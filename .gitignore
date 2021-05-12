@@ -1,0 +1,8 @@
+.stack-work/
+.vscode
+.history
+local_bot.conf
+gitpush.bat
+*.txt
+
+

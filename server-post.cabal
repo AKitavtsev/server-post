@@ -1,0 +1,112 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 47e3087f40bf3b52c733c6685db2540d04acc31d48ce84e5b0afbc91b9cc5805
+
+name:           server-post
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/server-post#readme>
+homepage:       https://github.com/githubuser/server-post#readme
+bug-reports:    https://github.com/githubuser/server-post/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2021 Author name here
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/server-post
+
+library
+  exposed-modules:
+      Config
+      Controllers.Users
+      Db
+      FromRequest
+      Lib
+      Migrations
+      Models.User
+      Token
+  other-modules:
+      Paths_server_post
+  hs-source-dirs:
+      src
+  build-depends:
+      MissingH
+    , aeson
+    , base >=4.7 && <5
+    , bytestring
+    , configurator
+    , directory
+    , hspec
+    , http-types
+    , mtl
+    , postgresql-simple
+    , resource-pool
+    , text
+    , time
+    , wai
+    , warp
+  default-language: Haskell2010
+
+executable server-post-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_server_post
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      MissingH
+    , aeson
+    , base >=4.7 && <5
+    , bytestring
+    , configurator
+    , directory
+    , hspec
+    , http-types
+    , mtl
+    , postgresql-simple
+    , resource-pool
+    , server-post
+    , text
+    , time
+    , wai
+    , warp
+  default-language: Haskell2010
+
+test-suite server-post-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      TokenTest
+      Paths_server_post
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      MissingH
+    , aeson
+    , base >=4.7 && <5
+    , bytestring
+    , configurator
+    , directory
+    , hspec
+    , http-types
+    , mtl
+    , postgresql-simple
+    , resource-pool
+    , server-post
+    , text
+    , time
+    , wai
+    , warp
+  default-language: Haskell2010
