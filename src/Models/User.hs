@@ -3,6 +3,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module Models.User (
+  Avatar (..),
   UserIn (..),
   UserOut (..),
   UserID (..)
@@ -13,9 +14,13 @@ import Data.Aeson
 -- import Data.UUID
 
 -- represents a user
+data Avatar  = Avatar { image :: String
+                      , typ   :: String
+                      } deriving (Eq, Show, Generic, FromJSON, ToJSON)
+             
 data UserIn  = UserIn  { name     :: String
                        , surname  :: String
-                       , avatar   :: String
+                       , avatar   :: Maybe Avatar
                        , login    :: String
                        , password :: String
                        } deriving (Show, Generic, FromJSON, ToJSON)

@@ -11,43 +11,38 @@ import Data.Aeson (eitherDecode, encode )
 -- import Data.Hash.MD5
 import Data.Pool (Pool)
 
+import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.Text.Lazy as TL
+
 -- import Data.UUID
 -- import Data.UUID.V4
 import GHC.Generics
 import Network.HTTP.Types
 import Network.Wai
--- import Web.Scotty
--- import Web.Scotty.Trans
--- import Web.Scotty.Internal.Types
-
--- import Core
--- import Persistence.Accounts
 import Config
 import Models.User
 import Db
 import Token
 import FromRequest
--- import Serializers.Account
--- import Serializers.Response
 
 -- routes :: Pool Connection -> Request
        -- -> (Response -> IO ResponseReceived)
        -- -> IO ResponseReceived
-
 routes pool req respond = do
   case  toMethod req of 
     "POST" -> do
       body <- strictRequestBody req
       case eitherDecode body :: Either String UserIn of
         Left e -> do
-          respond (responseLBS status400 [("Content-Type", "text/plain")] "bad")
+          respond (responseLBS status400 [("Content-Type", "text/plain")] $ BL.pack e)
         Right correctlyParsedBody -> do
           exL <- liftIO $ existLogin pool (login correctlyParsedBody)
           case exL of
             False -> do
               c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
-              insertUser pool correctlyParsedBody c_date      
+              insertUser pool correctlyParsedBody c_date
+
+              
               idAdm <- liftIO $ findUserByLogin pool 
                        (login correctlyParsedBody) 
                        (Models.User.password correctlyParsedBody)

@@ -7,6 +7,7 @@ import Db
 import Migrations
 
 import qualified Controllers.Users
+import qualified Images
 import qualified Token
 import FromRequest (toPath)
 -- вроде base
@@ -21,7 +22,8 @@ import System.Environment
 import Network.Wai
 import Network.Wai.Handler.Warp
 
-import Network.HTTP.Types (status200)
+import Network.HTTP.Types
+
 
 
 
@@ -43,8 +45,7 @@ main = do
   config <- getConfig
   
   conn <- newConn config
-  pool <- createPool (newConn config) close 1 40 10
-  
+  pool <- createPool (newConn config) close 1 40 10  
   mig <- getArgs
   when (mig == ["-m"]) $ do
     begin conn
@@ -58,6 +59,8 @@ routes pool req respond  = do
           Controllers.Users.routes pool req respond
         "token" -> do
           Token.routes pool req respond
+        "image" -> do
+          Images.routes pool req respond
         _       -> do
           respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
 

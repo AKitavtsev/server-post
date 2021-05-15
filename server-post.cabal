@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 47e3087f40bf3b52c733c6685db2540d04acc31d48ce84e5b0afbc91b9cc5805
+-- hash: 97c923cdca6d5d5f61502fa2e3f951af5f1d2cfc40f47bfe6475523a6cd33554
 
 name:           server-post
 version:        0.1.0.0
@@ -31,6 +31,7 @@ library
       Controllers.Users
       Db
       FromRequest
+      Images
       Lib
       Migrations
       Models.User
@@ -43,6 +44,7 @@ library
       MissingH
     , aeson
     , base >=4.7 && <5
+    , base64-bytestring
     , bytestring
     , configurator
     , directory
@@ -68,6 +70,7 @@ executable server-post-exe
       MissingH
     , aeson
     , base >=4.7 && <5
+    , base64-bytestring
     , bytestring
     , configurator
     , directory
@@ -96,6 +99,7 @@ test-suite server-post-test
       MissingH
     , aeson
     , base >=4.7 && <5
+    , base64-bytestring
     , bytestring
     , configurator
     , directory

@@ -2,13 +2,15 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module Db (newConn
-          , fetch
-          , execSqlT
+          -- , fetch
+          -- , execSqlT
           , insertUser
           , existLogin
           , findUserByLogin
           , findUserByID
           , deleteUserByID
+          -- , insertImage
+          , findImageByID
           ) where
 
 import qualified Config as C
@@ -28,7 +30,8 @@ import GHC.Int
 import Data.Pool
 import Control.Monad.Trans
 
-import qualified Data.ByteString.Internal as BS
+import qualified Data.ByteString.Lazy.Char8 as LC
+-- import qualified Data.ByteString as BS
 
 -- DbConfig contains info needed to connect to MySQL server
 -- data DbConfig = DbConfig {
@@ -89,9 +92,17 @@ execSqlT pool args sql = withResource pool ins
 
 insertUser :: Pool Connection -> UserIn -> String-> IO ()
 insertUser pool (UserIn name surname avatar login password) c_date = do
-     liftIO $ execSqlT pool [name, surname, avatar, login, password, c_date, "FALSE"]
-              "INSERT INTO users (name, surname, avatar, login, password, c_date, admin) VALUES(?,?,?,?, md5( ?) ,?,?)"
-     return ()
+  case avatar of
+    Nothing -> 
+      liftIO $ execSqlT pool [name, surname, login, password, c_date, "FALSE"]
+        "INSERT INTO users (name, surname, login, password, c_date, admin) VALUES(?,?,?,md5( ?) ,?,?)"
+    Just (Avatar im t) -> do
+      liftIO $ execSqlT pool [im, t]
+        "INSERT INTO images (image, image_type) VALUES(?,?)"
+      image_id <- findLastImage pool                     
+      liftIO $ execSqlT pool [name, surname, (show image_id), login, password, c_date, "FALSE"]
+        "INSERT INTO users (name, surname, avatar, login, password, c_date, admin) VALUES(?,?,?,?,md5( ?) ,?,?)"    
+  return ()
 
 existLogin :: Pool Connection -> String -> IO Bool
 existLogin pool login = do
@@ -125,6 +136,28 @@ deleteUserByID pool id = do
      liftIO $ execSqlT pool [id] "DELETE FROM users WHERE user_id=?"
      return ()
 --------------------------------------------------------------------------------
+-- insertImage :: Pool Connection -> String -> IO ()
+-- insertImage pool image = do
+     -- liftIO $ execSqlT pool [image]
+              -- "INSERT INTO image (image) VALUES(?)"
+     -- return ()
+
+findLastImage:: Pool Connection -> IO Integer
+findLastImage pool = do
+  res <- liftIO $ fetch pool () 
+         "SELECT image_id, image FROM images ORDER BY image_id DESC LIMIT 1" 
+         :: IO [(Integer, String)]
+  return $ pass res
+    where pass [(id, img)] = id
+       
+findImageByID:: Pool Connection -> Integer -> IO (Maybe (String, String))
+findImageByID pool id = do
+         res <- liftIO $ fetch pool (Only id) 
+                "SELECT image, image_type FROM images WHERE image_id=?"
+                :: IO [(String, String)]
+         return $ pass res
+         where pass [(img, t)] = Just (img, t)
+               pass _ = Nothing
 
 -- listArticles :: Pool Connection -> IO [Article]
 -- listArticles pool = do
