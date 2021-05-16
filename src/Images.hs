@@ -23,6 +23,7 @@ import Data.Aeson
 -- import Data.Hash.MD5
 -- import Data.Pool (Pool)
 -- import Data.Time.Clock
+import Data.List (dropWhile)
 import GHC.Generics
 import Network.HTTP.Types.Status
 import Network.HTTP.Types
@@ -47,7 +48,7 @@ routes pool req respond = do
 --Вариант 2 - из файла
   -- imageFile <- BC.readFile "Images/kita.jpg"
   -- let image = BC.unpack $ B64.encode imageFile
-  -- insertImage pool image
+  -- insertImage' pool image
 
 --Теперь отдаем
   let token = toToken req
@@ -55,13 +56,29 @@ routes pool req respond = do
   case  (testToken token curtime) of
     Left st -> do
        respond (responseLBS st [("Content-Type", "text/plain")] "")
-    Right (id, adm) -> do
+    Right _ -> do
       let id = toId req
       imageMb <- liftIO $ findImageByID pool id
       case imageMb of
         Nothing -> do
-          respond (responseLBS notFound404 [("Content-Type", "text/plain")]
-                    "image not exist")
+
+-- чисто для служебного пользования, для проекта надо оставить только
+          -- respond (responseLBS notFound404 
+                   -- [("Content-Type", "text/plain")]
+                    -- "image not exist")
+          let file = toParam req "file"
+          case file of
+            Nothing   -> respond (responseLBS notFound404 
+                                  [("Content-Type", "text/plain")]
+                                  "image not exist")
+            Just fn -> do
+              imageFile <- BC.readFile ("Images/" ++ fn) 
+              let image = BC.unpack $ B64.encode imageFile              
+              insertImage' pool id image (tail $ dropWhile (\x -> not (x == '.')) fn)         
+              respond (responseLBS notFound404 
+                       [("Content-Type", "text/plain")]
+                         "image adding image")    
+--------------------
         Just (image, typ)  -> do
           let typeImage = BC.pack ("image/" ++ typ)    
           respond (responseLBS status200 [("Content-Type", typeImage)]

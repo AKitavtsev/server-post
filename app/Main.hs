@@ -47,10 +47,10 @@ main = do
   conn <- newConn config
   pool <- createPool (newConn config) close 1 40 10  
   mig <- getArgs
-  when (mig == ["-m"]) $ do
-    begin conn
-    runMigrations pool "sql"
-    commit  conn
+  -- when (mig == ["-m"]) $ do
+    -- begin conn
+  runMigrations pool "sql"
+    -- commit  conn
   run 3000 (routes pool)
     
 routes pool req respond  = do

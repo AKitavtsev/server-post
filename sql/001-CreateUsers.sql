@@ -1,10 +1,9 @@
-DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE users (
     user_id serial NOT NULL,
     name character varying(1024) NOT NULL,
     surname character varying(1024) NOT NULL,
-    avatar integer,
-    login character varying (1024) UNIQUE,  
+    login character varying (1024) UNIQUE NOT NULL,
     password text NOT NULL,
     c_date timestamp NOT NULL,
     admin boolean NOT NULL,

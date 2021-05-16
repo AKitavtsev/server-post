@@ -40,13 +40,11 @@ routes pool req respond = do
           case exL of
             False -> do
               c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
-              insertUser pool correctlyParsedBody c_date
-
-              
+              insertUser pool correctlyParsedBody c_date              
               idAdm <- liftIO $ findUserByLogin pool 
                        (login correctlyParsedBody) 
                        (Models.User.password correctlyParsedBody)
-                       
+              insertImage pool correctlyParsedBody idAdm
               timeStr <- liftIO expirationTime
               let tokenMb =  creatToken idAdm timeStr 
               case tokenMb of
