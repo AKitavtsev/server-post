@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 79f2e43b7e33647a8d0f1ca21acd9a5da29ba2c8bfeb747f7edc01aa28c5c449
+-- hash: eefa293af9f806ca5d4af27d7f60e419590be20e87de9fc12442ff097bd345f3
 
 name:           server-post
 version:        0.1.0.0
@@ -32,6 +32,8 @@ library
       Db
       FromRequest
       Images
+      Logger
+      Logger.Impl.StdOut
       Migrations
       Models.User
       Token

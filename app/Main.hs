@@ -4,6 +4,8 @@ module Main where
 
 import Config
 import Db
+import Logger
+import qualified Logger.Impl.StdOut as LS
 import Migrations
 
 import qualified Controllers.Users
@@ -42,15 +44,17 @@ import qualified Data.Text as T
 main :: IO ()
 main = do
 
-  config <- getConfig
-  
-  conn <- newConn config
-  pool <- createPool (newConn config) close 1 40 10  
+  conf  <- C.load [C.Optional "server.conf", C.Optional "local_server.conf"]    
+  dbConf <- getDbConfig conf
+  conn <- newConn dbConf  
+  pool <- createPool (newConn dbConf) close 1 40 10  
   mig <- getArgs
-  -- when (mig == ["-m"]) $ do
-    -- begin conn
-  runMigrations pool "sql"
-    -- commit  conn
+  when (mig == ["-m"]) $ do
+    begin conn
+    runMigrations pool "sql"
+    commit  conn
+  hLogger <- LS.newHandle
+  logInfo hLogger "  Listen port 3000"
   run 3000 (routes pool)
     
 routes pool req respond  = do

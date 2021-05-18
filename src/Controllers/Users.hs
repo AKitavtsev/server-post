@@ -4,7 +4,7 @@
 module Controllers.Users 
     where
 
-import Control.Monad (when)
+-- import Control.Monad (when)
 import Control.Monad.Trans
 import Data.Aeson (eitherDecode, encode )
 -- import Database.PostgreSQL.Simple
@@ -19,6 +19,7 @@ import qualified Data.Text.Lazy as TL
 import GHC.Generics
 import Network.HTTP.Types
 import Network.Wai
+
 import Config
 import Models.User
 import Db

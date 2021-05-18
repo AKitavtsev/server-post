@@ -46,7 +46,7 @@ import qualified Data.ByteString.Lazy.Char8 as LC
 
 -- The function knows how to create new DB connection
 -- It is needed to use with resource pool
-newConn :: C.Config -> IO Connection
+newConn :: C.DbConfig -> IO Connection
 newConn conf = connect defaultConnectInfo
                        { connectUser = C.user conf
                        , connectPassword = C.password conf
@@ -156,10 +156,6 @@ insertImage pool (UserIn name surname avatar login password) (Just (id, adm)) = 
       Just (Avatar im t) -> liftIO $ execSqlT pool [(show id), im, t]
         "INSERT INTO images (image_id, image, image_type) VALUES (?,?,?)"
     return ()
-  -- case  avatar of
-    -- Just (Avatar im t) -> liftIO $ execSqlT pool [(show id), im, t]
-      -- "INSERT INTO images (image_id, image, image_type) VALUES (?,?,?)"
-    -- Nothing -> 
   return ()
        
 findImageByID:: Pool Connection -> Integer -> IO (Maybe (String, String))
