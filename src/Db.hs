@@ -14,7 +14,7 @@ module Db (newConn
           , findImageByID
           ) where
 
-import qualified Config as C
+import qualified Servises.Config as C
 import Models.User
 
 -- import Token (curTimeStr)
@@ -46,7 +46,7 @@ import qualified Data.ByteString.Lazy.Char8 as LC
 
 -- The function knows how to create new DB connection
 -- It is needed to use with resource pool
-newConn :: C.DbConfig -> IO Connection
+newConn :: C.Config -> IO Connection
 newConn conf = connect defaultConnectInfo
                        { connectUser = C.user conf
                        , connectPassword = C.password conf

@@ -4,12 +4,12 @@
 {-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Images
+module Controllers.Images
     where
 
 import FromRequest
 import Db
-import Token
+import Controllers.Token
 
 
 import Control.Monad.Trans

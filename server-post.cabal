@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: eefa293af9f806ca5d4af27d7f60e419590be20e87de9fc12442ff097bd345f3
+-- hash: 8867d38b3c08c074c52d0c3af17678fff3f0d9b9c37db20cc67b8f4f69db3d68
 
 name:           server-post
 version:        0.1.0.0
@@ -27,16 +27,18 @@ source-repository head
 
 library
   exposed-modules:
-      Config
+      Controllers.Images
+      Controllers.Token
       Controllers.Users
       Db
       FromRequest
-      Images
-      Logger
-      Logger.Impl.StdOut
       Migrations
       Models.User
-      Token
+      Servises.Config
+      Servises.Data
+      Servises.Impl.Configurator
+      Servises.Impl.StdOut
+      Servises.Logger
   other-modules:
       Paths_server_post
   hs-source-dirs:

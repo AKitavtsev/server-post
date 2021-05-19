@@ -20,10 +20,10 @@ import GHC.Generics
 import Network.HTTP.Types
 import Network.Wai
 
-import Config
+import Servises.Config
 import Models.User
 import Db
-import Token
+import Controllers.Token
 import FromRequest
 
 -- routes :: Pool Connection -> Request

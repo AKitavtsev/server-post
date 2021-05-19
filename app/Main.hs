@@ -2,15 +2,17 @@
 
 module Main where
 
-import Config
+import Servises.Config
 import Db
-import Logger
-import qualified Logger.Impl.StdOut as LS
+import Servises.Logger
 import Migrations
 
+import qualified Servises.Impl.StdOut as LS
+import qualified Servises.Impl.Configurator as CC
+
 import qualified Controllers.Users
-import qualified Images
-import qualified Token
+import qualified Controllers.Images
+import qualified Controllers.Token
 import FromRequest (toPath)
 -- вроде base
 -- import Control.Concurrent.STM
@@ -29,8 +31,8 @@ import Network.HTTP.Types
 
 
 
-import qualified Data.Configurator as C
-import qualified Data.Text as T
+-- import qualified Data.Configurator as C
+-- import qualified Data.Text as T
 
 
 -- import Core
@@ -44,8 +46,9 @@ import qualified Data.Text as T
 main :: IO ()
 main = do
 
-  conf  <- C.load [C.Optional "server.conf", C.Optional "local_server.conf"]    
-  dbConf <- getDbConfig conf
+  -- conf  <- C.load [C.Optional "server.conf", C.Optional "local_server.conf"]    
+  hConfig <- CC.newHandle
+  dbConf <- getDbConfig hConfig
   conn <- newConn dbConf  
   pool <- createPool (newConn dbConf) close 1 40 10  
   mig <- getArgs
@@ -53,7 +56,7 @@ main = do
     begin conn
     runMigrations pool "sql"
     commit  conn
-  hLogger <- LS.newHandle
+  hLogger <- LS.newHandle hConfig
   logInfo hLogger "  Listen port 3000"
   run 3000 (routes pool)
     
@@ -62,9 +65,9 @@ routes pool req respond  = do
         "user"  -> do
           Controllers.Users.routes pool req respond
         "token" -> do
-          Token.routes pool req respond
+          Controllers.Token.routes pool req respond
         "image" -> do
-          Images.routes pool req respond
+          Controllers.Images.routes pool req respond
         _       -> do
           respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
 

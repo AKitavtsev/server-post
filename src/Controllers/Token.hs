@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Token
+module Controllers.Token
     where
 
 import FromRequest

@@ -1,0 +1,20 @@
+module Servises.Logger
+  ( Handle(..)
+  , logDebug
+  , logInfo
+  , logWarning
+  , logError
+  ) where
+
+import Servises.Data (Priority (..))
+import Servises.Config (Config (..))
+
+data Handle = Handle
+    { config :: Config
+    , logPriority :: Priority -> String -> IO () }
+--
+logDebug, logInfo, logWarning, logError :: Handle -> String -> IO ()
+logDebug   = (`logPriority` DEBUG)
+logInfo    = (`logPriority` INFO)
+logWarning = (`logPriority` WARN)
+logError   = (`logPriority` ERROR)
