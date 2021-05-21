@@ -7,19 +7,16 @@ import qualified Servises.Config as SC
 
 import Control.Monad (when)
 
-newHandle :: SC.Handle -> IO SL.Handle
-newHandle handle = do
-    config <- SC.getLogConfig handle 
-    putStrLn (show config)    
+newHandle ::  SC.Config -> IO SL.Handle
+newHandle config = do
     return $ SL.Handle
       { SL.config = config
       , SL.logPriority = logPriority
-      -- \prio msg ->
-          -- putStrLn ((show prio) ++ msg)
       }      
       where 
         logPriority prio msg = do
-        -- config <- SC.getLogConfig handle
-          -- when (prio >= (level (SL.config handle))) 
-            putStrLn ((show prio) ++ msg ++ (show config))
-          -- return ()
+          let lev = case config of
+                      (SC.LogConfig x) -> x
+          when (prio >= lev) $ do
+            putStrLn ((show prio) ++ msg)
+          return ()

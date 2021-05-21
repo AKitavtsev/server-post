@@ -31,4 +31,7 @@ getconfig fm =  do
                    "ERROR" -> ERROR
                    _       -> INFO
       return (SC.LogConfig level)
+    SC.TOKEN -> do
+      lifetime <- C.lookupDefault 86400 conf (T.pack "token.lifetime") :: IO Integer
+      return (SC.TokenConfig lifetime)
      

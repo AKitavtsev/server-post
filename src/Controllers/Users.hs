@@ -13,6 +13,7 @@ import Data.Pool (Pool)
 
 import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.Text.Lazy as TL
+import qualified Data.Time as Time
 
 -- import Data.UUID
 -- import Data.UUID.V4
@@ -20,17 +21,18 @@ import GHC.Generics
 import Network.HTTP.Types
 import Network.Wai
 
+import Servises.Token
 import Servises.Config
 import Models.User
 import Db
-import Controllers.Token
+import Controllers.Token (Token (..))
 import FromRequest
 
 -- routes :: Pool Connection -> Request
        -- -> (Response -> IO ResponseReceived)
        -- -> IO ResponseReceived
-routes pool req respond = do
-  case  toMethod req of 
+routes pool hLogger hToken req respond = do
+  case  toMethod req of
     "POST" -> do
       body <- strictRequestBody req
       case eitherDecode body :: Either String UserIn of
@@ -46,38 +48,37 @@ routes pool req respond = do
                        (login correctlyParsedBody) 
                        (Models.User.password correctlyParsedBody)
               insertImage pool correctlyParsedBody idAdm
-              timeStr <- liftIO expirationTime
-              let tokenMb =  creatToken idAdm timeStr 
-              case tokenMb of
-                Nothing -> do
-                  respond (responseLBS noContent204 [("Content-Type", "text/plain")] "bad")
-                Just token -> do 
-                  respond (responseLBS created201 [("Content-Type", "text/plain")] $ encode token)
+              case idAdm of 
+                Just (id, adm) -> do
+                  token <- (createToken hToken) id adm
+                  respond (responseLBS created201 
+                           [("Content-Type", "text/plain")] $ encode (Token token))
+                Nothing -> respond (responseLBS noContent204 [("Content-Type", "text/plain")] "bad")
             True -> do
               respond (responseLBS found302 [("Content-Type", "text/plain")] "user exist")
     
     "GET" -> do
       let token = toToken req
-      curtime <- liftIO $ curTimeStr "%Y%m%d%H%M%S"
-      case  (testToken token curtime) of
-        Left st -> do
-          respond (responseLBS st [("Content-Type", "text/plain")] "")
-        Right (id, adm) -> do
+      vt <- validToken hToken token
+      case vt of
+        Just (id, _) -> do
           userMb <- liftIO $ findUserByID pool id
           case userMb of
             Nothing -> do
               respond (responseLBS notFound404 [("Content-Type", "text/plain")] "user not exist")
             Just user -> do 
               respond (responseLBS status200 [("Content-Type", "text/plain")] $ encode user)
+        Nothing -> do
+          respond (responseLBS status400 [("Content-Type", "text/plain")] "")        
 
     "DELETE" -> do
       let token = toToken req
           id    = toId req
-      curtime <- liftIO $ curTimeStr "%Y%m%d%H%M%S"
-      case  (testToken token curtime) of
-        Left st -> do
-          respond (responseLBS st [("Content-Type", "text/plain")] "bad")
-        Right (i, adm) -> do
+      vt <- validToken hToken token
+      case  vt of
+        Nothing -> do
+          respond (responseLBS status400 [("Content-Type", "text/plain")] "bad")
+        Just (id, adm) -> do
           case adm of      
             True -> do
               deleteUserByID pool id
@@ -85,20 +86,9 @@ routes pool req respond = do
             False  -> do
               respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")
 
-
-
--- так работает 
--- http://localhost:3000/file/?path=images\kita.jpg
-  -- get "/file" $ do
-    -- path <- param "path" :: ActionM String
-    -- file path
-
-    
--- это не работает в адресной строке 
--- http://localhost:3000/images\kita.jpg"
-
-  -- get "/:path" $ do
-    -- path <- param "path" :: ActionM String
-    -- file path
+curTimeStr :: String -> IO String
+curTimeStr form = do
+    utc <- Time.getCurrentTime
+    return (Time.formatTime Time.defaultTimeLocale form utc)
 
 

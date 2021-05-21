@@ -7,8 +7,9 @@ import Db
 import Servises.Logger
 import Migrations
 
-import qualified Servises.Impl.StdOut as LS
-import qualified Servises.Impl.Configurator as CC
+import qualified Servises.Impl.StdOut as SL
+import qualified Servises.Impl.Configurator as SC
+import qualified Servises.Impl.MD5 as ST
 
 import qualified Controllers.Users
 import qualified Controllers.Images
@@ -45,29 +46,37 @@ import Network.HTTP.Types
 -- start the server and load the routes from the controllers
 main :: IO ()
 main = do
-
-  -- conf  <- C.load [C.Optional "server.conf", C.Optional "local_server.conf"]    
-  hConfig <- CC.newHandle
+  hConfig <- SC.newHandle
+  
   dbConf <- getDbConfig hConfig
+  
   conn <- newConn dbConf  
-  pool <- createPool (newConn dbConf) close 1 40 10  
+  pool <- createPool (newConn dbConf) close 1 40 10 
+  
   mig <- getArgs
   when (mig == ["-m"]) $ do
     begin conn
     runMigrations pool "sql"
     commit  conn
-  hLogger <- LS.newHandle hConfig
+
+  tokenConfig <- getTokenConfig hConfig
+  hToken      <- ST.newHandle tokenConfig
+  
+  logConf     <- getLogConfig hConfig 
+  hLogger     <- SL.newHandle logConf
+  
   logInfo hLogger "  Listen port 3000"
-  run 3000 (routes pool)
+  
+  run 3000 (routes pool hLogger hToken)
     
-routes pool req respond  = do
+routes pool hLogger hToken req respond  = do
     case toPath req of
         "user"  -> do
-          Controllers.Users.routes pool req respond
+          Controllers.Users.routes pool hLogger hToken req respond
         "token" -> do
-          Controllers.Token.routes pool req respond
+          Controllers.Token.routes pool hLogger hToken req respond
         "image" -> do
-          Controllers.Images.routes pool req respond
+          Controllers.Images.routes pool hLogger hToken req respond
         _       -> do
           respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
 
