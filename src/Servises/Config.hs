@@ -9,6 +9,7 @@ module Servises.Config
   , getDbConfig 
   , getLogConfig
   , getTokenConfig
+  , getPoolConfig
   ) where
 
 import Servises.Data (Priority (..))
@@ -22,20 +23,28 @@ import Servises.Data (Priority (..))
 -- import qualified Data.Configurator.Types as TC
 -- import qualified Data.Text as T
 
-data ForModule = DB | LOG | TOKEN deriving (Eq, Ord, Show)
+data ForModule = DB 
+               | LOG 
+               | TOKEN 
+               | POOL 
+               deriving (Eq, Ord, Show)
 
 newtype Handle = Handle
     { getConfig :: ForModule -> IO Config}  
 
-data Config = DbConfig    {name     :: !String
-                          ,user     :: !String
-                          ,password :: !String
+data Config = DbConfig    { name      :: !String
+                          , user      :: !String
+                          , password  :: !String
                           }
-            | LogConfig   {level :: !Priority
+            | LogConfig   { level     :: !Priority
                           }
-            | TokenConfig {lifetime :: Integer
+            | TokenConfig { lifetime  :: !Integer
                           }
-            deriving (Show)
+            | PoolConfig  { subpools  :: !Int
+                          , time      :: !Integer
+                          , resours   :: !Int
+                          }
+             deriving (Show)
 
 
 
@@ -43,4 +52,5 @@ getDbConfig, getLogConfig, getTokenConfig :: Handle -> IO Config
 getDbConfig    = (`getConfig` DB)
 getLogConfig   = (`getConfig` LOG)
 getTokenConfig = (`getConfig` TOKEN)
+getPoolConfig  = (`getConfig` POOL)
 
