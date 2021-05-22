@@ -4,10 +4,11 @@
 
 module Controllers.Token
     where
-
+    
+   
+import FromRequest  
+import Servises.Db
 import Servises.Token
-import FromRequest
-import Db
 
 -- import Control.Monad.Trans
 -- import Database.PostgreSQL.Simple
@@ -32,7 +33,7 @@ data Token = Token {token :: String}
 -- routes :: Pool Connection -> Request
        -- -> (Response -> IO ResponseReceived)
        -- -> IO ResponseReceived
-routes pool hLogger hToken req respond = do
+routes pool hLogger hToken hDb req respond = do
   case  toParam req "login" of
     Nothing -> do
       respond (responseLBS status400 [("Content-Type", "text/plain")] "")
@@ -41,7 +42,7 @@ routes pool hLogger hToken req respond = do
         Nothing -> do 
           respond (responseLBS status400 [("Content-Type", "text/plain")] "")
         Just password -> do
-          idAdm   <- liftIO $ findUserByLogin pool login password    
+          idAdm   <- liftIO $ findUserByLogin hDb pool login password    
           case idAdm of
             Nothing -> do
               respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")

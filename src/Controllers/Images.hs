@@ -6,8 +6,8 @@ module Controllers.Images
     where
 
 import FromRequest
-import Db
 -- import Controllers.Token
+import Servises.Db
 import Servises.Token
 import Servises.Config
 
@@ -33,7 +33,7 @@ import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Base64 as B64
 
 
-routes pool hLogger hToken req respond = do
+routes pool hLogger hToken hDb req respond = do
   let token = toToken req
   vt <- validToken hToken token
   case  vt of
@@ -41,7 +41,7 @@ routes pool hLogger hToken req respond = do
        respond (responseLBS status400 [("Content-Type", "text/plain")] "")
     Just _ -> do
       let id = toId req
-      imageMb <- liftIO $ findImageByID pool id
+      imageMb <- liftIO $ findImageByID hDb pool id
       case imageMb of
         Nothing -> do
 
@@ -54,7 +54,7 @@ routes pool hLogger hToken req respond = do
             Just fn -> do
               imageFile <- BC.readFile ("Images/" ++ fn) 
               let image = BC.unpack $ B64.encode imageFile              
-              insertImage' pool id image (tail $ dropWhile (\x -> not (x == '.')) fn)         
+              insertImage' hDb pool id image (tail $ dropWhile (\x -> not (x == '.')) fn)         
               respond (responseLBS notFound404 
                        [("Content-Type", "text/plain")]
                          "image adding image")    

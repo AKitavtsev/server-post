@@ -2,7 +2,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 
 
-module Migrations (runMigrations)
+module Servises.Impl.PostgreSQL.Migrations (runMigrations)
     where
 
 import Control.Monad (forM_, void, when)
@@ -16,11 +16,13 @@ import qualified Data.ByteString as BS
 import qualified Data.List as L
 
   
-runMigrations :: Pool Connection -> FilePath -> IO ()
-runMigrations pool dir = do
+runMigrations :: Connection -> Pool Connection -> FilePath -> IO ()
+runMigrations conn pool dir = do
+    begin conn
     fn <- scriptsInDirectory dir 
     withResource pool $ \conn -> do
       forM_ fn (executeMigration conn False) 
+    commit conn
           
 executeMigration :: Connection -> Bool -> FilePath -> IO ()
 executeMigration con verbose fileName  = do

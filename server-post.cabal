@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2a1c901acd0402631d8124e1056bdf53b11d7a4810e3a4de827e5f0c03e3f1cb
+-- hash: b39ed7aa6ae983f910e137b6af0109f14b64e6944e92d196fefead33183e2db3
 
 name:           server-post
 version:        0.1.0.0
@@ -30,15 +30,16 @@ library
       Controllers.Images
       Controllers.Token
       Controllers.Users
-      Db
       FromRequest
-      Migrations
       Models.User
       Router
       Servises.Config
       Servises.Data
+      Servises.Db
       Servises.Impl.Configurator
       Servises.Impl.MD5
+      Servises.Impl.PostgreSQL
+      Servises.Impl.PostgreSQL.Migrations
       Servises.Impl.StdOut
       Servises.Logger
       Servises.Token
