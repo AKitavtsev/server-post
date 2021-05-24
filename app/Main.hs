@@ -37,17 +37,17 @@ main = do
                      (subpools poolConfig)
                      (fromInteger (time poolConfig) :: NominalDiffTime)
                      (resours poolConfig)
+  logConf     <- getLogConfig hConfig 
+  hLogger     <- SL.newHandle logConf
   
   -- mig <- getArgs
   -- when (mig == ["-m"]) $ do
-  runMigrations hDb conn pool "sql"
-
+  logInfo hLogger "  Run migrations"
+  runMigrations hDb hLogger conn pool "sql"
   
   tokenConfig <- getTokenConfig hConfig
   hToken      <- ST.newHandle tokenConfig
   
-  logConf     <- getLogConfig hConfig 
-  hLogger     <- SL.newHandle logConf
   
   logInfo hLogger "  Listen port 3000"
   

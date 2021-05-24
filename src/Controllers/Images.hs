@@ -8,6 +8,7 @@ module Controllers.Images
 import FromRequest
 -- import Controllers.Token
 import Servises.Db
+import Servises.Logger
 import Servises.Token
 import Servises.Config
 
@@ -22,6 +23,7 @@ import Data.Aeson
 -- import Data.Pool (Pool)
 -- import Data.Time.Clock
 import Data.List (dropWhile)
+import Control.Monad (when)
 import GHC.Generics
 import Network.HTTP.Types.Status
 import Network.HTTP.Types
@@ -38,13 +40,16 @@ routes pool hLogger hToken hDb req respond = do
   vt <- validToken hToken token
   case  vt of
     Nothing -> do
+       logError hLogger "  Invalid or outdated token"
        respond (responseLBS status400 [("Content-Type", "text/plain")] "")
     Just _ -> do
       let id = toId req
+      when (id == 0) $ do
+        logError hLogger "  Invalid id"
       imageMb <- liftIO $ findImageByID hDb pool id
       case imageMb of
         Nothing -> do
-
+          logError hLogger "  Image not found"
 -- чисто для служебного пользования, для проекта надо оставить только
           let file = toParam req "file"
           case file of

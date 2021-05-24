@@ -35,8 +35,8 @@ getconfig fm =  do
       lifetime <- C.lookupDefault 86400 conf (T.pack "token.lifetime") :: IO Integer
       return (SC.TokenConfig lifetime)
     SC.POOL -> do
-       subpools <- C.lookupDefault 1 conf (T.pack "poll.subpools") :: IO Int
-       time     <- C.lookupDefault 40 conf (T.pack "poll.time") :: IO Integer
-       resours <- C.lookupDefault 10 conf (T.pack "poll.resours") :: IO Int
-       return (SC.PoolConfig subpools time resours)
+      subpools <- C.lookupDefault 1 conf (T.pack "poll.subpools") :: IO Int
+      time     <- C.lookupDefault 40 conf (T.pack "poll.time") :: IO Integer
+      resours <- C.lookupDefault 10 conf (T.pack "poll.resours") :: IO Int
+      return (SC.PoolConfig subpools time resours)
        

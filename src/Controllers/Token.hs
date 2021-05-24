@@ -8,6 +8,7 @@ module Controllers.Token
    
 import FromRequest  
 import Servises.Db
+import Servises.Logger
 import Servises.Token
 
 -- import Control.Monad.Trans
@@ -36,15 +37,18 @@ data Token = Token {token :: String}
 routes pool hLogger hToken hDb req respond = do
   case  toParam req "login" of
     Nothing -> do
+      logError hLogger "  Parameter \"Login\" not found"
       respond (responseLBS status400 [("Content-Type", "text/plain")] "")
     Just login -> do
       case toParam req "password" of
         Nothing -> do 
+          logError hLogger "  Parameter \"Password\" not found"
           respond (responseLBS status400 [("Content-Type", "text/plain")] "")
         Just password -> do
           idAdm   <- liftIO $ findUserByLogin hDb pool login password    
           case idAdm of
             Nothing -> do
+              logError hLogger "  Invalid Login/Password"
               respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
             Just (id, adm) -> do
               token <- (createToken hToken) id adm

@@ -2,6 +2,7 @@ module Servises.Db (Handle(..))
     where
 
 import Servises.Config (Config (..))
+import qualified Servises.Logger as Logger
 import Models.User
 
 import Data.Pool
@@ -10,7 +11,8 @@ import Database.PostgreSQL.Simple
 data Handle = Handle
     { close           :: Connection -> IO ()
     , newConn         :: Config -> IO Connection
-    , runMigrations   :: Connection -> Pool Connection -> FilePath -> IO ()
+    , runMigrations   :: Logger.Handle 
+                      -> Connection -> Pool Connection -> FilePath -> IO ()
     , insertUser      :: Pool Connection -> UserIn -> String-> IO ()
     , existLogin      :: Pool Connection -> String -> IO Bool
     , findUserByLogin :: Pool Connection -> String -> String -> IO (Maybe (Integer, Bool))

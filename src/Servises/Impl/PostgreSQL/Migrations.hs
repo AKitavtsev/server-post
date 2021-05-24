@@ -1,12 +1,12 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-
 module Servises.Impl.PostgreSQL.Migrations (runMigrations)
+
     where
+import Servises.Logger
 
 import Control.Monad (forM_, void, when)
--- import Data.Function 
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Types (Query (..))
 import Data.Pool
@@ -16,19 +16,19 @@ import qualified Data.ByteString as BS
 import qualified Data.List as L
 
   
-runMigrations :: Connection -> Pool Connection -> FilePath -> IO ()
-runMigrations conn pool dir = do
+runMigrations :: Servises.Logger.Handle -> Connection -> Pool Connection -> FilePath -> IO ()
+runMigrations hLogger conn pool dir = do
     begin conn
     fn <- scriptsInDirectory dir 
     withResource pool $ \conn -> do
-      forM_ fn (executeMigration conn False) 
+      forM_ fn (executeMigration hLogger conn ) 
     commit conn
           
-executeMigration :: Connection -> Bool -> FilePath -> IO ()
-executeMigration con verbose fileName  = do
+executeMigration :: Servises.Logger.Handle -> Connection -> FilePath -> IO ()
+executeMigration hLogger con fileName  = do
             content <- BS.readFile fileName
             void $ execute_ con (Query content)
-            when verbose $ putStrLn $ "Execute:\t" ++ fileName
+            logInfo hLogger ("  Execute: " ++ fileName)
             return () 
 
 -- | Lists all files in the given 'FilePath' 'dir' in alphabetical order.
