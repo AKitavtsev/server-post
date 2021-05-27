@@ -5,6 +5,8 @@ module Router (routes)
 
 import FromRequest (toPath)
 
+import qualified Controllers.Authors
+import qualified Controllers.Categories
 import qualified Controllers.Images
 import qualified Controllers.Token
 import qualified Controllers.Users
@@ -19,13 +21,17 @@ import qualified Data.Text as T
 routes pool hLogger hToken hDb req respond  = do
     logInfo hLogger ("  Path = " ++ (T.unpack $ toPath req))
     case toPath req of
-        "user"  -> do
+        "user"       -> do
           Controllers.Users.routes pool hLogger hToken hDb req respond
-        "token" -> do
+        "token"      -> do
           Controllers.Token.routes pool hLogger hToken hDb req respond
-        "image" -> do
+        "image"      -> do
           Controllers.Images.routes pool hLogger hToken hDb req respond
-        _       -> do
+        "author"     -> do
+          Controllers.Authors.routes pool hLogger hToken hDb req respond
+        "category"   -> do
+            Controllers.Categories.routes pool hLogger hToken hDb req respond
+        _            -> do
           logError hLogger "  Path not found"
           respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
   

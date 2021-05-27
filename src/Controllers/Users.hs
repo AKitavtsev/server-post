@@ -41,21 +41,19 @@ routes pool hLogger hToken hDb req respond = do
           logError hLogger "  Invalid request body"         
           respond (responseLBS status400 [("Content-Type", "text/plain")] $ BL.pack e)
         Right correctlyParsedBody -> do
+-- проверяю наличие логина в юзерс (а может не надо, пусть БД разбирается)
           exL <- liftIO $ existLogin hDb pool (login correctlyParsedBody)
           case exL of
             False -> do
               c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
-              insertUser hDb pool correctlyParsedBody c_date              
-              idAdm <- liftIO $ findUserByLogin hDb pool 
+              insertUser hDb pool correctlyParsedBody c_date 
+              Just (id, adm) <- liftIO $ findUserByLogin hDb pool 
                        (login correctlyParsedBody) 
                        (Models.User.password correctlyParsedBody)
-              insertImage hDb pool correctlyParsedBody idAdm
-              case idAdm of 
-                Just (id, adm) -> do
-                  token <- (createToken hToken) id adm
-                  respond (responseLBS created201 
+              insertImage hDb pool correctlyParsedBody id
+              token <- (createToken hToken) id adm
+              respond (responseLBS created201 
                            [("Content-Type", "text/plain")] $ encode (Token token))
-                Nothing -> respond (responseLBS status400 [("Content-Type", "text/plain")] "")
             True -> do
               logError hLogger "  Login already exists"
               respond (responseLBS found302 [("Content-Type", "text/plain")] "user exist")
@@ -86,14 +84,12 @@ routes pool hLogger hToken hDb req respond = do
         Nothing -> do
           logError hLogger "  Invalid or outdated token"
           respond (responseLBS status400 [("Content-Type", "text/plain")] "bad")
-        Just (id, adm) -> do
-          case adm of      
-            True -> do
-              deleteUserByID hDb pool id
-              respond (responseLBS status204 [("Content-Type", "text/plain")] "delete")
-            False  -> do
-              logError hLogger "  Administrator authority required"
-              respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")
+        Just (_, True) -> do
+          deleteUserByID hDb pool id
+          respond (responseLBS status204 [("Content-Type", "text/plain")] "delete")
+        Just (_, False) -> do
+          logError hLogger "  Administrator authority required"
+          respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")
 
 curTimeStr :: String -> IO String
 curTimeStr form = do

@@ -7,6 +7,7 @@ module Servises.Impl.PostgreSQL
 
 import qualified Servises.Config as C
 import qualified Servises.Db as SD
+import Models.Author
 import Models.User
 import Servises.Impl.PostgreSQL.Migrations
 
@@ -18,21 +19,27 @@ import Control.Monad.Trans
 import Control.Monad (when)
 
 import qualified Data.ByteString.Lazy.Char8 as LC
+import qualified Data.Text as T
 
 newHandle :: IO SD.Handle
 newHandle = do
     return $ SD.Handle
-      { SD.close           = close
-      , SD.newConn         = newConn
-      , SD.runMigrations   = runMigrations
-      , SD.insertUser      = insertUser
-      , SD.existLogin      = existLogin
-      , SD.findUserByLogin = findUserByLogin
-      , SD.findUserByID    = findUserByID
-      , SD.deleteUserByID  = deleteUserByID
-      , SD.insertImage     = insertImage
-      , SD.insertImage'    = insertImage'
-      , SD.findImageByID   = findImageByID
+      { SD.close            = close
+      , SD.newConn          = newConn
+      , SD.runMigrations    = runMigrations
+      , SD.insertUser       = insertUser
+      , SD.existLogin       = existLogin
+      , SD.findUserByLogin  = findUserByLogin
+      , SD.findUserByID     = findUserByID
+      , SD.deleteUserByID   = deleteUserByID
+      , SD.insertImage      = insertImage
+      , SD.insertImage'     = insertImage'
+      , SD.findImageByID    = findImageByID
+      , SD.insertAuthor     = insertAuthor
+      , SD.findAuthorByID   = findAuthorByID
+      , SD.deleteAuthorByID = deleteAuthorByID
+      , SD.updateAuthor     = updateAuthor
+      , SD.findCategory     = findCategory
       }
 
 newConn conf = connect defaultConnectInfo
@@ -41,6 +48,7 @@ newConn conf = connect defaultConnectInfo
                        , connectDatabase = C.name conf
                        }
 
+
 insertUser pool (UserIn name surname avatar login password) c_date = do
   liftIO $ execSqlT pool [name, surname, login, password, c_date, "FALSE"]
         "INSERT INTO users (name, surname, login, password, c_date, admin) VALUES(?,?,?,md5( ?) ,?,?)"
@@ -48,14 +56,14 @@ insertUser pool (UserIn name surname avatar login password) c_date = do
 
 existLogin pool login = do
     res <- liftIO $ fetch pool (Only login) 
-           "SELECT user_id, password FROM users WHERE login=?" :: IO [(Integer, String)]
+           "SELECT id, password FROM users WHERE login=?" :: IO [(Integer, String)]
     return $ pass res
          where pass [(id, passw)] = True
                pass _ = False 
 
 findUserByLogin pool login password = do
          res <- liftIO $ fetch pool [login, password] 
-                "SELECT user_id, admin  FROM users WHERE login=? AND password = md5( ?)" ::
+                "SELECT id, admin  FROM users WHERE login=? AND password = md5( ?)" ::
                 IO [(Integer,  Bool)]
          return $ pass res
          where 
@@ -64,38 +72,69 @@ findUserByLogin pool login password = do
 
 findUserByID pool id = do
          res <- liftIO $ fetch pool (Only id) 
-                "SELECT user_id, name, surname, login, c_date::varchar, admin  FROM users WHERE user_id=?" ::
+                "SELECT id, name, surname, login, c_date::varchar, admin  FROM users WHERE id=?" ::
                 IO [(Integer, String, String, String, String, Bool)]
          return $ pass res
          where pass [(id, n, sn, log, dat, adm)] = Just (UserOut id n sn log dat adm)
                pass _ = Nothing
 
 deleteUserByID pool id = do
-     liftIO $ execSqlT pool [id] "DELETE FROM users WHERE user_id=?"
+     liftIO $ execSqlT pool [id] "DELETE FROM users WHERE id=?"
      return ()
 --------------------------------------------------------------------------------
 -- чисто для служебного пользования
 insertImage' pool id im t = do
   liftIO $ execSqlT pool [(show id) , im, t]
-      "INSERT INTO images (image_id, image, image_type) VALUES (?,?,?)"
+      "INSERT INTO images (id, image, image_type) VALUES (?,?,?)"
   return ()     
-
-insertImage pool (UserIn name surname avatar login password) (Just (id, adm)) = do
+----------------------------------
+insertImage pool (UserIn name surname avatar login password) id = do
   when (not (avatar == Nothing)) $ do
     case avatar of
       Just (Avatar im t) -> liftIO $ execSqlT pool [(show id), im, t]
-        "INSERT INTO images (image_id, image, image_type) VALUES (?,?,?)"
+        "INSERT INTO images (id, image, image_type) VALUES (?,?,?)"
     return ()
   return ()
        
 findImageByID pool id = do
          res <- liftIO $ fetch pool (Only id) 
-                "SELECT image, image_type FROM images WHERE image_id=?"
+                "SELECT image, image_type FROM images WHERE id=?"
                 :: IO [(String, String)]
          return $ pass res
          where pass [(img, t)] = Just (img, t)
                pass _ = Nothing
+--------------------------------------------
+insertAuthor pool (Author id description) = do
+  liftIO $ execSqlT pool [show id, T.unpack description]
+        "INSERT INTO authors  (id, description) VALUES(?,?)"
+  return ()
 
+findAuthorByID pool id = do
+    res <- liftIO $ fetch pool (Only id) 
+           -- "SELECT id, description  FROM authors, users  WHERE id=?" ::
+            -- IO [(Integer, T.Text)]           
+              "SELECT users.name, users.surname, authors.description FROM users, authors WHERE users.id = authors.id AND authors.id = ?;"           
+    return $ pass res
+      where pass [(name, surname, descr)] = Just (AuthorOut name surname descr)
+            pass _ = Nothing
+
+deleteAuthorByID pool id = do
+     liftIO $ execSqlT pool [id] "DELETE FROM authors WHERE id=?"
+     return ()
+     
+updateAuthor pool id descr = do
+     liftIO $ execSqlT pool [descr, (show id)]
+                "UPDATE authors SET description=? WHERE id=?"
+     return ()
+--------------------------------
+findCategory pool id = do
+     res <- liftIO $ fetch pool (Only id) 
+             "SELECT id, name, COALESCE(id_owner, 0) FROM categories WHERE id=?" ::
+              IO [(Integer, String, Integer)]             
+     return $ pass res
+         where pass [(id, name, idOw)] = Just (id, idOw)
+               pass _                  = Nothing
+               
 -- listArticles :: Pool Connection -> IO [Article]
 -- listArticles pool = do
      -- res <- fetchSimple pool "SELECT * FROM article ORDER BY id DESC" :: IO [(Integer, TL.Text, TL.Text)]
