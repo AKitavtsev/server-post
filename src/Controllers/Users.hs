@@ -33,7 +33,11 @@ import Servises.Db
 routes pool hLogger hToken hDb req respond = do
   logInfo hLogger ("  Method = " ++ (BC.unpack $ toMethod req))
   case  toMethod req of
-    "POST" -> do
+    "POST"   -> post    
+    "GET"    -> get
+    "DELETE" -> delete
+  where 
+    post = do
       body <- strictRequestBody req
       logDebug hLogger ("  Body = " ++ (BL.unpack body))
       case eitherDecode body :: Either String UserIn of
@@ -57,10 +61,8 @@ routes pool hLogger hToken hDb req respond = do
             True -> do
               logError hLogger "  Login already exists"
               respond (responseLBS found302 [("Content-Type", "text/plain")] "user exist")
-    
-    "GET" -> do
-      let token = toToken req
-      vt <- validToken hToken token
+    get = do
+      vt <- validToken hToken (toToken req)
       case vt of
         Just (id, _) -> do
           when (id == 0) $ do
@@ -75,11 +77,9 @@ routes pool hLogger hToken hDb req respond = do
         Nothing -> do
           logError hLogger "  Invalid or outdated token"
           respond (responseLBS status400 [("Content-Type", "text/plain")] "")        
-
-    "DELETE" -> do
-      let token = toToken req
-          id    = toId req
-      vt <- validToken hToken token
+    delete = do
+      let id    = toId req
+      vt <- validToken hToken (toToken req)
       case  vt of
         Nothing -> do
           logError hLogger "  Invalid or outdated token"

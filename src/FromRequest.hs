@@ -37,6 +37,6 @@ toId :: Request -> Integer
 toId req = case pathInfo req of
                 (x:y:z:xs) -> read_ $ T.unpack z
                 _          -> 0
-    where read_ x = if (all isDigit x) 
+    where read_ x = if ((not (x == [])) && (all isDigit x)) 
                     then read x else 0
                 

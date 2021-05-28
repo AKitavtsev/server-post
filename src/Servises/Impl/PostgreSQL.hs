@@ -9,6 +9,7 @@ import qualified Servises.Config as C
 import qualified Servises.Db as SD
 import Models.Author
 import Models.User
+import Models.Category
 import Servises.Impl.PostgreSQL.Migrations
 
 import Database.PostgreSQL.Simple
@@ -24,22 +25,24 @@ import qualified Data.Text as T
 newHandle :: IO SD.Handle
 newHandle = do
     return $ SD.Handle
-      { SD.close            = close
-      , SD.newConn          = newConn
-      , SD.runMigrations    = runMigrations
-      , SD.insertUser       = insertUser
-      , SD.existLogin       = existLogin
-      , SD.findUserByLogin  = findUserByLogin
-      , SD.findUserByID     = findUserByID
-      , SD.deleteUserByID   = deleteUserByID
-      , SD.insertImage      = insertImage
-      , SD.insertImage'     = insertImage'
-      , SD.findImageByID    = findImageByID
-      , SD.insertAuthor     = insertAuthor
-      , SD.findAuthorByID   = findAuthorByID
-      , SD.deleteAuthorByID = deleteAuthorByID
-      , SD.updateAuthor     = updateAuthor
-      , SD.findCategory     = findCategory
+      { SD.close              = close
+      , SD.newConn            = newConn
+      , SD.runMigrations      = runMigrations
+      , SD.insertUser         = insertUser
+      , SD.existLogin         = existLogin
+      , SD.findUserByLogin    = findUserByLogin
+      , SD.findUserByID       = findUserByID
+      , SD.deleteUserByID     = deleteUserByID
+      , SD.insertImage        = insertImage
+      , SD.insertImage'       = insertImage'
+      , SD.findImageByID      = findImageByID
+      , SD.insertAuthor       = insertAuthor
+      , SD.findAuthorByID     = findAuthorByID
+      , SD.deleteAuthorByID   = deleteAuthorByID
+      , SD.updateAuthor       = updateAuthor
+      , SD.insertCategory     = insertCategory
+      , SD.findCategoryByID   = findCategoryByID
+      , SD.deleteCategoryByID = deleteCategoryByID
       }
 
 newConn conf = connect defaultConnectInfo
@@ -111,7 +114,7 @@ insertAuthor pool (Author id description) = do
 
 findAuthorByID pool id = do
     res <- liftIO $ fetch pool (Only id) 
-           -- "SELECT id, description  FROM authors, users  WHERE id=?" ::
+           -- "SELECT FROM authors, users  WHERE id=?" ::
             -- IO [(Integer, T.Text)]           
               "SELECT users.name, users.surname, authors.description FROM users, authors WHERE users.id = authors.id AND authors.id = ?;"           
     return $ pass res
@@ -127,13 +130,28 @@ updateAuthor pool id descr = do
                 "UPDATE authors SET description=? WHERE id=?"
      return ()
 --------------------------------
-findCategory pool id = do
-     res <- liftIO $ fetch pool (Only id) 
-             "SELECT id, name, COALESCE(id_owner, 0) FROM categories WHERE id=?" ::
-              IO [(Integer, String, Integer)]             
+insertCategory pool (Category name owner_id) = do
+  case owner_id of
+    Just owner -> do
+      liftIO $ execSqlT pool [name, show owner]
+        "INSERT INTO categories (name, id_owner) VALUES(?,?)"
+    Nothing    -> do 
+      liftIO $ execSqlT pool [name]
+        "INSERT INTO categories (name) VALUES(?)"
+  return ()
+
+findCategoryByID pool id = do
+     res <- liftIO $ fetch pool (Only id)
+              "SELECT * FROM categories WHERE id=?"  :: IO [(Integer, String, Maybe Integer)]   
+             -- "SELECT id, name, COALESCE(id_owner, 0) FROM categories WHERE id=?" ::
+              -- IO [(Integer, String, Integer)]             
      return $ pass res
-         where pass [(id, name, idOw)] = Just (id, idOw)
+         where pass [(id, name, idOw)] = Just (Category name idOw)
                pass _                  = Nothing
+
+deleteCategoryByID pool id = do
+     liftIO $ execSqlT pool [id] "DELETE FROM categories WHERE id=?"
+     return ()
                
 -- listArticles :: Pool Connection -> IO [Article]
 -- listArticles pool = do

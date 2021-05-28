@@ -22,38 +22,66 @@ import Database.PostgreSQL.Simple (Connection (..))
 
 import Controllers.Token (Token (..))
 import FromRequest
-import Models.Author
+import Models.Category
 -- import Servises.Config
 import Servises.Logger
 import Servises.Token
 import Servises.Db
 
 routes pool hLogger hToken hDb req respond = do
-  let token = toToken req
-  vt <- validToken hToken token
-  when (vt == Nothing) $ do
-         logError hLogger "  Invalid or outdated token"
-  -- respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-  logInfo hLogger ("  Method = " ++ (BC.unpack $ toMethod req))         
-  case  toMethod req of
-        -- "POST" -> do
-           -- body <- strictRequestBody req
-           -- logDebug hLogger ("  Body = " ++ (BL.unpack body))
-           -- case eitherDecode body :: Either String  Author of
-             -- Left e -> do
-               -- logError hLogger ("  Invalid request body  - " ++ e)          
-               -- respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-             -- Right correctlyParsedBody -> do
--- здесь бы проверить наличие id в users (а может и нет?)
-               -- insertAuthor hDb pool correctlyParsedBody              
-               -- respond (responseLBS created201 [("Content-Type", "text/plain")] "")    
-    "GET"    -> do
-      let id   = toId req
-      when (id == 0) $ do
-        logError hLogger "  Invalid id"
-      cat <- getCategories  hDb pool id
-      logInfo hLogger (show cat)
-      respond (responseLBS status200 [("Content-Type", "text/plain")] "")
+  -- let token = toToken req
+  vt <- validToken hToken (toToken req)
+  case vt of
+    Nothing -> do
+      logError hLogger "  Invalid or outdated token"
+      respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+    _       -> do
+      logInfo hLogger ("  Method = " ++ (BC.unpack $ toMethod req))         
+      case  toMethod req of
+        "POST"   -> post vt
+        "GET"    -> get 
+        "DELETE" -> delete vt
+  where 
+    post vt = do
+      case vt of
+        Just (_, True) -> do         
+          body <- strictRequestBody req
+          logDebug hLogger ("  Body = " ++ (BL.unpack body))
+          case eitherDecode body :: Either String Category of
+            Left e -> do
+              logError hLogger ("  Invalid request body  - " ++ e)          
+              respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+            Right correctlyParsedBody -> do
+              insertCategory hDb pool correctlyParsedBody              
+              respond (responseLBS created201 [("Content-Type", "text/plain")] "") 
+        Just (_, False) -> do
+          logError hLogger "  Administrator authority required"
+          respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")    
+    get = do
+        let id  = toId req
+        when (id == 0) $ do
+          logError hLogger "  Invalid id"
+        categoryMb <- liftIO $ findCategoryByID hDb pool id
+        case categoryMb of
+          Nothing -> do
+            logError hLogger "  Category not exist"
+            respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
+          Just category -> do 
+            respond (responseLBS status200 [("Content-Type", "text/plain")] $ encode category)
+    delete vt = do
+      case vt of
+        Just (_, True) -> do
+          let id  = toId req
+          when (id == 0) $ do
+            logError hLogger "  Invalid id"
+          deleteCategoryByID hDb pool id
+          respond (responseLBS status204 [("Content-Type", "text/plain")] "delete")
+        Just (_, False) -> do
+          logError hLogger "  Administrator authority required"
+          respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")    
+
+          
+          -- respond (responseLBS status200 [("Content-Type", "text/plain")] "")
           -- authorMb <- liftIO $ findAuthorByID hDb pool id
           -- case authorMb of
             -- Nothing -> do
@@ -85,21 +113,21 @@ routes pool hLogger hToken hDb req respond = do
               -- respond (responseLBS status200 [("Content-Type", "text/plain")]
                         -- $ encode (Author id $ Just (T.pack descr)))
                 
-getCategories :: Servises.Db.Handle ->  Pool Connection -> Integer -> IO [Integer]
-getCategories  hDb pool id = 
-  helper hDb pool id []
+-- getCategories :: Servises.Db.Handle ->  Pool Connection -> Integer -> IO [Integer]
+-- getCategories  hDb pool id = 
+  -- helper hDb pool id []
       
-    where
-      helper :: Servises.Db.Handle -> Pool Connection -> Integer -> [Integer] -> IO [Integer]   
-      helper hDb pool id listCat = do
+    -- where
+      -- helper :: Servises.Db.Handle -> Pool Connection -> Integer -> [Integer] -> IO [Integer]   
+      -- helper hDb pool id listCat = do
         -- return []
     
-            cats <- findCategory hDb pool id
-            case cats of 
-              Just (id, 0)    -> return (id:listCat )              
-              Just (id, idOw) -> do
-                helper hDb pool idOw (id:listCat)
-              Nothing         -> return listCat
+            -- cats <- findCategory hDb pool id
+            -- case cats of 
+              -- Just (id, 0)    -> return (id:listCat )              
+              -- Just (id, idOw) -> do
+                -- helper hDb pool idOw (id:listCat)
+              -- Nothing         -> return listCat
 
   
           
