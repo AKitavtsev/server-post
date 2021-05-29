@@ -30,4 +30,6 @@ data Handle = Handle
     , insertCategory     :: Pool Connection -> Category -> IO ()
     , findCategoryByID   :: Pool Connection -> Integer -> IO (Maybe Category) 
     , deleteCategoryByID :: Pool Connection -> Integer -> IO ()     
+    , updateNameCategory :: Pool Connection -> Integer -> String -> IO ()
+    , updateOwnerCategory:: Pool Connection -> Integer -> String -> IO ()
     }

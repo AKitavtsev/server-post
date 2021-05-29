@@ -29,7 +29,6 @@ import Servises.Token
 import Servises.Db
 
 routes pool hLogger hToken hDb req respond = do
-  -- let token = toToken req
   vt <- validToken hToken (toToken req)
   case vt of
     Nothing -> do
@@ -41,6 +40,7 @@ routes pool hLogger hToken hDb req respond = do
         "POST"   -> post vt
         "GET"    -> get 
         "DELETE" -> delete vt
+        "PUT"    -> put vt
   where 
     post vt = do
       case vt of
@@ -79,55 +79,25 @@ routes pool hLogger hToken hDb req respond = do
         Just (_, False) -> do
           logError hLogger "  Administrator authority required"
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")    
+    put vt = do
+      case vt of
+        Just (_, True) -> do
+          let id  = toId req
+          when (id == 0) $ do
+            logError hLogger "  Invalid id"
+          let nameMb = (toParam req "name")
 
-          
-          -- respond (responseLBS status200 [("Content-Type", "text/plain")] "")
-          -- authorMb <- liftIO $ findAuthorByID hDb pool id
-          -- case authorMb of
-            -- Nothing -> do
-              -- logError hLogger "  Author not exist"
-              -- respond (responseLBS notFound404 [("Content-Type", "text/plain")] "author not exist")
-            -- Just author -> do 
-              -- respond (responseLBS status200 [("Content-Type", "text/plain")] $ encode author)
-              
-        -- getCategories hDb pool id
-        
-        
-        -- "DELETE" -> do
-          -- let id   = toId req
-          -- when (id == 0) $ do
-            -- logError hLogger "  Invalid id"
-          -- deleteAuthorByID hDb pool id
-          -- respond (responseLBS status204 [("Content-Type", "text/plain")] "delete")
-        -- "PUT"    -> do
-          -- let id    = toId req
-              -- descrMb = toParam req "description"
-          -- when (id == 0) $ do
-            -- logError hLogger "  Invalid id"
-          -- case descrMb of
-            -- Nothing -> do
-              -- logError hLogger "  The \"description\" parameter is required"
-              -- respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-            -- Just descr -> do
-              -- updateAuthor hDb pool id descr
-              -- respond (responseLBS status200 [("Content-Type", "text/plain")]
-                        -- $ encode (Author id $ Just (T.pack descr)))
-                
--- getCategories :: Servises.Db.Handle ->  Pool Connection -> Integer -> IO [Integer]
--- getCategories  hDb pool id = 
-  -- helper hDb pool id []
-      
-    -- where
-      -- helper :: Servises.Db.Handle -> Pool Connection -> Integer -> [Integer] -> IO [Integer]   
-      -- helper hDb pool id listCat = do
-        -- return []
-    
-            -- cats <- findCategory hDb pool id
-            -- case cats of 
-              -- Just (id, 0)    -> return (id:listCat )              
-              -- Just (id, idOw) -> do
-                -- helper hDb pool idOw (id:listCat)
-              -- Nothing         -> return listCat
+          when (not (nameMb == Nothing)) $ do
+            let name = case nameMb of Just n -> n
+            logInfo hLogger ("  Update name to " ++ name)
+            updateNameCategory hDb pool id name
+          let ownerMb = (toParam req "id_owner")           
+          when (not (ownerMb == Nothing)) $ do
+            let owner = case ownerMb of Just o -> o            
+            logInfo hLogger ("  Update id_owner to " ++ owner)
+            updateOwnerCategory hDb pool id owner
+          respond (responseLBS status200 [("Content-Type", "text/plain")] "") 
+        Just (_, False) -> do
+          logError hLogger "  Administrator authority required"
+          respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")    
 
-  
-          

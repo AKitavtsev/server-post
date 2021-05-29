@@ -25,24 +25,26 @@ import qualified Data.Text as T
 newHandle :: IO SD.Handle
 newHandle = do
     return $ SD.Handle
-      { SD.close              = close
-      , SD.newConn            = newConn
-      , SD.runMigrations      = runMigrations
-      , SD.insertUser         = insertUser
-      , SD.existLogin         = existLogin
-      , SD.findUserByLogin    = findUserByLogin
-      , SD.findUserByID       = findUserByID
-      , SD.deleteUserByID     = deleteUserByID
-      , SD.insertImage        = insertImage
-      , SD.insertImage'       = insertImage'
-      , SD.findImageByID      = findImageByID
-      , SD.insertAuthor       = insertAuthor
-      , SD.findAuthorByID     = findAuthorByID
-      , SD.deleteAuthorByID   = deleteAuthorByID
-      , SD.updateAuthor       = updateAuthor
-      , SD.insertCategory     = insertCategory
-      , SD.findCategoryByID   = findCategoryByID
-      , SD.deleteCategoryByID = deleteCategoryByID
+      { SD.close               = close
+      , SD.newConn             = newConn
+      , SD.runMigrations       = runMigrations
+      , SD.insertUser          = insertUser
+      , SD.existLogin          = existLogin
+      , SD.findUserByLogin     = findUserByLogin
+      , SD.findUserByID        = findUserByID
+      , SD.deleteUserByID      = deleteUserByID
+      , SD.insertImage         = insertImage
+      , SD.insertImage'        = insertImage'
+      , SD.findImageByID       = findImageByID
+      , SD.insertAuthor        = insertAuthor
+      , SD.findAuthorByID      = findAuthorByID
+      , SD.deleteAuthorByID    = deleteAuthorByID
+      , SD.updateAuthor        = updateAuthor
+      , SD.insertCategory      = insertCategory
+      , SD.findCategoryByID    = findCategoryByID
+      , SD.deleteCategoryByID  = deleteCategoryByID
+      , SD.updateNameCategory  = updateNameCategory
+      , SD.updateOwnerCategory = updateOwnerCategory
       }
 
 newConn conf = connect defaultConnectInfo
@@ -152,7 +154,20 @@ findCategoryByID pool id = do
 deleteCategoryByID pool id = do
      liftIO $ execSqlT pool [id] "DELETE FROM categories WHERE id=?"
      return ()
-               
+
+updateNameCategory pool id name = do
+     liftIO $ execSqlT pool [name, (show id)]
+                "UPDATE categories SET name=? WHERE id=?"
+     return ()
+
+updateOwnerCategory pool id owner = do
+     case owner of
+       "null" -> liftIO $ execSqlT pool [(show id)]
+                  "UPDATE categories SET id_owner=null WHERE id=?" 
+       _      -> liftIO $ execSqlT pool [owner, (show id)]
+                  "UPDATE categories SET id_owner=? WHERE id=?"                 
+     return () 
+     
 -- listArticles :: Pool Connection -> IO [Article]
 -- listArticles pool = do
      -- res <- fetchSimple pool "SELECT * FROM article ORDER BY id DESC" :: IO [(Integer, TL.Text, TL.Text)]
