@@ -8,6 +8,7 @@ import FromRequest (toPath)
 import qualified Controllers.Authors
 import qualified Controllers.Categories
 import qualified Controllers.Images
+import qualified Controllers.Tags
 import qualified Controllers.Token
 import qualified Controllers.Users
 
@@ -31,6 +32,8 @@ routes pool hLogger hToken hDb req respond  = do
           Controllers.Authors.routes pool hLogger hToken hDb req respond
         "category"   -> do
           Controllers.Categories.routes pool hLogger hToken hDb req respond
+        "tag"        -> do
+          Controllers.Tags.routes pool hLogger hToken hDb req respond
         _            -> do
           logError hLogger "  Path not found"
           respond $ responseLBS status404 [("Content-Type", "text/plain")] ""

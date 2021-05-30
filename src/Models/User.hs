@@ -6,7 +6,7 @@ module Models.User (
   Avatar (..),
   UserIn (..),
   UserOut (..),
-  UserID (..)
+  -- UserID (..)
   ) where
 
 import  GHC.Generics
@@ -33,6 +33,6 @@ data UserOut = UserOut { user_id  :: Integer
                        , admin    :: Bool
                        } deriving (Show, Generic, FromJSON, ToJSON)
 
-data UserID  = UserID  { user_id_ :: Integer
-                       , token    :: String   
-                       } deriving (Show, Generic, FromJSON, ToJSON)
+-- data UserID  = UserID  { user_id_ :: Integer
+                       -- , token    :: String   
+                       -- } deriving (Show, Generic, FromJSON, ToJSON)

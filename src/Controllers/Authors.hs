@@ -70,7 +70,8 @@ routes pool hLogger hToken hDb req respond = do
        let id   = toId req
        when (id == 0) $ do
          logError hLogger "  Invalid id"
-       deleteAuthorByID hDb pool id
+       -- deleteAuthorByID hDb pool id
+       deleteByID hDb pool "author" id
        respond (responseLBS status204 [("Content-Type", "text/plain")] "")
     put = do
        let id     = toId req
@@ -82,7 +83,7 @@ routes pool hLogger hToken hDb req respond = do
            logError hLogger "  The \"description\" parameter is required"
            respond (responseLBS status400 [("Content-Type", "text/plain")] "")
          Just descr -> do
-           updateAuthor hDb pool id descr
+           updateByID hDb pool "author" id descr
            respond (responseLBS status200 [("Content-Type", "text/plain")]
                    $ encode (Author id $ T.pack descr))
 

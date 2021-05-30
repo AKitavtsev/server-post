@@ -7,17 +7,20 @@ module Servises.Impl.PostgreSQL
 
 import qualified Servises.Config as C
 import qualified Servises.Db as SD
-import Models.Author
-import Models.User
-import Models.Category
-import Servises.Impl.PostgreSQL.Migrations
 
+import Models.Author
+import Models.Category
+import Models.Tag
+import Models.User
+
+import Servises.Impl.PostgreSQL.Migrations
 import Database.PostgreSQL.Simple
 
-import GHC.Int
-import Data.Pool
-import Control.Monad.Trans
+import Data.Char (toLower)
+import Data.Pool (Pool (..), withResource)
+import Control.Monad.Trans (liftIO)
 import Control.Monad (when)
+import GHC.Int (Int64 (..))
 
 import qualified Data.ByteString.Lazy.Char8 as LC
 import qualified Data.Text as T
@@ -28,23 +31,29 @@ newHandle = do
       { SD.close               = close
       , SD.newConn             = newConn
       , SD.runMigrations       = runMigrations
+      , SD.deleteByID          = deleteByID
+      , SD.updateByID          = updateByID
       , SD.insertUser          = insertUser
       , SD.existLogin          = existLogin
       , SD.findUserByLogin     = findUserByLogin
       , SD.findUserByID        = findUserByID
-      , SD.deleteUserByID      = deleteUserByID
+      -- , SD.deleteUserByID      = deleteUserByID
       , SD.insertImage         = insertImage
       , SD.insertImage'        = insertImage'
       , SD.findImageByID       = findImageByID
       , SD.insertAuthor        = insertAuthor
       , SD.findAuthorByID      = findAuthorByID
-      , SD.deleteAuthorByID    = deleteAuthorByID
-      , SD.updateAuthor        = updateAuthor
+      -- , SD.deleteAuthorByID    = deleteAuthorByID
+      -- , SD.updateAuthor        = updateAuthor
       , SD.insertCategory      = insertCategory
       , SD.findCategoryByID    = findCategoryByID
-      , SD.deleteCategoryByID  = deleteCategoryByID
+      -- , SD.deleteCategoryByID  = deleteCategoryByID
       , SD.updateNameCategory  = updateNameCategory
       , SD.updateOwnerCategory = updateOwnerCategory
+      , SD.insertTag           = insertTag
+      , SD.findTagByID         = findTagByID
+      -- , SD.deleteTagByID       = deleteTagByID     
+      -- , SD.updateTag           = updateTag
       }
 
 newConn conf = connect defaultConnectInfo
@@ -53,7 +62,24 @@ newConn conf = connect defaultConnectInfo
                        , connectDatabase = C.name conf
                        }
 
+deleteByID pool model id = do
+  case model of
+    "user"     -> do liftIO $ execSqlT pool [id] "DELETE FROM users WHERE id=?"
+    "author"   -> do liftIO $ execSqlT pool [id] "DELETE FROM authors WHERE id=?"
+    "category" -> do liftIO $ execSqlT pool [id] "DELETE FROM categories WHERE id=?"
+    "tag"      -> do liftIO $ execSqlT pool [id] "DELETE FROM tags WHERE id=?"
+  return ()
 
+updateByID pool model id fild = do
+  case model of
+    "author" -> do 
+      liftIO $ execSqlT pool [fild, (show id)] 
+                   "UPDATE authors SET description =? WHERE id=?"
+    "tag"    -> do
+      liftIO $ execSqlT pool [fild, (show id)] 
+                   "UPDATE tags SET tag=? WHERE id=?"
+  return ()
+-----------------------------------------------------------------------
 insertUser pool (UserIn name surname avatar login password) c_date = do
   liftIO $ execSqlT pool [name, surname, login, password, c_date, "FALSE"]
         "INSERT INTO users (name, surname, login, password, c_date, admin) VALUES(?,?,?,md5( ?) ,?,?)"
@@ -83,9 +109,9 @@ findUserByID pool id = do
          where pass [(id, n, sn, log, dat, adm)] = Just (UserOut id n sn log dat adm)
                pass _ = Nothing
 
-deleteUserByID pool id = do
-     liftIO $ execSqlT pool [id] "DELETE FROM users WHERE id=?"
-     return ()
+-- deleteUserByID pool id = do
+     -- liftIO $ execSqlT pool [id] "DELETE FROM users WHERE id=?"
+     -- return ()
 --------------------------------------------------------------------------------
 -- чисто для служебного пользования
 insertImage' pool id im t = do
@@ -123,14 +149,14 @@ findAuthorByID pool id = do
       where pass [(name, surname, descr)] = Just (AuthorOut name surname descr)
             pass _ = Nothing
 
-deleteAuthorByID pool id = do
-     liftIO $ execSqlT pool [id] "DELETE FROM authors WHERE id=?"
-     return ()
+-- deleteAuthorByID pool id = do
+     -- liftIO $ execSqlT pool [id] "DELETE FROM authors WHERE id=?"
+     -- return ()
      
-updateAuthor pool id descr = do
-     liftIO $ execSqlT pool [descr, (show id)]
-                "UPDATE authors SET description=? WHERE id=?"
-     return ()
+-- updateAuthor pool id descr = do
+     -- liftIO $ execSqlT pool [descr, (show id)]
+                -- "UPDATE authors SET description=? WHERE id=?"
+     -- return ()
 --------------------------------
 insertCategory pool (Category name owner_id) = do
   case owner_id of
@@ -151,9 +177,9 @@ findCategoryByID pool id = do
          where pass [(id, name, idOw)] = Just (Category name idOw)
                pass _                  = Nothing
 
-deleteCategoryByID pool id = do
-     liftIO $ execSqlT pool [id] "DELETE FROM categories WHERE id=?"
-     return ()
+-- deleteCategoryByID pool id = do
+     -- liftIO $ execSqlT pool [id] "DELETE FROM categories WHERE id=?"
+     -- return ()
 
 updateNameCategory pool id name = do
      liftIO $ execSqlT pool [name, (show id)]
@@ -161,13 +187,33 @@ updateNameCategory pool id name = do
      return ()
 
 updateOwnerCategory pool id owner = do
-     case owner of
+     case map toLower owner of
        "null" -> liftIO $ execSqlT pool [(show id)]
                   "UPDATE categories SET id_owner=null WHERE id=?" 
        _      -> liftIO $ execSqlT pool [owner, (show id)]
                   "UPDATE categories SET id_owner=? WHERE id=?"                 
      return () 
-     
+---------------------------------------------------------------------------     
+insertTag pool (Tag tag) = do
+      liftIO $ execSqlT pool [tag]
+        "INSERT INTO tags (tag) VALUES(?)"
+      return ()
+
+findTagByID pool id = do
+     res <- liftIO $ fetch pool (Only id)
+              "SELECT * FROM tags WHERE id=?"  :: IO [(Integer, String)]   
+     return $ pass res
+         where pass [(id, tag)] = Just (Tag tag)
+               pass _                  = Nothing
+
+-- deleteTagByID pool id = do
+     -- liftIO $ execSqlT pool [id] "DELETE FROM tags WHERE id=?"
+     -- return ()
+
+-- updateTag pool id tag = do
+     -- liftIO $ execSqlT pool [tag, (show id)]
+                -- "UPDATE tags SET tag=? WHERE id=?"
+     -- return ()
 -- listArticles :: Pool Connection -> IO [Article]
 -- listArticles pool = do
      -- res <- fetchSimple pool "SELECT * FROM article ORDER BY id DESC" :: IO [(Integer, TL.Text, TL.Text)]

@@ -85,7 +85,8 @@ routes pool hLogger hToken hDb req respond = do
           logError hLogger "  Invalid or outdated token"
           respond (responseLBS status400 [("Content-Type", "text/plain")] "bad")
         Just (_, True) -> do
-          deleteUserByID hDb pool id
+          -- deleteUserByID hDb pool id
+          deleteByID hDb pool "user" id
           respond (responseLBS status204 [("Content-Type", "text/plain")] "delete")
         Just (_, False) -> do
           logError hLogger "  Administrator authority required"

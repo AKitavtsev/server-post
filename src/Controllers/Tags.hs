@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric, OverloadedStrings #-}
 
 
-module Controllers.Categories (routes)
+module Controllers.Tags (routes)
     where
 
 import Control.Monad.Trans
@@ -20,9 +20,9 @@ import Network.HTTP.Types
 import Network.Wai
 import Database.PostgreSQL.Simple (Connection (..))
 
-import Controllers.Token (Token (..))
+-- import Controllers.Token (Token (..))
 import FromRequest
-import Models.Category
+import Models.Tag
 -- import Servises.Config
 import Servises.Logger
 import Servises.Token
@@ -47,12 +47,12 @@ routes pool hLogger hToken hDb req respond = do
         Just (_, True) -> do         
           body <- strictRequestBody req
           logDebug hLogger ("  Body = " ++ (BL.unpack body))
-          case eitherDecode body :: Either String Category of
+          case eitherDecode body :: Either String Tag of
             Left e -> do
               logError hLogger ("  Invalid request body  - " ++ e)          
               respond (responseLBS status400 [("Content-Type", "text/plain")] "")
             Right correctlyParsedBody -> do
-              insertCategory hDb pool correctlyParsedBody              
+              insertTag hDb pool correctlyParsedBody              
               respond (responseLBS created201 [("Content-Type", "text/plain")] "") 
         Just (_, False) -> do
           logError hLogger "  Administrator authority required"
@@ -61,20 +61,20 @@ routes pool hLogger hToken hDb req respond = do
         let id  = toId req
         when (id == 0) $ do
           logError hLogger "  Invalid id"
-        categoryMb <- liftIO $ findCategoryByID hDb pool id
-        case categoryMb of
+        tagMb <- liftIO $ findTagByID hDb pool id
+        case tagMb of
           Nothing -> do
-            logError hLogger "  Category not exist"
+            logError hLogger "  Tag not exist"
             respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
-          Just category -> do 
-            respond (responseLBS status200 [("Content-Type", "text/plain")] $ encode category)
+          Just tag -> do 
+            respond (responseLBS status200 [("Content-Type", "text/plain")] $ encode tag)
     delete vt = do
       case vt of
         Just (_, True) -> do
           let id  = toId req
           when (id == 0) $ do
             logError hLogger "  Invalid id"
-          deleteByID hDb pool "category" id
+          deleteByID hDb pool "tag" id
           respond (responseLBS status204 [("Content-Type", "text/plain")] "delete")
         Just (_, False) -> do
           logError hLogger "  Administrator authority required"
@@ -85,17 +85,11 @@ routes pool hLogger hToken hDb req respond = do
           let id  = toId req
           when (id == 0) $ do
             logError hLogger "  Invalid id"
-          let nameMb = (toParam req "name")
-
-          when (not (nameMb == Nothing)) $ do
-            let name = case nameMb of Just n -> n
-            logInfo hLogger ("  Update name to " ++ name)
-            updateNameCategory hDb pool id name
-          let ownerMb = (toParam req "id_owner")           
-          when (not (ownerMb == Nothing)) $ do
-            let owner = case ownerMb of Just o -> o            
-            logInfo hLogger ("  Update id_owner to " ++ owner)
-            updateOwnerCategory hDb pool id owner
+          let tagMb = (toParam req "tag")
+          when (not (tagMb == Nothing)) $ do
+            let tag = case tagMb of Just t -> t
+            logInfo hLogger ("  Update tag to " ++ tag)
+            updateByID hDb pool "tag" id tag
           respond (responseLBS status200 [("Content-Type", "text/plain")] "") 
         Just (_, False) -> do
           logError hLogger "  Administrator authority required"
