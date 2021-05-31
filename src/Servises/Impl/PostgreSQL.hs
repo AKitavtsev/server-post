@@ -12,8 +12,8 @@ import Models.Author
 import Models.Category
 import Models.Tag
 import Models.User
-
 import Servises.Impl.PostgreSQL.Migrations
+
 import Database.PostgreSQL.Simple
 
 import Data.Char (toLower)
@@ -48,7 +48,7 @@ newHandle = do
       , SD.insertCategory      = insertCategory
       , SD.findCategoryByID    = findCategoryByID
       -- , SD.deleteCategoryByID  = deleteCategoryByID
-      , SD.updateNameCategory  = updateNameCategory
+      -- , SD.updateNameCategory  = updateNameCategory
       , SD.updateOwnerCategory = updateOwnerCategory
       , SD.insertTag           = insertTag
       , SD.findTagByID         = findTagByID
@@ -72,18 +72,28 @@ deleteByID pool model id = do
 
 updateByID pool model id fild = do
   case model of
-    "author" -> do 
+    "author"   -> do 
       liftIO $ execSqlT pool [fild, (show id)] 
                    "UPDATE authors SET description =? WHERE id=?"
-    "tag"    -> do
+    "tag"      -> do
       liftIO $ execSqlT pool [fild, (show id)] 
                    "UPDATE tags SET tag=? WHERE id=?"
+    "category" -> do
+     liftIO $ execSqlT pool [fild, (show id)]
+                "UPDATE categories SET name=? WHERE id=?"
+
   return ()
 -----------------------------------------------------------------------
+-- insertUser pool (UserIn name surname avatar login password) c_date = do
+  -- liftIO $ execSqlT pool [name, surname, login, password, c_date, "FALSE"]
+        -- "INSERT INTO users (name, surname, login, password, c_date, admin) VALUES(?,?,?,md5( ?) ,?,?) "
+  -- return ()
 insertUser pool (UserIn name surname avatar login password) c_date = do
-  liftIO $ execSqlT pool [name, surname, login, password, c_date, "FALSE"]
-        "INSERT INTO users (name, surname, login, password, c_date, admin) VALUES(?,?,?,md5( ?) ,?,?)"
-  return ()
+  res <- liftIO $ fetch pool [name, surname, login, password, c_date, "FALSE"]
+        "INSERT INTO users (name, surname, login, password, c_date, admin) VALUES(?,?,?,md5( ?) ,?,?) returning id"
+  return $ pass res
+  where 
+    pass [Only id] = id
 
 existLogin pool login = do
     res <- liftIO $ fetch pool (Only login) 
@@ -181,10 +191,10 @@ findCategoryByID pool id = do
      -- liftIO $ execSqlT pool [id] "DELETE FROM categories WHERE id=?"
      -- return ()
 
-updateNameCategory pool id name = do
-     liftIO $ execSqlT pool [name, (show id)]
-                "UPDATE categories SET name=? WHERE id=?"
-     return ()
+-- updateNameCategory pool id name = do
+     -- liftIO $ execSqlT pool [name, (show id)]
+                -- "UPDATE categories SET name=? WHERE id=?"
+     -- return ()
 
 updateOwnerCategory pool id owner = do
      case map toLower owner of

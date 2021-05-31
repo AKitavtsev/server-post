@@ -86,11 +86,10 @@ routes pool hLogger hToken hDb req respond = do
           when (id == 0) $ do
             logError hLogger "  Invalid id"
           let nameMb = (toParam req "name")
-
           when (not (nameMb == Nothing)) $ do
             let name = case nameMb of Just n -> n
             logInfo hLogger ("  Update name to " ++ name)
-            updateNameCategory hDb pool id name
+            updateByID hDb pool  "category" id name
           let ownerMb = (toParam req "id_owner")           
           when (not (ownerMb == Nothing)) $ do
             let owner = case ownerMb of Just o -> o            

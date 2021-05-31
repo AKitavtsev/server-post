@@ -20,7 +20,7 @@ data Handle = Handle
                          -> Connection -> Pool Connection -> FilePath -> IO ()
     , deleteByID         :: Pool Connection -> String -> Integer -> IO ()
     , updateByID         :: Pool Connection -> String -> Integer -> String -> IO ()
-    , insertUser         :: Pool Connection -> UserIn -> String-> IO ()
+    , insertUser         :: Pool Connection -> UserIn -> String-> IO Integer
     , existLogin         :: Pool Connection -> String -> IO Bool
     , findUserByLogin    :: Pool Connection -> String -> String -> IO (Maybe (Integer, Bool))
     , findUserByID       :: Pool Connection -> Integer -> IO (Maybe UserOut)
@@ -35,7 +35,7 @@ data Handle = Handle
     , insertCategory     :: Pool Connection -> Category -> IO ()
     , findCategoryByID   :: Pool Connection -> Integer -> IO (Maybe Category)
     -- , deleteCategoryByID :: Pool Connection -> Integer -> IO ()
-    , updateNameCategory :: Pool Connection -> Integer -> String -> IO ()
+    -- , updateNameCategory :: Pool Connection -> Integer -> String -> IO ()
     , updateOwnerCategory:: Pool Connection -> Integer -> String -> IO ()
     , insertTag          :: Pool Connection -> Tag -> IO ()
     , findTagByID        :: Pool Connection -> Integer -> IO (Maybe Tag)

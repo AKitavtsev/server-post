@@ -46,21 +46,24 @@ routes pool hLogger hToken hDb req respond = do
           respond (responseLBS status400 [("Content-Type", "text/plain")] $ BL.pack e)
         Right correctlyParsedBody -> do
 -- проверяю наличие логина в юзерс (а может не надо, пусть БД разбирается)
-          exL <- liftIO $ existLogin hDb pool (login correctlyParsedBody)
-          case exL of
-            False -> do
+          -- exL <- liftIO $ existLogin hDb pool (login correctlyParsedBody)
+          -- case exL of
+            -- False -> do
               c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
-              insertUser hDb pool correctlyParsedBody c_date 
-              Just (id, adm) <- liftIO $ findUserByLogin hDb pool 
-                       (login correctlyParsedBody) 
-                       (Models.User.password correctlyParsedBody)
+              id <- insertUser hDb pool correctlyParsedBody c_date 
               insertImage hDb pool correctlyParsedBody id
-              token <- (createToken hToken) id adm
+              token <- (createToken hToken) id False
+              -- insertUser hDb pool correctlyParsedBody c_date 
+              -- Just (id, adm) <- liftIO $ findUserByLogin hDb pool 
+                       -- (login correctlyParsedBody) 
+                       -- (Models.User.password correctlyParsedBody)
+              -- insertImage hDb pool correctlyParsedBody id
+              -- token <- (createToken hToken) id adm
               respond (responseLBS created201 
                            [("Content-Type", "text/plain")] $ encode (Token token))
-            True -> do
-              logError hLogger "  Login already exists"
-              respond (responseLBS found302 [("Content-Type", "text/plain")] "user exist")
+            -- True -> do
+              -- logError hLogger "  Login already exists"
+              -- respond (responseLBS found302 [("Content-Type", "text/plain")] "user exist")
     get = do
       vt <- validToken hToken (toToken req)
       case vt of
