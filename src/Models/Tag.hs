@@ -11,4 +11,3 @@ import Data.Aeson (FromJSON, ToJSON)
 
 data Tag = Tag {tag :: String}  
              deriving (Eq, Show, Generic, FromJSON, ToJSON)
-

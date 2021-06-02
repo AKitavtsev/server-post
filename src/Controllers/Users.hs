@@ -45,13 +45,16 @@ routes pool hLogger hToken hDb req respond = do
           logError hLogger "  Invalid request body"         
           respond (responseLBS status400 [("Content-Type", "text/plain")] $ BL.pack e)
         Right correctlyParsedBody -> do
--- проверяю наличие логина в юзерс (а может не надо, пусть БД разбирается)
-          -- exL <- liftIO $ existLogin hDb pool (login correctlyParsedBody)
-          -- case exL of
-            -- False -> do
-              c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
-              id <- insertUser hDb pool correctlyParsedBody c_date 
-              insertImage hDb pool correctlyParsedBody id
+          c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
+          id <- insertUser hDb pool correctlyParsedBody c_date
+          case id of
+            0 -> do
+              logError hLogger "  Login exist"         
+              respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+            _ -> do            
+              idim <- insertImage hDb pool correctlyParsedBody id
+              when (idim == 0) $ do
+                logWarning hLogger "  Invalid image type specified (only png, jpg, gif or bmp is allowed)"
               token <- (createToken hToken) id False
               -- insertUser hDb pool correctlyParsedBody c_date 
               -- Just (id, adm) <- liftIO $ findUserByLogin hDb pool 

@@ -52,8 +52,12 @@ routes pool hLogger hToken hDb req respond = do
               logError hLogger ("  Invalid request body  - " ++ e)          
               respond (responseLBS status400 [("Content-Type", "text/plain")] "")
             Right correctlyParsedBody -> do
-              insertCategory hDb pool correctlyParsedBody              
-              respond (responseLBS created201 [("Content-Type", "text/plain")] "") 
+              id <- insertCategory hDb pool correctlyParsedBody
+              case id of
+                0 -> do
+                  logError hLogger "  category - owner not found"
+                  respond (responseLBS status500 [("Content-Type", "text/plain")] "")
+                _ -> respond (responseLBS created201 [("Content-Type", "text/plain")] "") 
         Just (_, False) -> do
           logError hLogger "  Administrator authority required"
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")    
@@ -88,14 +92,20 @@ routes pool hLogger hToken hDb req respond = do
           let nameMb = (toParam req "name")
           when (not (nameMb == Nothing)) $ do
             let name = case nameMb of Just n -> n
-            logInfo hLogger ("  Update name to " ++ name)
             updateByID hDb pool  "category" id name
-          let ownerMb = (toParam req "id_owner")           
-          when (not (ownerMb == Nothing)) $ do
-            let owner = case ownerMb of Just o -> o            
-            logInfo hLogger ("  Update id_owner to " ++ owner)
-            updateOwnerCategory hDb pool id owner
-          respond (responseLBS status200 [("Content-Type", "text/plain")] "") 
+            logDebug hLogger ("  Update name to " ++ name)            
+          let ownerMb = (toParam req "id_owner")
+          case ownerMb of
+            Nothing    -> respond (responseLBS status200 
+                                   [("Content-Type", "text/plain")] "")
+            Just owner -> do
+               id <- updateOwnerCategory hDb pool id owner
+               logDebug hLogger ("  Update id_owner to " ++ owner)
+               case id of
+                 0 -> do
+                   logError hLogger "  category - owner not found"
+                   respond (responseLBS status500 [("Content-Type", "text/plain")] "")
+                 _ -> respond (responseLBS status200 [("Content-Type", "text/plain")] "")
         Just (_, False) -> do
           logError hLogger "  Administrator authority required"
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")    

@@ -21,24 +21,16 @@ data Handle = Handle
     , deleteByID         :: Pool Connection -> String -> Integer -> IO ()
     , updateByID         :: Pool Connection -> String -> Integer -> String -> IO ()
     , insertUser         :: Pool Connection -> UserIn -> String-> IO Integer
-    , existLogin         :: Pool Connection -> String -> IO Bool
     , findUserByLogin    :: Pool Connection -> String -> String -> IO (Maybe (Integer, Bool))
     , findUserByID       :: Pool Connection -> Integer -> IO (Maybe UserOut)
-    -- , deleteUserByID     :: Pool Connection -> Integer -> IO ()
-    , insertImage        :: Pool Connection -> UserIn ->  Integer -> IO ()
+    , insertImage        :: Pool Connection -> UserIn ->  Integer -> IO Integer
     , insertImage'       :: Pool Connection -> Integer -> String -> String -> IO ()
     , findImageByID      :: Pool Connection -> Integer -> IO (Maybe (String, String))
-    , insertAuthor       :: Pool Connection -> Author -> IO ()
+    , insertAuthor       :: Pool Connection -> Author -> IO Integer
     , findAuthorByID     :: Pool Connection -> Integer -> IO (Maybe AuthorOut)
-    -- , deleteAuthorByID   :: Pool Connection -> Integer -> IO ()
-    -- , updateAuthor       :: Pool Connection -> Integer -> String -> IO ()
-    , insertCategory     :: Pool Connection -> Category -> IO ()
+    , insertCategory     :: Pool Connection -> Category -> IO Integer
     , findCategoryByID   :: Pool Connection -> Integer -> IO (Maybe Category)
-    -- , deleteCategoryByID :: Pool Connection -> Integer -> IO ()
-    -- , updateNameCategory :: Pool Connection -> Integer -> String -> IO ()
-    , updateOwnerCategory:: Pool Connection -> Integer -> String -> IO ()
+    , updateOwnerCategory:: Pool Connection -> Integer -> String -> IO Integer
     , insertTag          :: Pool Connection -> Tag -> IO ()
     , findTagByID        :: Pool Connection -> Integer -> IO (Maybe Tag)
-    -- , deleteTagByID      :: Pool Connection -> Integer -> IO ()
-    -- , updateTag          :: Pool Connection -> Integer -> String -> IO ()
     }

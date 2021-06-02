@@ -35,22 +35,17 @@ data Token = Token {token :: String}
        -- -> (Response -> IO ResponseReceived)
        -- -> IO ResponseReceived
 routes pool hLogger hToken hDb req respond = do
-  case  toParam req "login" of
-    Nothing -> do
-      logError hLogger "  Parameter \"Login\" not found"
+  case (\x y -> (x,y)) <$> toParam req "login" <*> toParam req "password" of
+    Nothing -> do 
+      logError hLogger "  Required Parameters \"Login \" and \"Password\""
       respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-    Just login -> do
-      case toParam req "password" of
-        Nothing -> do 
-          logError hLogger "  Parameter \"Password\" not found"
-          respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-        Just password -> do
-          idAdm   <- liftIO $ findUserByLogin hDb pool login password    
-          case idAdm of
-            Nothing -> do
-              logError hLogger "  Invalid Login/Password"
-              respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
-            Just (id, adm) -> do
-              token <- (createToken hToken) id adm
-              respond (responseLBS created201 [("Content-Type", "text/plain")]
-                      $ encode (Token token))
+    Just (login, password) -> do
+      idAdm   <- liftIO $ findUserByLogin hDb pool login password    
+      case idAdm of
+         Nothing -> do
+           logError hLogger "  Invalid Login/Password"
+           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
+         Just (id, adm) -> do
+           token <- (createToken hToken) id adm
+           respond (responseLBS created201 [("Content-Type", "text/plain")]
+                   $ encode (Token token))

@@ -10,6 +10,6 @@ import  GHC.Generics
 import Data.Aeson (FromJSON, ToJSON)
 
 data Category  = Category  { name     :: String 
-                           , owner_id :: Maybe Integer                     
+                           , id_owner :: Maybe Integer                     
                            } deriving (Show, Generic, FromJSON, ToJSON)
                        

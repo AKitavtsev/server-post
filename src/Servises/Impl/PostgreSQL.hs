@@ -17,6 +17,7 @@ import Servises.Impl.PostgreSQL.Migrations
 import Database.PostgreSQL.Simple
 
 import Data.Char (toLower)
+import Control.Exception
 import Data.Pool (Pool (..), withResource)
 import Control.Monad.Trans (liftIO)
 import Control.Monad (when)
@@ -34,26 +35,18 @@ newHandle = do
       , SD.deleteByID          = deleteByID
       , SD.updateByID          = updateByID
       , SD.insertUser          = insertUser
-      , SD.existLogin          = existLogin
       , SD.findUserByLogin     = findUserByLogin
       , SD.findUserByID        = findUserByID
-      -- , SD.deleteUserByID      = deleteUserByID
       , SD.insertImage         = insertImage
       , SD.insertImage'        = insertImage'
       , SD.findImageByID       = findImageByID
       , SD.insertAuthor        = insertAuthor
       , SD.findAuthorByID      = findAuthorByID
-      -- , SD.deleteAuthorByID    = deleteAuthorByID
-      -- , SD.updateAuthor        = updateAuthor
       , SD.insertCategory      = insertCategory
       , SD.findCategoryByID    = findCategoryByID
-      -- , SD.deleteCategoryByID  = deleteCategoryByID
-      -- , SD.updateNameCategory  = updateNameCategory
       , SD.updateOwnerCategory = updateOwnerCategory
       , SD.insertTag           = insertTag
       , SD.findTagByID         = findTagByID
-      -- , SD.deleteTagByID       = deleteTagByID     
-      -- , SD.updateTag           = updateTag
       }
 
 newConn conf = connect defaultConnectInfo
@@ -81,26 +74,15 @@ updateByID pool model id fild = do
     "category" -> do
      liftIO $ execSqlT pool [fild, (show id)]
                 "UPDATE categories SET name=? WHERE id=?"
-
   return ()
 -----------------------------------------------------------------------
--- insertUser pool (UserIn name surname avatar login password) c_date = do
-  -- liftIO $ execSqlT pool [name, surname, login, password, c_date, "FALSE"]
-        -- "INSERT INTO users (name, surname, login, password, c_date, admin) VALUES(?,?,?,md5( ?) ,?,?) "
-  -- return ()
 insertUser pool (UserIn name surname avatar login password) c_date = do
   res <- liftIO $ fetch pool [name, surname, login, password, c_date, "FALSE"]
         "INSERT INTO users (name, surname, login, password, c_date, admin) VALUES(?,?,?,md5( ?) ,?,?) returning id"
   return $ pass res
   where 
     pass [Only id] = id
-
-existLogin pool login = do
-    res <- liftIO $ fetch pool (Only login) 
-           "SELECT id, password FROM users WHERE login=?" :: IO [(Integer, String)]
-    return $ pass res
-         where pass [(id, passw)] = True
-               pass _ = False 
+    pass _         = 0
 
 findUserByLogin pool login password = do
          res <- liftIO $ fetch pool [login, password] 
@@ -118,10 +100,6 @@ findUserByID pool id = do
          return $ pass res
          where pass [(id, n, sn, log, dat, adm)] = Just (UserOut id n sn log dat adm)
                pass _ = Nothing
-
--- deleteUserByID pool id = do
-     -- liftIO $ execSqlT pool [id] "DELETE FROM users WHERE id=?"
-     -- return ()
 --------------------------------------------------------------------------------
 -- чисто для служебного пользования
 insertImage' pool id im t = do
@@ -130,13 +108,16 @@ insertImage' pool id im t = do
   return ()     
 ----------------------------------
 insertImage pool (UserIn name surname avatar login password) id = do
-  when (not (avatar == Nothing)) $ do
-    case avatar of
-      Just (Avatar im t) -> liftIO $ execSqlT pool [(show id), im, t]
-        "INSERT INTO images (id, image, image_type) VALUES (?,?,?)"
-    return ()
-  return ()
-       
+  case avatar of
+    Just (Avatar im t) -> do
+      res <- liftIO $ fetch pool [(show id), im, t]
+        "INSERT INTO images (id, image, image_type) VALUES (?,?,?) returning id"
+      return $ pass res
+      where
+        pass [Only id] = id
+        pass _         = 0
+    Nothing  -> return (-1)
+  
 findImageByID pool id = do
          res <- liftIO $ fetch pool (Only id) 
                 "SELECT image, image_type FROM images WHERE id=?"
@@ -146,9 +127,12 @@ findImageByID pool id = do
                pass _ = Nothing
 --------------------------------------------
 insertAuthor pool (Author id description) = do
-  liftIO $ execSqlT pool [show id, T.unpack description]
-        "INSERT INTO authors  (id, description) VALUES(?,?)"
-  return ()
+  res <- liftIO $ fetch pool [show id, T.unpack description]
+        "INSERT INTO authors  (id, description) VALUES(?,?) returning id"
+  return $ pass res
+  where
+    pass [Only id] = id
+    pass _         = 0
 
 findAuthorByID pool id = do
     res <- liftIO $ fetch pool (Only id) 
@@ -158,51 +142,41 @@ findAuthorByID pool id = do
     return $ pass res
       where pass [(name, surname, descr)] = Just (AuthorOut name surname descr)
             pass _ = Nothing
-
--- deleteAuthorByID pool id = do
-     -- liftIO $ execSqlT pool [id] "DELETE FROM authors WHERE id=?"
-     -- return ()
-     
--- updateAuthor pool id descr = do
-     -- liftIO $ execSqlT pool [descr, (show id)]
-                -- "UPDATE authors SET description=? WHERE id=?"
-     -- return ()
 --------------------------------
 insertCategory pool (Category name owner_id) = do
   case owner_id of
     Just owner -> do
-      liftIO $ execSqlT pool [name, show owner]
-        "INSERT INTO categories (name, id_owner) VALUES(?,?)"
-    Nothing    -> do 
-      liftIO $ execSqlT pool [name]
-        "INSERT INTO categories (name) VALUES(?)"
-  return ()
+      res <- liftIO $ fetch pool [name, show owner]
+        "INSERT INTO categories (name, id_owner) VALUES(?,?) returning id"
+      return $ pass res
+    Nothing    -> do  
+      res <- liftIO $ fetch pool [name]
+        "INSERT INTO categories (name) VALUES(?) returning id"
+      return $ pass res 
+  where
+    pass [Only id] = id
+    pass _         = 0
 
 findCategoryByID pool id = do
-     res <- liftIO $ fetch pool (Only id)
-              "SELECT * FROM categories WHERE id=?"  :: IO [(Integer, String, Maybe Integer)]   
-             -- "SELECT id, name, COALESCE(id_owner, 0) FROM categories WHERE id=?" ::
-              -- IO [(Integer, String, Integer)]             
-     return $ pass res
-         where pass [(id, name, idOw)] = Just (Category name idOw)
-               pass _                  = Nothing
-
--- deleteCategoryByID pool id = do
-     -- liftIO $ execSqlT pool [id] "DELETE FROM categories WHERE id=?"
-     -- return ()
-
--- updateNameCategory pool id name = do
-     -- liftIO $ execSqlT pool [name, (show id)]
-                -- "UPDATE categories SET name=? WHERE id=?"
-     -- return ()
+  res <- liftIO $ fetch pool (Only id)
+            "SELECT * FROM categories WHERE id=?"  :: IO [(Integer, String, Maybe Integer)]   
+  return $ pass res
+  where pass [(id, name, idOw)] = Just (Category name idOw)
+        pass _                  = Nothing
 
 updateOwnerCategory pool id owner = do
-     case map toLower owner of
-       "null" -> liftIO $ execSqlT pool [(show id)]
-                  "UPDATE categories SET id_owner=null WHERE id=?" 
-       _      -> liftIO $ execSqlT pool [owner, (show id)]
-                  "UPDATE categories SET id_owner=? WHERE id=?"                 
-     return () 
+  case map toLower owner of
+    "null" -> do
+      res <- liftIO $ fetch pool [(show id)]
+                  "UPDATE categories SET id_owner=null WHERE id=? returning id"
+      return $ pass res                  
+    _      -> do
+      res <- liftIO $ fetch pool [owner, (show id)]
+                  "UPDATE categories SET id_owner=? WHERE id=? returning id" 
+      return $ pass res                  
+  where
+    pass [Only id] = id
+    pass _         = 0
 ---------------------------------------------------------------------------     
 insertTag pool (Tag tag) = do
       liftIO $ execSqlT pool [tag]
@@ -215,15 +189,12 @@ findTagByID pool id = do
      return $ pass res
          where pass [(id, tag)] = Just (Tag tag)
                pass _                  = Nothing
-
--- deleteTagByID pool id = do
-     -- liftIO $ execSqlT pool [id] "DELETE FROM tags WHERE id=?"
-     -- return ()
-
--- updateTag pool id tag = do
-     -- liftIO $ execSqlT pool [tag, (show id)]
-                -- "UPDATE tags SET tag=? WHERE id=?"
-     -- return ()
+               
+               
+               
+               
+               
+               
 -- listArticles :: Pool Connection -> IO [Article]
 -- listArticles pool = do
      -- res <- fetchSimple pool "SELECT * FROM article ORDER BY id DESC" :: IO [(Integer, TL.Text, TL.Text)]
@@ -263,7 +234,18 @@ findTagByID pool id = do
      
 fetch :: (FromRow r, ToRow q) => Pool Connection -> q -> Query -> IO [r]
 fetch pool args sql = withResource pool retrieve
-      where retrieve conn = query conn sql args
+      where retrieve conn = do
+         -- query conn sql args
+              resEither <- try (query conn sql args)
+              testException resEither
+             
+testException :: (Either SqlError [r]) ->  IO [r]
+testException resEither = do
+    case resEither of
+        Right val -> return val
+        Left ex   -> return []
+      
+      
 
 -- No arguments -- just pure sql
 -- fetchSimple :: FromRow r => Pool Connection -> Query -> IO [r]

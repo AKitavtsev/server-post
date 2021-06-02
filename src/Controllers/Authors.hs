@@ -52,9 +52,12 @@ routes pool hLogger hToken hDb req respond = do
           logError hLogger ("  Invalid request body  - " ++ e)          
           respond (responseLBS status400 [("Content-Type", "text/plain")] "")
         Right correctlyParsedBody -> do
--- здесь бы проверить наличие id в users (а может и нет?)
-          insertAuthor hDb pool correctlyParsedBody              
-          respond (responseLBS created201 [("Content-Type", "text/plain")] "")    
+          id <- insertAuthor hDb pool correctlyParsedBody
+          case id of
+            0 -> do
+              logError hLogger "  There is no user with this ID, or the user is already the author"
+              respond (responseLBS status500 [("Content-Type", "text/plain")] "")
+            _ -> respond (responseLBS created201 [("Content-Type", "text/plain")] "")    
     get = do
       let id   = toId req
       when (id == 0) $ do
