@@ -10,6 +10,7 @@ import qualified Servises.Db as SD
 
 import Models.Author
 import Models.Category
+import Models.Draft
 import Models.Tag
 import Models.User
 import Servises.Impl.PostgreSQL.Migrations
@@ -47,6 +48,7 @@ newHandle = do
       , SD.updateOwnerCategory = updateOwnerCategory
       , SD.insertTag           = insertTag
       , SD.findTagByID         = findTagByID
+      , SD.insertDraft         = insertDraft
       }
 
 newConn conf = connect defaultConnectInfo
@@ -95,10 +97,11 @@ findUserByLogin pool login password = do
 
 findUserByID pool id = do
          res <- liftIO $ fetch pool (Only id) 
-                "SELECT id, name, surname, login, c_date::varchar, admin  FROM users WHERE id=?" ::
-                IO [(Integer, String, String, String, String, Bool)]
+                "SELECT name, surname, login, c_date::varchar, admin  FROM users WHERE id=?" ::
+                IO [(String, String, String, String, Bool)]
          return $ pass res
-         where pass [(id, n, sn, log, dat, adm)] = Just (UserOut id n sn log dat adm)
+         where pass [(n, sn, log, dat, adm)] 
+                   = Just (UserOut n sn log dat adm)
                pass _ = Nothing
 --------------------------------------------------------------------------------
 -- чисто для служебного пользования
@@ -189,9 +192,19 @@ findTagByID pool id = do
      return $ pass res
          where pass [(id, tag)] = Just (Tag tag)
                pass _                  = Nothing
-               
-               
-               
+----------------------------------------------------------------------------------
+insertDraft pool (DraftIn title category tags t_content mainPhoto otherPhotos) id c_date = do
+  res <- liftIO $ fetch pool [title, show id, c_date, show category, "{1,2,3}", T.unpack t_content]
+        "INSERT INTO drafts (title, author, c_date, category, tags, t_content) VALUES(?,?,?,?,?,?) returning id"
+  return $ pass res
+  where 
+    pass [Only id] = id
+    pass _         = 0
+              
+
+
+
+
                
                
                
@@ -243,7 +256,9 @@ testException :: (Either SqlError [r]) ->  IO [r]
 testException resEither = do
     case resEither of
         Right val -> return val
-        Left ex   -> return []
+        Left ex   -> do
+          putStrLn (show ex)
+          return []
       
       
 

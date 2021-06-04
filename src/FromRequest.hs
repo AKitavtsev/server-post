@@ -7,6 +7,7 @@ module FromRequest
 -- import qualified Data.ByteString.Internal as BS
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.Text as T
+import qualified Data.Time as Time
 
 import Data.Char (isDigit)
 import Network.Wai
@@ -39,4 +40,8 @@ toId req = case pathInfo req of
                 _          -> 0
     where read_ x = if ((not (x == [])) && (all isDigit x)) 
                     then read x else 0
-                
+                    
+curTimeStr :: String -> IO String
+curTimeStr form = do
+    utc <- Time.getCurrentTime
+    return (Time.formatTime Time.defaultTimeLocale form utc)                         

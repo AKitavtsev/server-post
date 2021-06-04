@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS authors;
 CREATE TABLE authors (
     id integer NOT NULL,
     description text NOT NULL,

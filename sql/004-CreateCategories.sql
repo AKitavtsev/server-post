@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS categories;
 CREATE TABLE categories (
     id serial NOT NULL,
     name character varying (1024) NOT NULL,

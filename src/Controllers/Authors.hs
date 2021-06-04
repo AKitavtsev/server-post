@@ -19,7 +19,7 @@ import GHC.Generics
 import Network.HTTP.Types
 import Network.Wai
 
-import Controllers.Token (Token (..))
+-- import Controllers.Token (Token (..))
 import FromRequest
 import Models.Author
 -- import Servises.Config

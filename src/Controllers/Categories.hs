@@ -20,7 +20,7 @@ import Network.HTTP.Types
 import Network.Wai
 import Database.PostgreSQL.Simple (Connection (..))
 
-import Controllers.Token (Token (..))
+-- import Controllers.Token (Token (..))
 import FromRequest
 import Models.Category
 -- import Servises.Config

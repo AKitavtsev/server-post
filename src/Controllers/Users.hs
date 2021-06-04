@@ -11,14 +11,13 @@ import Data.Pool (Pool)
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.Text.Lazy as TL
-import qualified Data.Time as Time
 
 import Control.Monad (when)
 import GHC.Generics
 import Network.HTTP.Types
 import Network.Wai
 
-import Controllers.Token (Token (..))
+-- import Controllers.Token (Token (..))
 import FromRequest
 import Models.User
 import Servises.Config
@@ -42,31 +41,22 @@ routes pool hLogger hToken hDb req respond = do
       logDebug hLogger ("  Body = " ++ (BL.unpack body))
       case eitherDecode body :: Either String UserIn of
         Left e -> do
-          logError hLogger "  Invalid request body"         
+          logError hLogger ("  Invalid request body - " ++ e)         
           respond (responseLBS status400 [("Content-Type", "text/plain")] $ BL.pack e)
         Right correctlyParsedBody -> do
           c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
           id <- insertUser hDb pool correctlyParsedBody c_date
           case id of
             0 -> do
-              logError hLogger "  Login exist"         
+              logError hLogger "  Login already exist"         
               respond (responseLBS status400 [("Content-Type", "text/plain")] "")
             _ -> do            
               idim <- insertImage hDb pool correctlyParsedBody id
               when (idim == 0) $ do
                 logWarning hLogger "  Invalid image type specified (only png, jpg, gif or bmp is allowed)"
               token <- (createToken hToken) id False
-              -- insertUser hDb pool correctlyParsedBody c_date 
-              -- Just (id, adm) <- liftIO $ findUserByLogin hDb pool 
-                       -- (login correctlyParsedBody) 
-                       -- (Models.User.password correctlyParsedBody)
-              -- insertImage hDb pool correctlyParsedBody id
-              -- token <- (createToken hToken) id adm
               respond (responseLBS created201 
-                           [("Content-Type", "text/plain")] $ encode (Token token))
-            -- True -> do
-              -- logError hLogger "  Login already exists"
-              -- respond (responseLBS found302 [("Content-Type", "text/plain")] "user exist")
+                      [("Content-Type", "text/plain")] $ encode (UserID id token))
     get = do
       vt <- validToken hToken (toToken req)
       case vt of
@@ -98,9 +88,9 @@ routes pool hLogger hToken hDb req respond = do
           logError hLogger "  Administrator authority required"
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")
 
-curTimeStr :: String -> IO String
-curTimeStr form = do
-    utc <- Time.getCurrentTime
-    return (Time.formatTime Time.defaultTimeLocale form utc)
+-- curTimeStr :: String -> IO String
+-- curTimeStr form = do
+    -- utc <- Time.getCurrentTime
+    -- return (Time.formatTime Time.defaultTimeLocale form utc)
 
 

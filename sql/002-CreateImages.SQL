@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS images;
 CREATE TABLE images (
     id integer NOT NULL,
     image text NOT NULL,

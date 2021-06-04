@@ -6,6 +6,7 @@ import qualified Servises.Logger as Logger
 
 import Models.Author
 import Models.Category
+import Models.Draft
 import Models.Tag
 import Models.User
 
@@ -33,4 +34,5 @@ data Handle = Handle
     , updateOwnerCategory:: Pool Connection -> Integer -> String -> IO Integer
     , insertTag          :: Pool Connection -> Tag -> IO ()
     , findTagByID        :: Pool Connection -> Integer -> IO (Maybe Tag)
+    , insertDraft        :: Pool Connection -> DraftIn -> Integer -> String-> IO Integer       
     }

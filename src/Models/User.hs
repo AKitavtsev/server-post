@@ -6,12 +6,12 @@ module Models.User (
   Avatar (..),
   UserIn (..),
   UserOut (..),
-  -- UserID (..)
+  UserID (..)
   ) where
 
 import  GHC.Generics
 import Data.Aeson
--- import Data.UUID
+
 
 -- represents a user
 data Avatar  = Avatar { image :: String
@@ -25,14 +25,14 @@ data UserIn  = UserIn  { name     :: String
                        , password :: String
                        } deriving (Show, Generic, FromJSON, ToJSON)
 
-data UserOut = UserOut { user_id  :: Integer
-                       , name_    :: String
+data UserOut = UserOut { name_    :: String
                        , surname_ :: String
                        , login_   :: String
                        , c_data   :: String
                        , admin    :: Bool
                        } deriving (Show, Generic, FromJSON, ToJSON)
 
--- data UserID  = UserID  { user_id_ :: Integer
-                       -- , token    :: String   
-                       -- } deriving (Show, Generic, FromJSON, ToJSON)
+data UserID = UserID   { id    :: Integer
+                        , token :: String
+                       } deriving (Show, Generic, FromJSON, ToJSON)
+
