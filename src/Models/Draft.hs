@@ -5,6 +5,7 @@
 module Models.Draft (
   Photo (..),
   DraftIn (..),
+  DraftPost (..)
   ) where
 
 import Data.Aeson
@@ -25,4 +26,7 @@ data DraftIn  = DraftIn  { title       :: String
                          , otherPhotos :: [Photo]
                          } deriving (Show, Generic, FromJSON, ToJSON)
 
-
+data DraftPost  = DraftPost  { id     :: Integer
+                             , photo  :: Integer
+                             , photos :: [Integer]
+                             } deriving (Show, Generic, FromJSON, ToJSON)

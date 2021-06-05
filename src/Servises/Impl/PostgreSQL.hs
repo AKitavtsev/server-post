@@ -49,6 +49,7 @@ newHandle = do
       , SD.insertTag           = insertTag
       , SD.findTagByID         = findTagByID
       , SD.insertDraft         = insertDraft
+      , SD.insertPhoto         = insertPhoto
       }
 
 newConn conf = connect defaultConnectInfo
@@ -67,15 +68,22 @@ deleteByID pool model id = do
 
 updateByID pool model id fild = do
   case model of
-    "author"   -> do 
+    "author"      -> do 
       liftIO $ execSqlT pool [fild, (show id)] 
                    "UPDATE authors SET description =? WHERE id=?"
-    "tag"      -> do
+    "tag"         -> do
       liftIO $ execSqlT pool [fild, (show id)] 
                    "UPDATE tags SET tag=? WHERE id=?"
-    "category" -> do
-     liftIO $ execSqlT pool [fild, (show id)]
-                "UPDATE categories SET name=? WHERE id=?"
+    "category"    -> do
+      liftIO $ execSqlT pool [fild, (show id)]
+                   "UPDATE categories SET name=? WHERE id=?"
+    "draftPhoto"  -> do
+      liftIO $ execSqlT pool [fild, (show id)]
+                   "UPDATE drafts SET photo =? WHERE id=?"
+    "draftPhotos" -> do
+      liftIO $ execSqlT pool [listToSql fild, (show id)]
+                   "UPDATE drafts SET photos =? WHERE id=?"
+
   return ()
 -----------------------------------------------------------------------
 insertUser pool (UserIn name surname avatar login password) c_date = do
@@ -194,13 +202,23 @@ findTagByID pool id = do
                pass _                  = Nothing
 ----------------------------------------------------------------------------------
 insertDraft pool (DraftIn title category tags t_content mainPhoto otherPhotos) id c_date = do
-  res <- liftIO $ fetch pool [title, show id, c_date, show category, "{1,2,3}", T.unpack t_content]
+  res <- liftIO $ fetch pool [title, show id, c_date, show category, listToSql 
+                             $ show tags, T.unpack t_content]
         "INSERT INTO drafts (title, author, c_date, category, tags, t_content) VALUES(?,?,?,?,?,?) returning id"
   return $ pass res
   where 
     pass [Only id] = id
     pass _         = 0
-              
+                 
+insertPhoto pool author (Photo im t)  = do
+  -- case mainPhoto of
+    -- Photo im t -> do
+  res <- liftIO $ fetch pool [im, t, show author]
+        "INSERT INTO photos (image, image_type, author) VALUES (?,?,?) returning id"
+  return $ pass res
+  where
+        pass [Only id] = id
+        pass _         = 0
 
 
 
@@ -292,3 +310,5 @@ execSqlT pool args sql = withResource pool ins
        where ins conn = withTransaction conn $ execute conn sql args
 
 --------------------------------------------------------------------------------
+listToSql :: String -> String
+listToSql list = init ('{': (tail list)) ++ "}"

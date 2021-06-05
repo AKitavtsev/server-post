@@ -22,7 +22,6 @@ import Network.Wai
 -- import Controllers.Token (Token (..))
 import FromRequest
 import Models.Draft
--- import Servises.Config
 import Servises.Logger
 import Servises.Token
 import Servises.Db
@@ -49,13 +48,25 @@ routes pool hLogger hToken hDb req respond = do
           logError hLogger ("  Invalid request body  - " ++ e)          
           respond (responseLBS status400 [("Content-Type", "text/plain")] "")
         Right correctlyParsedBody -> do
-          c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
---- обработка [tags] - на выходе {tags}, если каждый tag присутствует в таблице tags иначе - жопа         
-          
+          c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"          
           id <- insertDraft hDb pool correctlyParsedBody id_author c_date
-          
-          respond (responseLBS status201 [("Content-Type", "text/plain")]
-                                         $ encode correctlyParsedBody)
+ 
+          idim <- insertPhoto hDb pool id_author (mainPhoto correctlyParsedBody)
+          case idim of
+            0 -> do
+              logWarning hLogger "  Invalid image type specified (only png, jpg, gif or bmp is allowed)"
+              respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+            _ -> do
+              updateByID hDb pool "draftPhoto" id (show idim)
+              photos <- mapM (insertPhoto hDb pool id_author) (otherPhotos correctlyParsedBody) 
+              updateByID hDb pool "draftPhotos" id (show photos)
+-- проверить photos на предмет нулей
+              
+              respond (responseLBS status201 [("Content-Type", "text/plain")]
+                       $ encode (DraftPost id idim photos))
+              
+              
+              
                                          
 
   -- where 
