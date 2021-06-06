@@ -9,6 +9,7 @@ import qualified Controllers.Authors
 import qualified Controllers.Categories
 import qualified Controllers.Drafts
 import qualified Controllers.Images
+import qualified Controllers.Photos
 import qualified Controllers.Tags
 import qualified Controllers.Token
 import qualified Controllers.Users
@@ -37,6 +38,8 @@ routes pool hLogger hToken hDb req respond  = do
           Controllers.Tags.routes pool hLogger hToken hDb req respond
         "draft"      -> do
           Controllers.Drafts.routes pool hLogger hToken hDb req respond
+        "photo"      -> do
+          Controllers.Photos.routes pool hLogger hToken hDb req respond
         _            -> do
           logError hLogger "  Path not found"
           respond $ responseLBS status404 [("Content-Type", "text/plain")] ""

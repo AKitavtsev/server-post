@@ -37,9 +37,9 @@ routes pool hLogger hToken hDb req respond = do
       case  toMethod req of
         "POST"   -> post id_author        
         -- "GET"    -> get
-        -- "DELETE" -> delete
-        -- "PUT"    -> put
-  where 
+        "DELETE" -> delete id_author
+        "PUT"    -> put id_author
+  where
     post id_author = do
       body <- strictRequestBody req
       logDebug hLogger ("  Body = " ++ (BL.unpack body))
@@ -54,70 +54,36 @@ routes pool hLogger hToken hDb req respond = do
           idim <- insertPhoto hDb pool id_author (mainPhoto correctlyParsedBody)
           case idim of
             0 -> do
-              logWarning hLogger "  Invalid image type specified (only png, jpg, gif or bmp is allowed)"
+              logError hLogger
+                "  Invalid photo type specified (only png, jpg, gif or bmp is allowed)"
               respond (responseLBS status400 [("Content-Type", "text/plain")] "")
             _ -> do
               updateByID hDb pool "draftPhoto" id (show idim)
-              photos <- mapM (insertPhoto hDb pool id_author) (otherPhotos correctlyParsedBody) 
-              updateByID hDb pool "draftPhotos" id (show photos)
--- проверить photos на предмет нулей
-              
+              photos <- mapM (insertPhoto hDb pool id_author)
+                             (otherPhotos correctlyParsedBody)
+              when (any (== 0) photos) $ do
+                logWarning hLogger 
+                  (" Some of the photos are of an invalid type" ++
+                  " (only png, jpg, gif or bmp is allowed). ")              
+              updateByID hDb pool "draftPhotos" id (show photos)              
               respond (responseLBS status201 [("Content-Type", "text/plain")]
                        $ encode (DraftPost id idim photos))
-              
-              
+    delete id_author = do
+       let id   = toId req
+       when (id == 0) $ do
+         logError hLogger "  Invalid id"
+       deleteDraft hDb pool id id_author
+       respond (responseLBS status204 [("Content-Type", "text/plain")] "")
+    put author = do          
+      let id         = toId req
+          tContentMb = toParam req "t_content"           
+      when (id == 0) $ do
+         logError hLogger "  Invalid id"
+      case tContentMb of
+         Just tContent -> do
+           updateDraft hDb pool id author tContent
+           respond (responseLBS status200 [("Content-Type", "text/plain")] "")
+            
               
                                          
 
-  -- where 
-    -- post = do
-      -- body <- strictRequestBody req
-      -- logDebug hLogger ("  Body = " ++ (BL.unpack body))
-      -- case eitherDecode body :: Either String UserIn of
-        -- Left e -> do
-          -- logError hLogger "  Invalid request body"         
-          -- respond (responseLBS status400 [("Content-Type", "text/plain")] $ BL.pack e)
-        -- Right correctlyParsedBody -> do
-
-
-          -- case id of
-            -- 0 -> do
-              -- logError hLogger "  There is no user with this ID, or the user is already the author"
-              -- respond (responseLBS status500 [("Content-Type", "text/plain")] "")
-            -- _ -> respond (responseLBS created201 [("Content-Type", "text/plain")] "")    
-    -- get = do
-      -- let id   = toId req
-      -- when (id == 0) $ do
-        -- logError hLogger "  Invalid id"
-      -- authorMb <- liftIO $ findAuthorByID hDb pool id
-      -- case authorMb of
-        -- Nothing -> do
-          -- logError hLogger "  Author not exist"
-          -- respond (responseLBS notFound404 [("Content-Type", "text/plain")] "author not exist")
-        -- Just author -> do 
-          -- respond (responseLBS status200 [("Content-Type", "text/plain")] $ encode author)
-    -- delete = do
-       -- let id   = toId req
-       -- when (id == 0) $ do
-         -- logError hLogger "  Invalid id"
-       -- deleteAuthorByID hDb pool id
-       -- deleteByID hDb pool "author" id
-       -- respond (responseLBS status204 [("Content-Type", "text/plain")] "")
-    -- put = do
-       -- let id      = toId req
-           -- descrMb = toParam req "description"
-       -- when (id == 0) $ do
-         -- logError hLogger "  Invalid id"
-       -- case descrMb of
-         -- Nothing -> do
-           -- logError hLogger "  The \"description\" parameter is required"
-           -- respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-         -- Just descr -> do
-           -- updateByID hDb pool "author" id descr
-           -- respond (responseLBS status200 [("Content-Type", "text/plain")]
-                   -- $ encode (Author id $ T.pack descr))
-
--- curTimeStr :: String -> IO String
--- curTimeStr form = do
-    -- utc <- Time.getCurrentTime
-    -- return (Time.formatTime Time.defaultTimeLocale form utc)         

@@ -49,7 +49,10 @@ newHandle = do
       , SD.insertTag           = insertTag
       , SD.findTagByID         = findTagByID
       , SD.insertDraft         = insertDraft
+      , SD.deleteDraft         = deleteDraft
+      , SD.updateDraft         = updateDraft
       , SD.insertPhoto         = insertPhoto
+      , SD.findPhotoByID       = findPhotoByID
       }
 
 newConn conf = connect defaultConnectInfo
@@ -82,6 +85,9 @@ updateByID pool model id fild = do
                    "UPDATE drafts SET photo =? WHERE id=?"
     "draftPhotos" -> do
       liftIO $ execSqlT pool [listToSql fild, (show id)]
+                   "UPDATE drafts SET photos =? WHERE id=?"
+    "drafts     " -> do
+      liftIO $ execSqlT pool [fild, (show id)]
                    "UPDATE drafts SET photos =? WHERE id=?"
 
   return ()
@@ -209,10 +215,16 @@ insertDraft pool (DraftIn title category tags t_content mainPhoto otherPhotos) i
   where 
     pass [Only id] = id
     pass _         = 0
-                 
+
+deleteDraft pool id author = do
+  liftIO $ execSqlT pool [id, author] "DELETE FROM drafts WHERE id=? AND author =?" 
+  return ()
+
+updateDraft pool id author content = do
+  liftIO $ execSqlT pool [content, (show id), (show author)] "UPDATE drafts SET t_content=? WHERE id=? AND author =?" 
+  return ()
+  
 insertPhoto pool author (Photo im t)  = do
-  -- case mainPhoto of
-    -- Photo im t -> do
   res <- liftIO $ fetch pool [im, t, show author]
         "INSERT INTO photos (image, image_type, author) VALUES (?,?,?) returning id"
   return $ pass res
@@ -220,7 +232,13 @@ insertPhoto pool author (Photo im t)  = do
         pass [Only id] = id
         pass _         = 0
 
-
+findPhotoByID pool id = do
+         res <- liftIO $ fetch pool (Only id) 
+                "SELECT image, image_type FROM photos WHERE id=?"
+                :: IO [(String, String)]
+         return $ pass res
+         where pass [(img, t)] = Just (img, t)
+               pass _ = Nothing
 
 
                

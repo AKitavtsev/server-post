@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3ec3aa23ea0568c53409ee26cae4769ca825c3c2c150e732bdc10830cf14420d
+-- hash: 6e6addcd1f16fa1ed92a0032a220163e379e75723f572ff3b729bf0f9c5bc1ef
 
 name:           server-post
 version:        0.1.0.0
@@ -31,6 +31,7 @@ library
       Controllers.Categories
       Controllers.Drafts
       Controllers.Images
+      Controllers.Photos
       Controllers.Tags
       Controllers.Token
       Controllers.Users

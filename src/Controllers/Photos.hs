@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Controllers.Images
+module Controllers.Photos
     where
 
 import FromRequest
@@ -14,14 +14,7 @@ import Servises.Config
 
 
 import Control.Monad.Trans
--- import Database.PostgreSQL.Simple
--- import Data.Pool (Pool)
--- import Network.HTTP.Types.Status
 import Data.Aeson
--- import Data.Char (isDigit)
--- import Data.Hash.MD5
--- import Data.Pool (Pool)
--- import Data.Time.Clock
 import Data.List (dropWhile)
 import Control.Monad (when)
 import GHC.Generics
@@ -46,24 +39,11 @@ routes pool hLogger hToken hDb req respond = do
       let id = toId req
       when (id == 0) $ do
         logError hLogger "  Invalid id"
-      imageMb <- liftIO $ findImageByID hDb pool id
+      imageMb <- liftIO $ findPhotoByID hDb pool id
       case imageMb of
         Nothing -> do
-          logError hLogger "  Image not found"
--- чисто для служебного пользования, для проекта надо оставить только
-          let file = toParam req "file"
-          case file of
-            Nothing   -> respond (responseLBS notFound404 
-                                  [("Content-Type", "text/plain")]
-                                  "image not exist")
-            Just fn -> do
-              imageFile <- BC.readFile ("Images/" ++ fn) 
-              let image = BC.unpack $ B64.encode imageFile              
-              insertImage' hDb pool id image (tail $ dropWhile (\x -> not (x == '.')) fn)         
-              respond (responseLBS notFound404 
-                       [("Content-Type", "text/plain")]
-                         "image adding")    
---------------------
+          logError hLogger "  Photo not found"
+          respond (responseLBS status400 [("Content-Type", "text/plain")] "")          
         Just (image, typ)  -> do
           let typeImage = BC.pack ("image/" ++ typ)    
           respond (responseLBS status200 [("Content-Type", typeImage)]
