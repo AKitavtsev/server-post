@@ -34,7 +34,7 @@ data Handle = Handle
     , updateOwnerCategory:: Pool Connection -> Integer -> String -> IO Integer
     , insertTag          :: Pool Connection -> Tag     -> IO ()
     , findTagByID        :: Pool Connection -> Integer -> IO (Maybe Tag)
-    , insertDraft        :: Pool Connection -> DraftIn -> Integer -> String-> IO Integer
+    , insertDraft        :: Pool Connection -> DraftIn -> Integer -> String -> IO Integer
     , deleteDraft        :: Pool Connection -> Integer -> Integer -> IO ()
     , updateDraft        :: Pool Connection -> Integer -> Integer -> String -> IO ()
     , insertPhoto        :: Pool Connection -> Integer -> Photo -> IO Integer   

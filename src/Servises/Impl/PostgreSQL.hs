@@ -18,8 +18,9 @@ import Servises.Impl.PostgreSQL.Migrations
 import Database.PostgreSQL.Simple
 
 import Data.Char (toLower)
-import Control.Exception
+import Data.Maybe
 import Data.Pool (Pool (..), withResource)
+import Control.Exception
 import Control.Monad.Trans (liftIO)
 import Control.Monad (when)
 import GHC.Int (Int64 (..))
@@ -207,9 +208,14 @@ findTagByID pool id = do
          where pass [(id, tag)] = Just (Tag tag)
                pass _                  = Nothing
 ----------------------------------------------------------------------------------
-insertDraft pool (DraftIn title category tags t_content mainPhoto otherPhotos) id c_date = do
-  res <- liftIO $ fetch pool [title, show id, c_date, show category, listToSql 
-                             $ show tags, T.unpack t_content]
+insertDraft pool (DraftIn id_draft title category tags t_content mainPhoto otherPhotos) 
+                  id c_date = do
+  res <- liftIO $ fetch pool [ fromMaybe "" title
+                             , show id
+                             , c_date
+                             , show $ fromMaybe 0 category
+                             , listToSql $ show $ fromMaybe [] tags
+                             , T.unpack $ fromMaybe "" t_content]
         "INSERT INTO drafts (title, author, c_date, category, tags, t_content) VALUES(?,?,?,?,?,?) returning id"
   return $ pass res
   where 
