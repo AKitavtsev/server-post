@@ -50,51 +50,63 @@ routes pool hLogger hToken hDb req respond = do
           respond (responseLBS status400 [("Content-Type", "text/plain")] "")
         Right correctlyParsedBody -> do
           case id_draft correctlyParsedBody of
-            Nothing -> insertDr id_author correctlyParsedBody
-            Just id_dr -> updateDr id_dr id_author correctlyParsedBody
-            
-    insertDr id_author correctlyParsedBody = do
+            Nothing -> insert id_author correctlyParsedBody
+            Just id_dr -> update id_dr id_author correctlyParsedBody            
+    insert id_author correctlyParsedBody = do
       c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"          
-      id <- insertDraft hDb pool correctlyParsedBody id_author c_date
-
-      
-      idim <- insertPhoto hDb pool id_author (fromMaybe (Photo "" "jpg") (mainPhoto correctlyParsedBody))
-      case idim of
+      id     <- insertDraft hDb pool correctlyParsedBody id_author c_date
+      case id of
         0 -> do
-           logError hLogger
-             "  Invalid photo type specified (only png, jpg, gif or bmp is allowed)"
-           respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+          logError hLogger "  No category specified" 
+          respond (responseLBS status400 [("Content-Type", "text/plain")] "")
         _ -> do
-           updateByID hDb pool "draftPhoto" id (show idim)
-           photos <- mapM (insertPhoto hDb pool id_author)
-                          (fromMaybe [] (otherPhotos correctlyParsedBody))
-           when (any (== 0) photos) $ do
-             logWarning hLogger 
+          idim   <- insertPhoto hDb pool id_author
+                     (fromMaybe (Photo "" "jpg") (mainPhoto correctlyParsedBody))
+          case idim of
+            0 -> do
+              logError hLogger
+               "  Invalid photo type specified (only png, jpg, gif or bmp is allowed)"
+              respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+            _ -> do
+              updateByID hDb pool "draftPhoto" id (show idim)
+              photos <- mapM (insertPhoto hDb pool id_author)
+                             (fromMaybe [] (otherPhotos correctlyParsedBody))
+              when (any (== 0) photos) $ do
+                logWarning hLogger 
                        (" Some of the photos are of an invalid type" ++
-                        " (only png, jpg, gif or bmp is allowed). ")              
-           updateByID hDb pool "draftPhotos" id (show $ photos)              
-           respond (responseLBS status201 [("Content-Type", "text/plain")]
-                     $ encode (DraftPost id idim (photos)))
-    updateDr id_dr id_author correctlyParsedBody = do
+                        " (only png, jpg, gif or bmp is allowed).")              
+                updateByID hDb pool "draftPhotos" id (show photos)              
+              respond (responseLBS status201 [("Content-Type", "text/plain")]
+                       $ encode (DraftPost id idim (photos)))
+    update id_dr id_author correctlyParsedBody = do
+      when (not (title correctlyParsedBody == Nothing)) $ do
+        id <- updateDraft hDb pool id_dr id_author
+                    "title"
+                    (fromMaybe "" (title correctlyParsedBody)) 
+        return ()                    
+      when (not (category correctlyParsedBody == Nothing)) $ do
+        id <- updateDraft hDb pool  id_dr id_author
+                    "category" 
+                    $ show (fromMaybe 0 (category correctlyParsedBody))
+        when (id == 0)  $ logWarning hLogger 
+                       " No category specified"
+        return ()
+      when (not (tags correctlyParsedBody == Nothing)) $ do
+        let tags' = fromMaybe [] (tags correctlyParsedBody)
+        tags'' <- checkAvailabilityTags hDb pool tags'
+        when (not (tags' == tags'')) $ logWarning hLogger 
+          ("  Not all tags were found. Required - " ++ (show tags') 
+                              ++ " , found - " ++ (show tags''))
+        -- id <- updateDraft hDb pool id_dr id_author "tags" (show tags'')
+
+        return ()
+
+             
       respond (responseLBS status200 [("Content-Type", "text/plain")] "")
-                   
-            
+                              
     delete id_author = do
        let id   = toId req
        when (id == 0) $ do
          logError hLogger "  Invalid id"
        deleteDraft hDb pool id id_author
        respond (responseLBS status204 [("Content-Type", "text/plain")] "")
-    -- put author = do          
-      -- let id         = toId req
-          -- tContentMb = toParam req "t_content"           
-      -- when (id == 0) $ do
-         -- logError hLogger "  Invalid id"
-      -- case tContentMb of
-         -- Just tContent -> do
-           -- updateDraft hDb pool id author tContent
-           -- respond (responseLBS status200 [("Content-Type", "text/plain")] "")
-            
-              
-                                         
-

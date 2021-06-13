@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Servises.Impl.PostgreSQL 
     ( newHandle
@@ -22,7 +23,7 @@ import Data.Maybe
 import Data.Pool (Pool (..), withResource)
 import Control.Exception
 import Control.Monad.Trans (liftIO)
-import Control.Monad (when)
+import Control.Monad (when, forM_)
 import GHC.Int (Int64 (..))
 
 import qualified Data.ByteString.Lazy.Char8 as LC
@@ -31,29 +32,30 @@ import qualified Data.Text as T
 newHandle :: IO SD.Handle
 newHandle = do
     return $ SD.Handle
-      { SD.close               = close
-      , SD.newConn             = newConn
-      , SD.runMigrations       = runMigrations
-      , SD.deleteByID          = deleteByID
-      , SD.updateByID          = updateByID
-      , SD.insertUser          = insertUser
-      , SD.findUserByLogin     = findUserByLogin
-      , SD.findUserByID        = findUserByID
-      , SD.insertImage         = insertImage
-      , SD.insertImage'        = insertImage'
-      , SD.findImageByID       = findImageByID
-      , SD.insertAuthor        = insertAuthor
-      , SD.findAuthorByID      = findAuthorByID
-      , SD.insertCategory      = insertCategory
-      , SD.findCategoryByID    = findCategoryByID
-      , SD.updateOwnerCategory = updateOwnerCategory
-      , SD.insertTag           = insertTag
-      , SD.findTagByID         = findTagByID
-      , SD.insertDraft         = insertDraft
-      , SD.deleteDraft         = deleteDraft
-      , SD.updateDraft         = updateDraft
-      , SD.insertPhoto         = insertPhoto
-      , SD.findPhotoByID       = findPhotoByID
+      { SD.close                 = close
+      , SD.newConn               = newConn
+      , SD.runMigrations         = runMigrations
+      , SD.deleteByID            = deleteByID
+      , SD.updateByID            = updateByID
+      , SD.insertUser            = insertUser
+      , SD.findUserByLogin       = findUserByLogin
+      , SD.findUserByID          = findUserByID
+      , SD.insertImage           = insertImage
+      , SD.insertImage'          = insertImage'
+      , SD.findImageByID         = findImageByID
+      , SD.insertAuthor          = insertAuthor
+      , SD.findAuthorByID        = findAuthorByID
+      , SD.insertCategory        = insertCategory
+      , SD.findCategoryByID      = findCategoryByID
+      , SD.updateOwnerCategory   = updateOwnerCategory
+      , SD.insertTag             = insertTag
+      , SD.findTagByID           = findTagByID
+      , SD.checkAvailabilityTags = checkAvailabilityTags
+      , SD.insertDraft           = insertDraft
+      , SD.deleteDraft           = deleteDraft
+      , SD.updateDraft           = updateDraft
+      , SD.insertPhoto           = insertPhoto
+      , SD.findPhotoByID         = findPhotoByID
       }
 
 newConn conf = connect defaultConnectInfo
@@ -87,9 +89,9 @@ updateByID pool model id fild = do
     "draftPhotos" -> do
       liftIO $ execSqlT pool [listToSql fild, (show id)]
                    "UPDATE drafts SET photos =? WHERE id=?"
-    "drafts     " -> do
+    "draftTitle"      -> do
       liftIO $ execSqlT pool [fild, (show id)]
-                   "UPDATE drafts SET photos =? WHERE id=?"
+                   "UPDATE drafts SET title =? WHERE id=?"
 
   return ()
 -----------------------------------------------------------------------
@@ -207,6 +209,18 @@ findTagByID pool id = do
      return $ pass res
          where pass [(id, tag)] = Just (Tag tag)
                pass _                  = Nothing
+               
+checkAvailabilityTags pool tags = do
+     res <- liftIO $ fetch pool (Only (In tags))
+              "SELECT id FROM tags WHERE id IN ?" 
+     return $ pass res 
+         where pass [] = []
+               pass xs = map fromOnly xs
+               -- $ \(Only id) -> id
+        
+-- query conn "select * from users where first_name in ?" $
+      -- Only $ In ["Anna", "Boris", "Carla"]   
+
 ----------------------------------------------------------------------------------
 insertDraft pool (DraftIn id_draft title category tags t_content mainPhoto otherPhotos) 
                   id c_date = do
@@ -216,7 +230,7 @@ insertDraft pool (DraftIn id_draft title category tags t_content mainPhoto other
                              , show $ fromMaybe 0 category
                              , listToSql $ show $ fromMaybe [] tags
                              , T.unpack $ fromMaybe "" t_content]
-        "INSERT INTO drafts (title, author, c_date, category, tags, t_content) VALUES(?,?,?,?,?,?) returning id"
+           "INSERT INTO drafts (title, author, c_date, category, tags, t_content) VALUES(?,?,?,?,?,?) returning id"
   return $ pass res
   where 
     pass [Only id] = id
@@ -226,9 +240,23 @@ deleteDraft pool id author = do
   liftIO $ execSqlT pool [id, author] "DELETE FROM drafts WHERE id=? AND author =?" 
   return ()
 
-updateDraft pool id author content = do
-  liftIO $ execSqlT pool [content, (show id), (show author)] "UPDATE drafts SET t_content=? WHERE id=? AND author =?" 
-  return ()
+updateDraft pool id author fild content = do
+  case fild of
+    "title"    -> do 
+      res <- liftIO $ fetch pool [content, (show id), (show author)]
+                    "UPDATE drafts SET title=? WHERE id=? AND author =? returning id"
+      return $ pass res
+    "category" -> do 
+      res <- liftIO $ fetch pool [content, (show id), (show author)]
+                    "UPDATE drafts SET category=? WHERE id=? AND author =? returning id"
+      return $ pass res
+    "tags" -> do                    
+      res <- liftIO $ fetch pool [content, (show id), (show author)]
+                    "UPDATE drafts SET tags =? WHERE id=? AND author =? returning id" 
+      return $ pass res
+  where 
+    pass [Only id] = id
+    pass _         = 0
   
 insertPhoto pool author (Photo im t)  = do
   res <- liftIO $ fetch pool [im, t, show author]
