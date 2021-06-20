@@ -89,9 +89,9 @@ updateByID pool model id fild = do
     "draftPhotos" -> do
       liftIO $ execSqlT pool [listToSql fild, (show id)]
                    "UPDATE drafts SET photos =? WHERE id=?"
-    "draftTitle"      -> do
-      liftIO $ execSqlT pool [fild, (show id)]
-                   "UPDATE drafts SET title =? WHERE id=?"
+    -- "draftTitle"      -> do
+      -- liftIO $ execSqlT pool [fild, (show id)]
+                   -- "UPDATE drafts SET title =? WHERE id=?"
 
   return ()
 -----------------------------------------------------------------------
@@ -222,12 +222,12 @@ checkAvailabilityTags pool tags = do
       -- Only $ In ["Anna", "Boris", "Carla"]   
 
 ----------------------------------------------------------------------------------
-insertDraft pool (DraftIn id_draft title category tags t_content mainPhoto otherPhotos) 
+insertDraft pool (DraftIn title category tags t_content mainPhoto otherPhotos) 
                   id c_date = do
   res <- liftIO $ fetch pool [ fromMaybe "" title
                              , show id
                              , c_date
-                             , show $ fromMaybe 0 category
+                             , show $ category
                              , listToSql $ show $ fromMaybe [] tags
                              , T.unpack $ fromMaybe "" t_content]
            "INSERT INTO drafts (title, author, c_date, category, tags, t_content) VALUES(?,?,?,?,?,?) returning id"
@@ -251,7 +251,7 @@ updateDraft pool id author fild content = do
                     "UPDATE drafts SET category=? WHERE id=? AND author =? returning id"
       return $ pass res
     "tags" -> do                    
-      res <- liftIO $ fetch pool [content, (show id), (show author)]
+      res <- liftIO $ fetch pool [listToSql content, (show id), (show author)]
                     "UPDATE drafts SET tags =? WHERE id=? AND author =? returning id" 
       return $ pass res
   where 

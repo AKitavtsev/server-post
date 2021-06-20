@@ -40,28 +40,35 @@ routes pool hLogger hToken hDb req respond = do
         -- "GET"    -> get
         "DELETE" -> delete id_author
         -- "PUT"    -> put id_author
-  where
+   where
     post id_author = do    
       body <- strictRequestBody req
       logDebug hLogger ("  Body = " ++ (BL.unpack body))
-      case eitherDecode body :: Either String DraftIn of
-        Left e -> do
-          logError hLogger ("  Invalid request body  - " ++ e)          
+      case eitherDecode body :: Either String DraftUp of
+        Right correctlyParsedBody -> do 
+          logInfo hLogger ("  Update")
+          update id_author correctlyParsedBody        
           respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-        Right correctlyParsedBody -> do
-          case id_draft correctlyParsedBody of
-            Nothing -> insert id_author correctlyParsedBody
-            Just id_dr -> update id_dr id_author correctlyParsedBody            
+        _  -> do
+          case eitherDecode body :: Either String DraftIn of
+            Right correctlyParsedBody -> do
+              logInfo hLogger ("  Insert")
+              insert id_author correctlyParsedBody
+            Left  e -> do              
+              logError hLogger ("  Invalid request body  - " ++ e)          
+              respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+              
     insert id_author correctlyParsedBody = do
-      c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"          
-      id     <- insertDraft hDb pool correctlyParsedBody id_author c_date
+      c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
+      correctlyParsedBody' <- verifiedDraftIn correctlyParsedBody
+      id <- insertDraft hDb pool correctlyParsedBody' id_author c_date
       case id of
         0 -> do
           logError hLogger "  No category specified" 
           respond (responseLBS status400 [("Content-Type", "text/plain")] "")
         _ -> do
           idim   <- insertPhoto hDb pool id_author
-                     (fromMaybe (Photo "" "jpg") (mainPhoto correctlyParsedBody))
+                     (mainPhoto correctlyParsedBody)
           case idim of
             0 -> do
               logError hLogger
@@ -78,30 +85,25 @@ routes pool hLogger hToken hDb req respond = do
                 updateByID hDb pool "draftPhotos" id (show photos)              
               respond (responseLBS status201 [("Content-Type", "text/plain")]
                        $ encode (DraftPost id idim (photos)))
-    update id_dr id_author correctlyParsedBody = do
-      when (not (title correctlyParsedBody == Nothing)) $ do
+                       
+    update id_author correctlyParsedBody = do
+      draft <- verifiedDraftUp correctlyParsedBody
+      let id_dr = id_draft draft
+      when (not (title_ draft == Nothing)) $ do
         id <- updateDraft hDb pool id_dr id_author
                     "title"
-                    (fromMaybe "" (title correctlyParsedBody)) 
+                    (fromMaybe "" (title_ draft)) 
         return ()                    
-      when (not (category correctlyParsedBody == Nothing)) $ do
+      when (not (category_ draft == Nothing)) $ do
         id <- updateDraft hDb pool  id_dr id_author
                     "category" 
-                    $ show (fromMaybe 0 (category correctlyParsedBody))
+                    $ show (fromMaybe 0 (category_ draft))
         when (id == 0)  $ logWarning hLogger 
-                       " No category specified"
+                       " The ,,,,,,,,,,,,,specified category was not found"
         return ()
-      when (not (tags correctlyParsedBody == Nothing)) $ do
-        let tags' = fromMaybe [] (tags correctlyParsedBody)
-        tags'' <- checkAvailabilityTags hDb pool tags'
-        when (not (tags' == tags'')) $ logWarning hLogger 
-          ("  Not all tags were found. Required - " ++ (show tags') 
-                              ++ " , found - " ++ (show tags''))
-        -- id <- updateDraft hDb pool id_dr id_author "tags" (show tags'')
-
+      when (not (tags_ draft == Nothing)) $ do
+        id <- updateDraft hDb pool id_dr id_author "tags" $ show (fromMaybe [] (tags_ draft))
         return ()
-
-             
       respond (responseLBS status200 [("Content-Type", "text/plain")] "")
                               
     delete id_author = do
@@ -110,3 +112,27 @@ routes pool hLogger hToken hDb req respond = do
          logError hLogger "  Invalid id"
        deleteDraft hDb pool id id_author
        respond (responseLBS status204 [("Content-Type", "text/plain")] "")
+
+    verifiedDraftIn :: DraftIn -> IO DraftIn
+    verifiedDraftIn draft = do
+      case tags draft of
+        Nothing -> return draft
+        Just  t -> do    
+          t' <- checkAvailabilityTags hDb pool t
+          when (not (t == t')) $ logWarning hLogger 
+            ("  Not all tags were found. Required - " ++ (show t) 
+                              ++ " , found - " ++ (show t'))     
+          return draft {tags = (Just t')} 
+
+    verifiedDraftUp :: DraftUp -> IO DraftUp
+    verifiedDraftUp draft = do
+      case tags_ draft of
+        Nothing -> return draft
+        Just t -> do
+          t' <- checkAvailabilityTags hDb pool t
+          when (not (t == t')) $ logWarning hLogger 
+                         ("  Not all tags were found. Required - " ++ (show t) 
+                              ++ " , found - " ++ (show t'))     
+          return draft {tags_ = (Just t')}                     
+   
+                                 
