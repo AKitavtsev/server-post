@@ -35,9 +35,12 @@ data Handle = Handle
     , insertTag          :: Pool Connection -> Tag     -> IO ()
     , findTagByID        :: Pool Connection -> Integer -> IO (Maybe Tag)
     , checkAvailabilityTags :: Pool Connection -> [Integer] -> IO [Integer]
+    , checkAvailabilityPhotos :: Pool Connection -> [Integer] -> Integer -> IO [Integer]
     , insertDraft        :: Pool Connection -> DraftIn -> Integer -> String -> IO Integer
     , deleteDraft        :: Pool Connection -> Integer -> Integer -> IO ()
     , updateDraft        :: Pool Connection -> Integer -> Integer -> String -> String -> IO Integer
     , insertPhoto        :: Pool Connection -> Integer -> Photo -> IO Integer   
     , findPhotoByID      :: Pool Connection -> Integer -> IO (Maybe (String, String))
+    , findPhoto          :: Pool Connection -> Integer -> Integer -> IO (Maybe Integer)
+    , findDraft          :: Pool Connection -> Integer -> Integer -> IO (Maybe Integer)
     }

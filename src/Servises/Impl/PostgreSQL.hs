@@ -32,30 +32,33 @@ import qualified Data.Text as T
 newHandle :: IO SD.Handle
 newHandle = do
     return $ SD.Handle
-      { SD.close                 = close
-      , SD.newConn               = newConn
-      , SD.runMigrations         = runMigrations
-      , SD.deleteByID            = deleteByID
-      , SD.updateByID            = updateByID
-      , SD.insertUser            = insertUser
-      , SD.findUserByLogin       = findUserByLogin
-      , SD.findUserByID          = findUserByID
-      , SD.insertImage           = insertImage
-      , SD.insertImage'          = insertImage'
-      , SD.findImageByID         = findImageByID
-      , SD.insertAuthor          = insertAuthor
-      , SD.findAuthorByID        = findAuthorByID
-      , SD.insertCategory        = insertCategory
-      , SD.findCategoryByID      = findCategoryByID
-      , SD.updateOwnerCategory   = updateOwnerCategory
-      , SD.insertTag             = insertTag
-      , SD.findTagByID           = findTagByID
-      , SD.checkAvailabilityTags = checkAvailabilityTags
-      , SD.insertDraft           = insertDraft
-      , SD.deleteDraft           = deleteDraft
-      , SD.updateDraft           = updateDraft
-      , SD.insertPhoto           = insertPhoto
-      , SD.findPhotoByID         = findPhotoByID
+      { SD.close                   = close
+      , SD.newConn                 = newConn
+      , SD.runMigrations           = runMigrations
+      , SD.deleteByID              = deleteByID
+      , SD.updateByID              = updateByID
+      , SD.insertUser              = insertUser
+      , SD.findUserByLogin         = findUserByLogin
+      , SD.findUserByID            = findUserByID
+      , SD.insertImage             = insertImage
+      , SD.insertImage'            = insertImage'
+      , SD.findImageByID           = findImageByID
+      , SD.insertAuthor            = insertAuthor
+      , SD.findAuthorByID          = findAuthorByID
+      , SD.insertCategory          = insertCategory
+      , SD.findCategoryByID        = findCategoryByID
+      , SD.updateOwnerCategory     = updateOwnerCategory
+      , SD.insertTag               = insertTag
+      , SD.findTagByID             = findTagByID
+      , SD.checkAvailabilityTags   = checkAvailabilityTags
+      , SD.checkAvailabilityPhotos = checkAvailabilityPhotos
+      , SD.insertDraft             = insertDraft
+      , SD.deleteDraft             = deleteDraft
+      , SD.updateDraft             = updateDraft
+      , SD.insertPhoto             = insertPhoto
+      , SD.findPhotoByID           = findPhotoByID
+      , SD.findPhoto               = findPhoto
+      , SD.findDraft               = findDraft
       }
 
 newConn conf = connect defaultConnectInfo
@@ -216,12 +219,7 @@ checkAvailabilityTags pool tags = do
      return $ pass res 
          where pass [] = []
                pass xs = map fromOnly xs
-               -- $ \(Only id) -> id
-        
--- query conn "select * from users where first_name in ?" $
-      -- Only $ In ["Anna", "Boris", "Carla"]   
-
-----------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 insertDraft pool (DraftIn title category tags t_content mainPhoto otherPhotos) 
                   id c_date = do
   res <- liftIO $ fetch pool [ fromMaybe "" title
@@ -254,10 +252,25 @@ updateDraft pool id author fild content = do
       res <- liftIO $ fetch pool [listToSql content, (show id), (show author)]
                     "UPDATE drafts SET tags =? WHERE id=? AND author =? returning id" 
       return $ pass res
+    "photos" -> do                    
+      res <- liftIO $ fetch pool [listToSql content, (show id), (show author)]
+                    "UPDATE drafts SET photos =? WHERE id=? AND author =? returning id" 
+      return $ pass res
+    "photo" -> do                    
+      res <- liftIO $ fetch pool [content, (show id), (show author)]
+                    "UPDATE drafts SET photo =? WHERE id=? AND author =? returning id" 
+      return $ pass res
   where 
     pass [Only id] = id
     pass _         = 0
-  
+    
+findDraft pool id_d author = do
+     res <- liftIO $ fetch pool [id_d, author]
+              "SELECT id FROM drafts WHERE id=? AND author =?"
+     return $ pass res
+         where pass [Only id] = Just id
+               pass _    = Nothing
+-------------------------------------------------------------------------------------  
 insertPhoto pool author (Photo im t)  = do
   res <- liftIO $ fetch pool [im, t, show author]
         "INSERT INTO photos (image, image_type, author) VALUES (?,?,?) returning id"
@@ -267,13 +280,26 @@ insertPhoto pool author (Photo im t)  = do
         pass _         = 0
 
 findPhotoByID pool id = do
-         res <- liftIO $ fetch pool (Only id) 
+         res <- liftIO $ fetch pool (Only id)
                 "SELECT image, image_type FROM photos WHERE id=?"
                 :: IO [(String, String)]
          return $ pass res
          where pass [(img, t)] = Just (img, t)
                pass _ = Nothing
+               
+findPhoto pool id_p author = do
+     res <- liftIO $ fetch pool [id_p, author] 
+              "SELECT id FROM photos WHERE id=? AND author =?"
+     return $ pass res
+         where pass [Only id] = Just id
+               pass _ = Nothing
 
+checkAvailabilityPhotos pool photos author = do
+     res <- liftIO $ fetch pool ((In photos), author)
+              "SELECT id FROM photos WHERE id IN ? AND author = ?" 
+     return $ pass res 
+         where pass [] = []
+               pass xs = map fromOnly xs
 
                
                

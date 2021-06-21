@@ -88,7 +88,7 @@ routes pool hLogger hToken hDb req respond = do
                        
     update id_author correctlyParsedBody = do
       draft <- verifiedDraftUp correctlyParsedBody
-      let id_dr = id_draft draft
+      let id_dr = id_draft draft            
       when (not (title_ draft == Nothing)) $ do
         id <- updateDraft hDb pool id_dr id_author
                     "title"
@@ -99,13 +99,60 @@ routes pool hLogger hToken hDb req respond = do
                     "category" 
                     $ show (fromMaybe 0 (category_ draft))
         when (id == 0)  $ logWarning hLogger 
-                       " The ,,,,,,,,,,,,,specified category was not found"
+                       " The specified category was not found"
         return ()
       when (not (tags_ draft == Nothing)) $ do
         id <- updateDraft hDb pool id_dr id_author "tags" $ show (fromMaybe [] (tags_ draft))
         return ()
+      when (not (mainPhoto_ draft == Nothing)) $ do
+        id <- updateDraft hDb pool id_dr id_author "photo" $ show (fromMaybe 0 (mainPhoto_ draft))
+        return ()
+      when (not (otherPhotos_ draft == Nothing)) $ do
+        id <- updateDraft hDb pool id_dr id_author "photos" $ show (fromMaybe [] (otherPhotos_ draft))
+        return ()
       respond (responseLBS status200 [("Content-Type", "text/plain")] "")
-                              
+        where
+          verifiedDraftUp draft = return draft        >>= 
+                                    verifiedID        >>=
+                                    verifiedTags      >>=
+                                    verifiedMainPhoto >>=
+                                    verifiedOtherPhotos          
+          verifiedID draft = do
+            id <- findDraft hDb pool (id_draft draft) id_author
+            case id of
+              Nothing -> do
+                logError hLogger ("  Draft not found")
+                return (DraftUp (id_draft draft) Nothing Nothing Nothing Nothing Nothing Nothing)
+              _       -> return draft
+          verifiedTags draft = do
+            case tags_ draft of
+              Nothing -> return draft
+              Just t  -> do
+                t' <- checkAvailabilityTags hDb pool t
+                when (not (t == t')) $ logWarning hLogger 
+                         ("  Not all tags were found. Required - " ++ (show t) 
+                              ++ " , found - " ++ (show t'))     
+                return draft {tags_ = (Just t')}
+          verifiedMainPhoto draft = do
+            case mainPhoto_ draft of
+              Nothing    -> return draft
+              Just photo -> do
+                id <- findPhoto hDb pool photo id_author
+                case id of
+                  Nothing -> do
+                    logError hLogger ("  Photo not found")
+                    return draft {mainPhoto_ = Nothing}
+                  _       -> return draft
+          verifiedOtherPhotos draft = do
+            case otherPhotos_ draft of
+              Nothing -> return draft
+              Just p -> do
+                p' <- checkAvailabilityPhotos hDb pool p id_author
+                when (not (p == p')) $ logWarning hLogger 
+                         ("  Not all photos were found. Required - " ++ (show p) 
+                              ++ " , found - " ++ (show p'))     
+                return draft {otherPhotos_ = (Just p')}
+                                            
     delete id_author = do
        let id   = toId req
        when (id == 0) $ do
@@ -114,7 +161,7 @@ routes pool hLogger hToken hDb req respond = do
        respond (responseLBS status204 [("Content-Type", "text/plain")] "")
 
     verifiedDraftIn :: DraftIn -> IO DraftIn
-    verifiedDraftIn draft = do
+    verifiedDraftIn draft = 
       case tags draft of
         Nothing -> return draft
         Just  t -> do    
@@ -124,15 +171,29 @@ routes pool hLogger hToken hDb req respond = do
                               ++ " , found - " ++ (show t'))     
           return draft {tags = (Just t')} 
 
-    verifiedDraftUp :: DraftUp -> IO DraftUp
-    verifiedDraftUp draft = do
-      case tags_ draft of
-        Nothing -> return draft
-        Just t -> do
-          t' <- checkAvailabilityTags hDb pool t
-          when (not (t == t')) $ logWarning hLogger 
-                         ("  Not all tags were found. Required - " ++ (show t) 
-                              ++ " , found - " ++ (show t'))     
-          return draft {tags_ = (Just t')}                     
+    -- verifiedDraftUp :: DraftUp -> IO DraftUp
+    -- verifiedDraftUp draft = 
+      -- verifiedTags draft
    
-                                 
+    -- verifiedTags :: DraftUp -> IO DraftUp
+    -- verifiedTags draft = do
+      -- case tags_ draft of
+        -- Nothing -> return draft
+        -- Just t -> do
+          -- t' <- checkAvailabilityTags hDb pool t
+          -- when (not (t == t')) $ logWarning hLogger 
+                         -- ("  Not all tags were found. Required - " ++ (show t) 
+                              -- ++ " , found - " ++ (show t'))     
+          -- return draft {tags_ = (Just t')}
+
+    -- verifiedOtherPhotos :: DraftUp -> IO DraftUp
+    -- verifiedOtherPhotos draft = do
+      -- case otherPhotos_ draft of
+        -- Nothing -> return draft
+        -- Just p -> do
+          -- p' <- checkAvailabilityPhotos hDb pool p id_author
+          -- when (not (p == p')) $ logWarning hLogger 
+                         -- ("  Not all photos were found. Required - " ++ (show p) 
+                              -- ++ " , found - " ++ (show p'))     
+          -- return draft {tags_ = (Just p')}
+                                
