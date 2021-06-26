@@ -43,4 +43,5 @@ data Handle = Handle
     , findPhotoByID      :: Pool Connection -> Integer -> IO (Maybe (String, String))
     , findPhoto          :: Pool Connection -> Integer -> Integer -> IO (Maybe Integer)
     , findDraft          :: Pool Connection -> Integer -> Integer -> IO (Maybe Integer)
+    , findDraftByID      :: Pool Connection -> Integer -> Integer -> IO (Maybe DraftGet)
     }

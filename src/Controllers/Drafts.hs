@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveGeneric, OverloadedStrings #-}
-
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Controllers.Drafts 
     where
@@ -37,9 +37,9 @@ routes pool hLogger hToken hDb req respond = do
       logInfo hLogger ("  Method = " ++ (BC.unpack $ toMethod req))         
       case  toMethod req of
         "POST"   -> post id_author        
-        -- "GET"    -> get
+        "GET"    -> get id_author
         "DELETE" -> delete id_author
-        -- "PUT"    -> put id_author
+
    where
     post id_author = do    
       body <- strictRequestBody req
@@ -98,8 +98,8 @@ routes pool hLogger hToken hDb req respond = do
         id <- updateDraft hDb pool  id_dr id_author
                     "category" 
                     $ show (fromMaybe 0 (category_ draft))
-        when (id == 0)  $ logWarning hLogger 
-                       " The specified category was not found"
+        when (id == 0) $
+                  logError hLogger " The specified category was not found"
         return ()
       when (not (tags_ draft == Nothing)) $ do
         id <- updateDraft hDb pool id_dr id_author "tags" $ show (fromMaybe [] (tags_ draft))
@@ -159,7 +159,19 @@ routes pool hLogger hToken hDb req respond = do
          logError hLogger "  Invalid id"
        deleteDraft hDb pool id id_author
        respond (responseLBS status204 [("Content-Type", "text/plain")] "")
-
+    
+    get id_author = do
+      let id   = toId req
+      when (id == 0) $ do
+        logError hLogger "  Invalid id"
+      draftMb <- liftIO $ findDraftByID hDb pool id id_author
+      case draftMb of
+        Nothing -> do
+          logError hLogger "  Draft not exist"
+          respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
+        Just draft -> do 
+          respond (responseLBS status200 [("Content-Type", "text/plain")] $ encode draft)     
+      
     verifiedDraftIn :: DraftIn -> IO DraftIn
     verifiedDraftIn draft = 
       case tags draft of
@@ -170,30 +182,3 @@ routes pool hLogger hToken hDb req respond = do
             ("  Not all tags were found. Required - " ++ (show t) 
                               ++ " , found - " ++ (show t'))     
           return draft {tags = (Just t')} 
-
-    -- verifiedDraftUp :: DraftUp -> IO DraftUp
-    -- verifiedDraftUp draft = 
-      -- verifiedTags draft
-   
-    -- verifiedTags :: DraftUp -> IO DraftUp
-    -- verifiedTags draft = do
-      -- case tags_ draft of
-        -- Nothing -> return draft
-        -- Just t -> do
-          -- t' <- checkAvailabilityTags hDb pool t
-          -- when (not (t == t')) $ logWarning hLogger 
-                         -- ("  Not all tags were found. Required - " ++ (show t) 
-                              -- ++ " , found - " ++ (show t'))     
-          -- return draft {tags_ = (Just t')}
-
-    -- verifiedOtherPhotos :: DraftUp -> IO DraftUp
-    -- verifiedOtherPhotos draft = do
-      -- case otherPhotos_ draft of
-        -- Nothing -> return draft
-        -- Just p -> do
-          -- p' <- checkAvailabilityPhotos hDb pool p id_author
-          -- when (not (p == p')) $ logWarning hLogger 
-                         -- ("  Not all photos were found. Required - " ++ (show p) 
-                              -- ++ " , found - " ++ (show p'))     
-          -- return draft {tags_ = (Just p')}
-                                

@@ -40,6 +40,13 @@ toId req = case pathInfo req of
                 _          -> 0
     where read_ x = if ((not (x == [])) && (all isDigit x)) 
                     then read x else 0
+
+toIdImage :: Request -> Integer
+toIdImage req = case pathInfo req of
+                (x:y:xs) -> read_ $ T.unpack y
+                _          -> 0
+    where read_ x = if ((not (x == [])) && (all isDigit x)) 
+                    then read x else 0
                     
 curTimeStr :: String -> IO String
 curTimeStr form = do

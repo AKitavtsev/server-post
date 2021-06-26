@@ -27,6 +27,7 @@ data UserIn  = UserIn  { name     :: String
 
 data UserOut = UserOut { name_    :: String
                        , surname_ :: String
+                       , avatar_  :: String
                        , login_   :: String
                        , c_data   :: String
                        , admin    :: Bool

@@ -59,6 +59,7 @@ newHandle = do
       , SD.findPhotoByID           = findPhotoByID
       , SD.findPhoto               = findPhoto
       , SD.findDraft               = findDraft
+      , SD.findDraftByID           = findDraftByID
       }
 
 newConn conf = connect defaultConnectInfo
@@ -121,7 +122,9 @@ findUserByID pool id = do
                 IO [(String, String, String, String, Bool)]
          return $ pass res
          where pass [(n, sn, log, dat, adm)] 
-                   = Just (UserOut n sn log dat adm)
+                      = Just (UserOut n sn 
+                           ("http://localhost:3000/image/" ++ (show id))
+                           log dat adm)
                pass _ = Nothing
 --------------------------------------------------------------------------------
 -- чисто для служебного пользования
@@ -159,8 +162,6 @@ insertAuthor pool (Author id description) = do
 
 findAuthorByID pool id = do
     res <- liftIO $ fetch pool (Only id) 
-           -- "SELECT FROM authors, users  WHERE id=?" ::
-            -- IO [(Integer, T.Text)]           
               "SELECT users.name, users.surname, authors.description FROM users, authors WHERE users.id = authors.id AND authors.id = ?;"           
     return $ pass res
       where pass [(name, surname, descr)] = Just (AuthorOut name surname descr)
@@ -270,7 +271,22 @@ findDraft pool id_d author = do
      return $ pass res
          where pass [Only id] = Just id
                pass _    = Nothing
--------------------------------------------------------------------------------------  
+
+findDraftByID pool id_d author = do
+  res <- liftIO $ fetch pool [id_d, author]
+              "SELECT  title, c_date::varchar, category, tags::varchar, photo :: varchar, photos::varchar, t_content FROM drafts WHERE id=? AND author =?"
+              :: IO [(String, String, Integer, String, String, String, T.Text)]
+  return $ pass res
+    where 
+      pass [(title, c_date, category, tags, photo, photos, t_content)]
+            = Just (DraftGet title c_date category
+                             (read (listFromSql tags) :: [Integer])
+                             ("http://localhost:3000/photo/" ++ photo)
+                             (map fromPhotoId (read (listFromSql photos) :: [Integer]))
+                             t_content)
+      pass _ = Nothing
+      fromPhotoId id = "http://localhost:3000/photo/" ++ (show id)     
+----------------------------------------------------------------------------------- 
 insertPhoto pool author (Photo im t)  = do
   res <- liftIO $ fetch pool [im, t, show author]
         "INSERT INTO photos (image, image_type, author) VALUES (?,?,?) returning id"
@@ -390,3 +406,6 @@ execSqlT pool args sql = withResource pool ins
 --------------------------------------------------------------------------------
 listToSql :: String -> String
 listToSql list = init ('{': (tail list)) ++ "}"
+
+listFromSql :: String -> String
+listFromSql list = init ('[': (tail list)) ++ "]"

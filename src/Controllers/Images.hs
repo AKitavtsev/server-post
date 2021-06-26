@@ -36,14 +36,14 @@ import qualified Data.ByteString.Base64 as B64
 
 
 routes pool hLogger hToken hDb req respond = do
-  let token = toToken req
-  vt <- validToken hToken token
-  case  vt of
-    Nothing -> do
-       logError hLogger "  Invalid or outdated token"
-       respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-    Just _ -> do
-      let id = toId req
+  -- let token = toToken req
+  -- vt <- validToken hToken token
+  -- case  vt of
+    -- Nothing -> do
+       -- logError hLogger "  Invalid or outdated token"
+       -- respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+    -- Just _ -> do
+      let id = toIdImage req
       when (id == 0) $ do
         logError hLogger "  Invalid id"
       imageMb <- liftIO $ findImageByID hDb pool id
