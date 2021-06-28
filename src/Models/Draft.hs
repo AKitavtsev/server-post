@@ -57,8 +57,8 @@ data DraftUp  = DraftUp  { id_draft     :: Integer
                          
 data DraftGet  = DraftGet  { title_g       :: String
                            , c_date        :: String
-                           , category_g    :: Integer
-                           , tags_g        :: [Integer]
+                           , category_g    :: (Integer, String)
+                           , tags_g        :: [String]
                            , mainPhoto_g   :: String
                            , otherPhotos_g :: [String]
                            , t_content_g   :: T.Text

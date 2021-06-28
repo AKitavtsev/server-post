@@ -169,8 +169,10 @@ routes pool hLogger hToken hDb req respond = do
         Nothing -> do
           logError hLogger "  Draft not exist"
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
-        Just draft -> do 
-          respond (responseLBS status200 [("Content-Type", "text/plain")] $ encode draft)     
+        Just draft -> do
+          tags <- liftIO $ findTags hDb pool id id_author
+          respond (responseLBS status200 [("Content-Type", "text/plain")]
+                                         $ encode (draft {tags_g = tags}))   
       
     verifiedDraftIn :: DraftIn -> IO DraftIn
     verifiedDraftIn draft = 

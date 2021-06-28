@@ -50,6 +50,7 @@ newHandle = do
       , SD.updateOwnerCategory     = updateOwnerCategory
       , SD.insertTag               = insertTag
       , SD.findTagByID             = findTagByID
+      , SD.findTags                = findTags
       , SD.checkAvailabilityTags   = checkAvailabilityTags
       , SD.checkAvailabilityPhotos = checkAvailabilityPhotos
       , SD.insertDraft             = insertDraft
@@ -213,6 +214,13 @@ findTagByID pool id = do
      return $ pass res
          where pass [(id, tag)] = Just (Tag tag)
                pass _                  = Nothing
+
+findTags pool id author= do
+  res <- liftIO $ fetch pool [id, author]
+             "SELECT tag FROM tags WHERE array_position ((SELECT tags FROM drafts WHERE id = ? AND author = ?), id) IS NOT NULL"
+  return $ pass res
+    where pass [] = []
+          pass xs = map fromOnly xs
                
 checkAvailabilityTags pool tags = do
      res <- liftIO $ fetch pool (Only (In tags))
@@ -274,13 +282,12 @@ findDraft pool id_d author = do
 
 findDraftByID pool id_d author = do
   res <- liftIO $ fetch pool [id_d, author]
-              "SELECT  title, c_date::varchar, category, tags::varchar, photo :: varchar, photos::varchar, t_content FROM drafts WHERE id=? AND author =?"
-              :: IO [(String, String, Integer, String, String, String, T.Text)]
+              "SELECT  d.title, d.c_date::varchar, d.category, c.name, d.tags::varchar, d.photo :: varchar, d.photos::varchar, d.t_content FROM drafts d, categories c WHERE  d.category = c.id AND d.id=? AND d.author =?"
+              :: IO [(String, String, Integer, String, String, String, String, T.Text)]
   return $ pass res
     where 
-      pass [(title, c_date, category, tags, photo, photos, t_content)]
-            = Just (DraftGet title c_date category
-                             (read (listFromSql tags) :: [Integer])
+      pass [(title, c_date, id_cat, category, tags, photo, photos, t_content)]
+            = Just (DraftGet title c_date (id_cat, category) []
                              ("http://localhost:3000/photo/" ++ photo)
                              (map fromPhotoId (read (listFromSql photos) :: [Integer]))
                              t_content)
