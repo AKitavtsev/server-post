@@ -41,6 +41,9 @@ routes pool hLogger hToken hDb req respond = do
         "GET"    -> get 
         "DELETE" -> delete vt
         "PUT"    -> put vt
+        _        -> do 
+          logError hLogger "  Invalid method"
+          respond $ responseLBS status404 [("Content-Type", "text/plain")] ""          
   where 
     post vt = do
       case vt of

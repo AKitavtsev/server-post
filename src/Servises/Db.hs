@@ -6,6 +6,7 @@ import qualified Servises.Logger as Logger
 
 import Models.Author
 import Models.Category
+import Models.Comment
 import Models.Draft
 import Models.Tag
 import Models.User
@@ -45,4 +46,8 @@ data Handle = Handle
     , findPhoto          :: Pool Connection -> Integer -> Integer -> IO (Maybe Integer)
     , findDraft          :: Pool Connection -> Integer -> Integer -> IO (Maybe Integer)
     , findDraftByID      :: Pool Connection -> Integer -> Integer -> IO (Maybe DraftGet)
+    , takeWholeDraft     :: Pool Connection -> (Integer, Integer) -> IO [String]
+    , publishPost        :: Pool Connection -> [String] -> IO Integer
+    , insertComment      :: Pool Connection -> CommentIn -> Integer -> String -> IO Integer
+    , deleteComment      :: Pool Connection -> Integer -> Integer -> IO ()
     }

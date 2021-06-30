@@ -11,18 +11,14 @@ import Data.Pool (Pool)
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
-import qualified Data.Time as Time
 
 import Control.Monad (when)
 import GHC.Generics
 import Network.HTTP.Types
 import Network.Wai
 
--- import Controllers.Token (Token (..))
 import FromRequest
 import Models.Author
--- import Servises.Config
 import Servises.Logger
 import Servises.Token
 import Servises.Db
@@ -43,6 +39,9 @@ routes pool hLogger hToken hDb req respond = do
         "GET"    -> get
         "DELETE" -> delete
         "PUT"    -> put
+        _        -> do 
+          logError hLogger "  Invalid method"
+          respond $ responseLBS status404 [("Content-Type", "text/plain")] ""          
   where 
     post = do
       body <- strictRequestBody req

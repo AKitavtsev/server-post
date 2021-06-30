@@ -11,6 +11,7 @@ import qualified Servises.Db as SD
 
 import Models.Author
 import Models.Category
+import Models.Comment
 import Models.Draft
 import Models.Tag
 import Models.User
@@ -61,6 +62,10 @@ newHandle = do
       , SD.findPhoto               = findPhoto
       , SD.findDraft               = findDraft
       , SD.findDraftByID           = findDraftByID
+      , SD.takeWholeDraft          = takeWholeDraft
+      , SD.publishPost             = publishPost
+      , SD.insertComment           = insertComment
+      , SD.deleteComment           = deleteComment
       }
 
 newConn conf = connect defaultConnectInfo
@@ -75,6 +80,7 @@ deleteByID pool model id = do
     "author"   -> do liftIO $ execSqlT pool [id] "DELETE FROM authors WHERE id=?"
     "category" -> do liftIO $ execSqlT pool [id] "DELETE FROM categories WHERE id=?"
     "tag"      -> do liftIO $ execSqlT pool [id] "DELETE FROM tags WHERE id=?"
+    "comment"  -> do liftIO $ execSqlT pool [id] "DELETE FROM comments WHERE id=?"
   return ()
 
 updateByID pool model id fild = do
@@ -99,7 +105,7 @@ updateByID pool model id fild = do
                    -- "UPDATE drafts SET title =? WHERE id=?"
 
   return ()
------------------------------------------------------------------------
+--User---------------------------------------------------------------------
 insertUser pool (UserIn name surname avatar login password) c_date = do
   res <- liftIO $ fetch pool [name, surname, login, password, c_date, "FALSE"]
         "INSERT INTO users (name, surname, login, password, c_date, admin) VALUES(?,?,?,md5( ?) ,?,?) returning id"
@@ -152,7 +158,7 @@ findImageByID pool id = do
          return $ pass res
          where pass [(img, t)] = Just (img, t)
                pass _ = Nothing
---------------------------------------------
+--Author------------------------------------------
 insertAuthor pool (Author id description) = do
   res <- liftIO $ fetch pool [show id, T.unpack description]
         "INSERT INTO authors  (id, description) VALUES(?,?) returning id"
@@ -167,7 +173,7 @@ findAuthorByID pool id = do
     return $ pass res
       where pass [(name, surname, descr)] = Just (AuthorOut name surname descr)
             pass _ = Nothing
---------------------------------
+--Category------------------------------
 insertCategory pool (Category name owner_id) = do
   case owner_id of
     Just owner -> do
@@ -202,7 +208,7 @@ updateOwnerCategory pool id owner = do
   where
     pass [Only id] = id
     pass _         = 0
----------------------------------------------------------------------------     
+--Tag-------------------------------------------------------------------------     
 insertTag pool (Tag tag) = do
       liftIO $ execSqlT pool [tag]
         "INSERT INTO tags (tag) VALUES(?)"
@@ -228,7 +234,7 @@ checkAvailabilityTags pool tags = do
      return $ pass res 
          where pass [] = []
                pass xs = map fromOnly xs
----------------------------------------------------------------------------------
+--Draft-------------------------------------------------------------------------------
 insertDraft pool (DraftIn title category tags t_content mainPhoto otherPhotos) 
                   id c_date = do
   res <- liftIO $ fetch pool [ fromMaybe "" title
@@ -293,7 +299,27 @@ findDraftByID pool id_d author = do
                              t_content)
       pass _ = Nothing
       fromPhotoId id = "http://localhost:3000/photo/" ++ (show id)     
------------------------------------------------------------------------------------ 
+
+takeWholeDraft pool (id_d, id_a) = do
+  res <- liftIO $ fetch pool [id_d, id_a]
+              "SELECT id::varchar, title, c_date::varchar, author:: varchar, category::varchar, tags::varchar, photo::varchar, photos::varchar, t_content FROM drafts WHERE id=? AND author =?"
+              :: IO [(String, String, String, String, String, String, String,
+                      String, T.Text)]
+  return $ pass res
+    where 
+      pass [(i, t, d, a, c, ts, p, ps, t_c)] = [i, t, d, a, c, ts, p, ps, T.unpack t_c]
+      pass _ = []
+
+publishPost pool [] = return 0             
+publishPost pool (i:t:d:a:xs) = do
+  liftIO $ execSqlT pool [i, a] "DELETE FROM posts WHERE id=? AND author =?"  
+  res <- liftIO $ fetch pool (i:t:d:a:xs)
+           "INSERT INTO posts (id, title, c_date, author, category, tags, photo, photos, t_content) VALUES(?,?,?,?,?,?,?,?,?) returning id"
+  return $ pass res
+  where 
+    pass [Only id] = id
+    pass _         = 0           
+--Photo--------------------------------------------------------------------------------- 
 insertPhoto pool author (Photo im t)  = do
   res <- liftIO $ fetch pool [im, t, show author]
         "INSERT INTO photos (image, image_type, author) VALUES (?,?,?) returning id"
@@ -323,10 +349,24 @@ checkAvailabilityPhotos pool photos author = do
      return $ pass res 
          where pass [] = []
                pass xs = map fromOnly xs
-
+--Comment----------------------------------------------------------------------
+insertComment pool (CommentIn post_id comment) 
+                    author_id c_date = do
+  res <- liftIO $ fetch pool [ c_date
+                             , show post_id
+                             , comment
+                             , show author_id
+                             ]
+           "INSERT INTO comments (c_date, post_id, comment, user_id) VALUES(?,?,?,?) returning id"
+  return $ pass res
+  where 
+    pass [Only id] = id
+    pass _         = 0               
                
-               
-               
+deleteComment pool id author = do
+  liftIO $ execSqlT pool [id, author] "DELETE FROM comments WHERE id=? AND user_id =?" 
+  return ()
+                 
 -- listArticles :: Pool Connection -> IO [Article]
 -- listArticles pool = do
      -- res <- fetchSimple pool "SELECT * FROM article ORDER BY id DESC" :: IO [(Integer, TL.Text, TL.Text)]

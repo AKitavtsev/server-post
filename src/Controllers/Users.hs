@@ -35,6 +35,9 @@ routes pool hLogger hToken hDb req respond = do
     "POST"   -> post    
     "GET"    -> get
     "DELETE" -> delete
+    _        -> do 
+      logError hLogger "  Invalid method"
+      respond $ responseLBS status404 [("Content-Type", "text/plain")] ""          
   where 
     post = do
       body <- strictRequestBody req

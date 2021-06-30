@@ -34,13 +34,16 @@ routes pool hLogger hToken hDb req respond = do
       logError hLogger "  Invalid or outdated token"
       respond (responseLBS status400 [("Content-Type", "text/plain")] "")
     Just (id_author, _) -> do
-      logInfo hLogger ("  Method = " ++ (BC.unpack $ toMethod req))         
+      logInfo hLogger ("  Method = " ++ (BC.unpack $ toMethod req))        
       case  toMethod req of
         "POST"   -> post id_author        
         "GET"    -> get id_author
         "DELETE" -> delete id_author
+        _        -> do 
+          logError hLogger "  Invalid method"
+          respond $ responseLBS status404 [("Content-Type", "text/plain")] ""          
 
-   where
+  where
     post id_author = do    
       body <- strictRequestBody req
       logDebug hLogger ("  Body = " ++ (BL.unpack body))
