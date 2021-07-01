@@ -8,6 +8,7 @@ import Models.Author
 import Models.Category
 import Models.Comment
 import Models.Draft
+import Models.Post
 import Models.Tag
 import Models.User
 
@@ -50,4 +51,5 @@ data Handle = Handle
     , publishPost        :: Pool Connection -> [String] -> IO Integer
     , insertComment      :: Pool Connection -> CommentIn -> Integer -> String -> IO Integer
     , deleteComment      :: Pool Connection -> Integer -> Integer -> IO ()
+    , findPosts          :: Pool Connection -> IO [Post]
     }

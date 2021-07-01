@@ -6,22 +6,13 @@ module Controllers.Images
     where
 
 import FromRequest
--- import Controllers.Token
 import Servises.Db
 import Servises.Logger
 import Servises.Token
 import Servises.Config
 
-
 import Control.Monad.Trans
--- import Database.PostgreSQL.Simple
--- import Data.Pool (Pool)
--- import Network.HTTP.Types.Status
 import Data.Aeson
--- import Data.Char (isDigit)
--- import Data.Hash.MD5
--- import Data.Pool (Pool)
--- import Data.Time.Clock
 import Data.List (dropWhile)
 import Control.Monad (when)
 import GHC.Generics

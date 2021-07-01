@@ -6,15 +6,11 @@ module Controllers.Comments
 
 import Control.Monad.Trans
 import Data.Aeson (eitherDecode, encode )
-import Data.Maybe (fromMaybe)
 import Data.Pool (Pool)
 
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as BL
-import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
 
-import Control.Monad (when)
 import GHC.Generics
 import Network.HTTP.Types
 import Network.Wai
@@ -39,10 +35,7 @@ routes pool hLogger hToken hDb req respond = do
         "DELETE" -> delete id_author adm
         _        -> do 
           logError hLogger "  Invalid method"
-          respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
-          
-
-
+          respond $ responseLBS status404 [("Content-Type", "text/plain")] ""          
   where
     post id_author = do    
       body <- strictRequestBody req

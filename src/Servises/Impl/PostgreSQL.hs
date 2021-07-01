@@ -13,6 +13,7 @@ import Models.Author
 import Models.Category
 import Models.Comment
 import Models.Draft
+import Models.Post
 import Models.Tag
 import Models.User
 import Servises.Impl.PostgreSQL.Migrations
@@ -66,6 +67,7 @@ newHandle = do
       , SD.publishPost             = publishPost
       , SD.insertComment           = insertComment
       , SD.deleteComment           = deleteComment
+      , SD.findPosts               = findPosts
       }
 
 newConn conf = connect defaultConnectInfo
@@ -366,7 +368,15 @@ insertComment pool (CommentIn post_id comment)
 deleteComment pool id author = do
   liftIO $ execSqlT pool [id, author] "DELETE FROM comments WHERE id=? AND user_id =?" 
   return ()
-                 
+-- Post------------------------------------------------------------------------
+
+findPosts pool = do
+  res <- fetchSimple pool "SELECT id, title, c_date :: varchar, author, category, tags :: varchar, photo, photos :: varchar, t_content FROM posts" 
+     :: IO [(Integer, String, String, Integer, Integer, String, Integer, String, T.Text)]
+  return $ map (\(id, title, c_date, author, category, tags, photo, photos, t_content) ->
+           Post id title c_date author category (read (listFromSql tags) :: [Integer])
+                photo (read (listFromSql photos) :: [Integer]) t_content) res
+                
 -- listArticles :: Pool Connection -> IO [Article]
 -- listArticles pool = do
      -- res <- fetchSimple pool "SELECT * FROM article ORDER BY id DESC" :: IO [(Integer, TL.Text, TL.Text)]
@@ -422,9 +432,9 @@ testException resEither = do
       
 
 -- No arguments -- just pure sql
--- fetchSimple :: FromRow r => Pool Connection -> Query -> IO [r]
--- fetchSimple pool sql = withResource pool retrieve
-       -- where retrieve conn = query_ conn sql
+fetchSimple :: FromRow r => Pool Connection -> Query -> IO [r]
+fetchSimple pool sql = withResource pool retrieve
+       where retrieve conn = query_ conn sql
 
 -- Update database
 -- execSql :: ToRow q => Pool Connection -> q -> Query -> IO Int64
