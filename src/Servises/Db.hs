@@ -51,5 +51,5 @@ data Handle = Handle
     , publishPost        :: Pool Connection -> [String] -> IO Integer
     , insertComment      :: Pool Connection -> CommentIn -> Integer -> String -> IO Integer
     , deleteComment      :: Pool Connection -> Integer -> Integer -> IO ()
-    , findPosts          :: Pool Connection -> IO [Post]
+    , takeAllPosts       :: Pool Connection -> IO [Post]
     }

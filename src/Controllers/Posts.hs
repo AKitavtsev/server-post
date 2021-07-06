@@ -35,7 +35,7 @@ routes pool hLogger hToken hDb req respond = do
        logError hLogger "  Invalid or outdated token"
        respond (responseLBS status400 [("Content-Type", "text/plain")] "")
     Just _ -> do
-      posts <- liftIO $ findPosts hDb pool
+      posts <- liftIO $ takeAllPosts hDb pool
       case posts of
         [] -> do
           logError hLogger "  Posts not found"

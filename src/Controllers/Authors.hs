@@ -76,7 +76,7 @@ routes pool hLogger hToken hDb req respond = do
        deleteByID hDb pool "author" id
        respond (responseLBS status204 [("Content-Type", "text/plain")] "")
     put = do
-       let id       = toId req
+       let id      = toId req
            descrMb = toParam req "description"
        when (id == 0) $ do
          logError hLogger "  Invalid id"

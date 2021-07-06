@@ -67,7 +67,7 @@ newHandle = do
       , SD.publishPost             = publishPost
       , SD.insertComment           = insertComment
       , SD.deleteComment           = deleteComment
-      , SD.findPosts               = findPosts
+      , SD.takeAllPosts            = takeAllPosts
       }
 
 newConn conf = connect defaultConnectInfo
@@ -222,8 +222,8 @@ findTagByID pool id = do
      return $ pass res
          where pass [(id, tag)] = Just (Tag tag)
                pass _                  = Nothing
-
-findTags pool id author= do
+ 
+findTags pool id author = do
   res <- liftIO $ fetch pool [id, author]
              "SELECT tag FROM tags WHERE array_position ((SELECT tags FROM drafts WHERE id = ? AND author = ?), id) IS NOT NULL"
   return $ pass res
@@ -300,7 +300,6 @@ findDraftByID pool id_d author = do
                              (map fromPhotoId (read (listFromSql photos) :: [Integer]))
                              t_content)
       pass _ = Nothing
-      fromPhotoId id = "http://localhost:3000/photo/" ++ (show id)     
 
 takeWholeDraft pool (id_d, id_a) = do
   res <- liftIO $ fetch pool [id_d, id_a]
@@ -369,13 +368,46 @@ deleteComment pool id author = do
   liftIO $ execSqlT pool [id, author] "DELETE FROM comments WHERE id=? AND user_id =?" 
   return ()
 -- Post------------------------------------------------------------------------
+-- takeAllPosts' pool = do
+  -- res <- fetchSimple pool "SELECT id, title, c_date :: varchar, author, category, tags :: varchar, photo, photos :: varchar, t_content FROM posts" 
+     -- :: IO [(Integer, String, String, Integer, Integer, String, Integer, String, T.Text)]
+  -- return $ map (\(i, t, d, a, c, ts, p, ps, t_c) ->
+           -- Post i t d a c (read (listFromSql ts) :: [Integer])
+                -- p (read (listFromSql ps) :: [Integer]) t_c) res
 
-findPosts pool = do
-  res <- fetchSimple pool "SELECT id, title, c_date :: varchar, author, category, tags :: varchar, photo, photos :: varchar, t_content FROM posts" 
-     :: IO [(Integer, String, String, Integer, Integer, String, Integer, String, T.Text)]
-  return $ map (\(id, title, c_date, author, category, tags, photo, photos, t_content) ->
-           Post id title c_date author category (read (listFromSql tags) :: [Integer])
-                photo (read (listFromSql photos) :: [Integer]) t_content) res
+takeAllPosts pool = do
+  res <- fetchSimple pool "SELECT p.id, p.title, p.c_date :: varchar, u.name, u.surname, c.name, p.tags :: varchar, p.photo, p.photos :: varchar, p.t_content FROM posts p, users u, categories c WHERE p.author = u.id AND p.category = c.id"
+     :: IO [(Integer, String, String,
+             String, String,
+             String,
+             String,
+             Integer, String, T.Text)] 
+  mapM joinPost res          
+  where 
+    -- joinPost :: (Integer, String, String, String, String, String, String, Integer, String, T.Text) -> IO Post
+    joinPost (i, t, d, n, sn, c, ts, p, ps, t_c) = do
+      tss <- mapM tagFromInteger (read (listFromSql ts) :: [Integer])
+      return (Post i t d n sn c
+                   tss
+                   (fromPhotoId p)
+                   (map fromPhotoId (read (listFromSql ps) :: [Integer]))
+                   t_c)
+    -- tagFromInteger :: Integer -> IO String           
+    tagFromInteger id = do 
+      nameTagMb <- findTagByID pool id
+      case nameTagMb of
+        Just (Tag nameTag) -> return nameTag
+        Nothing            -> return ""
+            
+                
+                
+                
+  -- return $ map (\(i, t, d, n, sn, c, ts, p, ps, t_c) ->
+           -- Post i t d n sn c
+                -- (read (listFromSql ts) :: [Integer])
+                -- (fromPhotoId p)
+                -- (map fromPhotoId (read (listFromSql ps) :: [Integer])) t_c) res
+                
                 
 -- listArticles :: Pool Connection -> IO [Article]
 -- listArticles pool = do
@@ -420,6 +452,11 @@ fetch pool args sql = withResource pool retrieve
          -- query conn sql args
               resEither <- try (query conn sql args)
               testException resEither
+
+-- catches :: IO a -> [Handler a] -> IO a
+
+-- f = expr `catches` [Handler (\ (ex :: ArithException) -> handleArith ex),
+                    -- Handler (\ (ex :: IOException)    -> handleIO    ex)]
              
 testException :: (Either SqlError [r]) ->  IO [r]
 testException resEither = do
@@ -466,3 +503,7 @@ listToSql list = init ('{': (tail list)) ++ "}"
 
 listFromSql :: String -> String
 listFromSql list = init ('[': (tail list)) ++ "]"
+
+      
+fromPhotoId :: Integer -> String      
+fromPhotoId id = "http://localhost:3000/photo/" ++ (show id)     

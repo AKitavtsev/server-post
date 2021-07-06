@@ -71,7 +71,7 @@ routes pool hLogger hToken hDb req respond = do
           respond (responseLBS status400 [("Content-Type", "text/plain")] "")
         _ -> do
           idim   <- insertPhoto hDb pool id_author
-                     (mainPhoto correctlyParsedBody)
+                     (mainPhoto correctlyParsedBody')
           case idim of
             0 -> do
               logError hLogger
@@ -80,12 +80,12 @@ routes pool hLogger hToken hDb req respond = do
             _ -> do
               updateByID hDb pool "draftPhoto" id (show idim)
               photos <- mapM (insertPhoto hDb pool id_author)
-                             (fromMaybe [] (otherPhotos correctlyParsedBody))
+                             (fromMaybe [] (otherPhotos correctlyParsedBody'))
               when (any (== 0) photos) $ do
                 logWarning hLogger 
                        (" Some of the photos are of an invalid type" ++
                         " (only png, jpg, gif or bmp is allowed).")              
-                updateByID hDb pool "draftPhotos" id (show photos)              
+              updateByID hDb pool "draftPhotos" id (show photos)              
               respond (responseLBS status201 [("Content-Type", "text/plain")]
                        $ encode (DraftPost id idim (photos)))
                        
