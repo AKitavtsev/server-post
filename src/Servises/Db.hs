@@ -22,7 +22,7 @@ data Handle = Handle
     , runMigrations      :: Logger.Handle 
                          -> Connection -> Pool Connection -> FilePath -> IO ()
     , deleteByID         :: Pool Connection -> String -> Integer -> IO ()
-    , updateByID         :: Pool Connection -> String -> Integer -> String -> IO ()
+    , updateByID         :: Pool Connection -> String -> Integer -> String -> String -> IO ()
     , insertUser         :: Pool Connection -> UserIn -> String-> IO Integer
     , findUserByLogin    :: Pool Connection -> String -> String -> IO (Maybe (Integer, Bool))
     , findUserByID       :: Pool Connection -> Integer -> IO (Maybe UserOut)

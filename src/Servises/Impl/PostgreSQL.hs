@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Servises.Impl.PostgreSQL 
     ( newHandle
@@ -20,12 +21,13 @@ import Servises.Impl.PostgreSQL.Migrations
 
 import Database.PostgreSQL.Simple
 
-import Data.Char (toLower)
-import Data.Maybe
-import Data.Pool (Pool (..), withResource)
 import Control.Exception
 import Control.Monad.Trans (liftIO)
 import Control.Monad (when, forM_)
+import Data.Char (toLower)
+import Data.Maybe
+import Data.Pool (Pool (..), withResource)
+import Data.String (fromString)
 import GHC.Int (Int64 (..))
 
 import qualified Data.ByteString.Lazy.Char8 as LC
@@ -75,37 +77,44 @@ newConn conf = connect defaultConnectInfo
                        , connectPassword = C.password conf
                        , connectDatabase = C.name conf
                        }
+-- q :: Query
+-- q = fromString ("select" ++ " ?")
 
 deleteByID pool model id = do
-  case model of
-    "user"     -> do liftIO $ execSqlT pool [id] "DELETE FROM users WHERE id=?"
-    "author"   -> do liftIO $ execSqlT pool [id] "DELETE FROM authors WHERE id=?"
-    "category" -> do liftIO $ execSqlT pool [id] "DELETE FROM categories WHERE id=?"
-    "tag"      -> do liftIO $ execSqlT pool [id] "DELETE FROM tags WHERE id=?"
-    "comment"  -> do liftIO $ execSqlT pool [id] "DELETE FROM comments WHERE id=?"
+  -- let q = fromString ("DELETE FROM " ++ model ++ " WHERE id=?") :: Query
+  liftIO $ execSqlT pool [id] $ fromString ("DELETE FROM " ++ model ++ "s WHERE id=?")
+  -- case model of
+    -- "user"     -> do liftIO $ execSqlT pool [id] "DELETE FROM users WHERE id=?"
+    -- "author"   -> do liftIO $ execSqlT pool [id] "DELETE FROM authors WHERE id=?"
+    -- "category" -> do liftIO $ execSqlT pool [id] "DELETE FROM categories WHERE id=?"
+    -- "tag"      -> do liftIO $ execSqlT pool [id] "DELETE FROM tags WHERE id=?"
+    -- "comment"  -> do liftIO $ execSqlT pool [id] "DELETE FROM comments WHERE id=?"
   return ()
 
-updateByID pool model id fild = do
-  case model of
-    "author"      -> do 
-      liftIO $ execSqlT pool [fild, (show id)] 
-                   "UPDATE authors SET description =? WHERE id=?"
-    "tag"         -> do
-      liftIO $ execSqlT pool [fild, (show id)] 
-                   "UPDATE tags SET tag=? WHERE id=?"
-    "category"    -> do
-      liftIO $ execSqlT pool [fild, (show id)]
-                   "UPDATE categories SET name=? WHERE id=?"
-    "draftPhoto"  -> do
-      liftIO $ execSqlT pool [fild, (show id)]
-                   "UPDATE drafts SET photo =? WHERE id=?"
-    "draftPhotos" -> do
-      liftIO $ execSqlT pool [listToSql fild, (show id)]
-                   "UPDATE drafts SET photos =? WHERE id=?"
-    -- "draftTitle"      -> do
+updateByID pool model id fild value = do
+  putStrLn ("-----------------" ++ ("UPDATE " ++ model ++ 
+                       "SET " ++ fild ++ " =? WHERE id=?"))
+      
+  liftIO $ execSqlT pool [value, (show id)] 
+         $ fromString ("UPDATE " ++ model ++ 
+                       " SET " ++ fild ++ " =? WHERE id=?")
+                       
+  -- case model of
+    -- "author"      -> do 
+      -- liftIO $ execSqlT pool [fild, (show id)] 
+                   -- "UPDATE authors SET description =? WHERE id=?"
+    -- "tag"         -> do
+      -- liftIO $ execSqlT pool [fild, (show id)] 
+                   -- "UPDATE tags SET tag=? WHERE id=?"
+    -- "category"    -> do
       -- liftIO $ execSqlT pool [fild, (show id)]
-                   -- "UPDATE drafts SET title =? WHERE id=?"
-
+                   -- "UPDATE categories SET name=? WHERE id=?"
+    -- "draftPhoto"  -> do
+      -- liftIO $ execSqlT pool [fild, (show id)]
+                   -- "UPDATE drafts SET photo =? WHERE id=?"
+    -- "draftPhotos" -> do
+      -- liftIO $ execSqlT pool [listToSql fild, (show id)]
+                   -- "UPDATE drafts SET photos =? WHERE id=?"
   return ()
 --User---------------------------------------------------------------------
 insertUser pool (UserIn name surname avatar login password) c_date = do
@@ -255,29 +264,36 @@ deleteDraft pool id author = do
   liftIO $ execSqlT pool [id, author] "DELETE FROM drafts WHERE id=? AND author =?" 
   return ()
 
-updateDraft pool id author fild content = do
-  case fild of
-    "title"    -> do 
-      res <- liftIO $ fetch pool [content, (show id), (show author)]
-                    "UPDATE drafts SET title=? WHERE id=? AND author =? returning id"
-      return $ pass res
-    "category" -> do 
-      res <- liftIO $ fetch pool [content, (show id), (show author)]
-                    "UPDATE drafts SET category=? WHERE id=? AND author =? returning id"
-      return $ pass res
-    "tags" -> do                    
-      res <- liftIO $ fetch pool [listToSql content, (show id), (show author)]
-                    "UPDATE drafts SET tags =? WHERE id=? AND author =? returning id" 
-      return $ pass res
-    "photos" -> do                    
-      res <- liftIO $ fetch pool [listToSql content, (show id), (show author)]
-                    "UPDATE drafts SET photos =? WHERE id=? AND author =? returning id" 
-      return $ pass res
-    "photo" -> do                    
-      res <- liftIO $ fetch pool [content, (show id), (show author)]
-                    "UPDATE drafts SET photo =? WHERE id=? AND author =? returning id" 
-      return $ pass res
-  where 
+updateDraft pool id author fild content_ = do
+  res <- liftIO $ fetch pool [content, (show id), (show author)]  
+                $ fromString ("UPDATE drafts SET " 
+                              ++ fild ++ " =?"
+                              ++ " WHERE id=? AND author =? returning id")
+  -- case fild of
+    -- "title"    -> do 
+      -- res <- liftIO $ fetch pool [content, (show id), (show author)]
+                    -- "UPDATE drafts SET title=? WHERE id=? AND author =? returning id"
+      -- return $ pass res
+    -- "category" -> do 
+      -- res <- liftIO $ fetch pool [content, (show id), (show author)]
+                    -- "UPDATE drafts SET category=? WHERE id=? AND author =? returning id"
+      -- return $ pass res
+    -- "tags" -> do                    
+      -- res <- liftIO $ fetch pool [content, (show id), (show author)]
+                    -- "UPDATE drafts SET tags =? WHERE id=? AND author =? returning id" 
+      -- return $ pass res
+    -- "photos" -> do                    
+      -- res <- liftIO $ fetch pool [content, (show id), (show author)]
+                    -- "UPDATE drafts SET photos =? WHERE id=? AND author =? returning id" 
+      -- return $ pass res
+    -- "photo" -> do                    
+      -- res <- liftIO $ fetch pool [content, (show id), (show author)]
+                    -- "UPDATE drafts SET photo =? WHERE id=? AND author =? returning id" 
+  return $ pass res
+  where
+    content = if ((fild == "tags") || (fild == "photos")) 
+              then listToSql content_ 
+              else           content_
     pass [Only id] = id
     pass _         = 0
     
@@ -448,23 +464,26 @@ takeAllPosts pool = do
      
 fetch :: (FromRow r, ToRow q) => Pool Connection -> q -> Query -> IO [r]
 fetch pool args sql = withResource pool retrieve
-      where retrieve conn = do
-         -- query conn sql args
-              resEither <- try (query conn sql args)
-              testException resEither
-
--- catches :: IO a -> [Handler a] -> IO a
-
--- f = expr `catches` [Handler (\ (ex :: ArithException) -> handleArith ex),
-                    -- Handler (\ (ex :: IOException)    -> handleIO    ex)]
-             
-testException :: (Either SqlError [r]) ->  IO [r]
-testException resEither = do
-    case resEither of
-        Right val -> return val
-        Left ex   -> do
-          putStrLn (show ex)
+      where 
+        retrieve conn = 
+          (query conn sql args)
+           `catches` [Handler (\ (ex :: SqlError)    -> handleSql ex),
+                      Handler (\ (ex :: ResultError) -> handleSql ex)]
+        handleSql ex = do
+          putStrLn ("-----------------" ++ show ex)
           return []
+          
+                     -- do
+              -- resEither <- try (query conn sql args)
+              -- testException resEither
+             
+-- testException :: (Either SqlError [r]) ->  IO [r]
+-- testException resEither = do
+    -- case resEither of
+        -- Right val -> return val
+        -- Left ex   -> do
+          -- putStrLn (show ex)
+          -- return []
       
       
 

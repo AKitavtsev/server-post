@@ -95,7 +95,7 @@ routes pool hLogger hToken hDb req respond = do
           let nameMb = (toParam req "name")
           when (not (nameMb == Nothing)) $ do
             let name = case nameMb of Just n -> n
-            updateByID hDb pool  "category" id name
+            updateByID hDb pool  "categories" id "name" name
             logDebug hLogger ("  Update name to " ++ name)            
           let ownerMb = (toParam req "id_owner")
           case ownerMb of
