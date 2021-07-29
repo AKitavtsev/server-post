@@ -92,7 +92,7 @@ routes pool hLogger hToken hDb req respond = do
           when (not (tagMb == Nothing)) $ do
             let tag = case tagMb of Just t -> t
             logError hLogger ("  Update tag to " ++ tag)
-            updateByID hDb pool "tags" id "tag" tag
+            updateByID hDb pool "tag" id "tag" tag
           respond (responseLBS status200 [("Content-Type", "text/plain")] "") 
         Just (_, False) -> do
           logError hLogger "  Administrator authority required"

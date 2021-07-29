@@ -1,4 +1,4 @@
-INSERT INTO categories (name, id_owner)
+INSERT INTO category (category_name, owner_id)
   VALUES ('Music', NULL),
 		 ('Others', NULL),
 		 ('Rock and pop', 1),

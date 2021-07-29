@@ -3,24 +3,22 @@
 
 module Controllers.Drafts 
     where
-
-import Control.Monad.Trans
-import Data.Aeson (eitherDecode, encode )
+    
+import Control.Monad (when)
+import Control.Monad.Trans (liftIO)
+import Data.Aeson (eitherDecode, encode)
+import Data.List (sort)
 import Data.Maybe (fromMaybe)
 import Data.Pool (Pool)
+import GHC.Generics
+import Network.HTTP.Types
+import Network.Wai
 
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
--- import qualified Data.Time as Time
 
-import Control.Monad (when)
-import GHC.Generics
-import Network.HTTP.Types
-import Network.Wai
-
--- import Controllers.Token (Token (..))
 import FromRequest
 import Models.Draft
 import Servises.Logger
@@ -38,155 +36,111 @@ routes pool hLogger hToken hDb req respond = do
       case  toMethod req of
         "POST"   -> post id_author        
         "GET"    -> get id_author
+        "PUT"    -> put id_author
         "DELETE" -> delete id_author
         _        -> do 
           logError hLogger "  Invalid method"
           respond $ responseLBS status404 [("Content-Type", "text/plain")] ""          
-
   where
-    post id_author = do    
-      body <- strictRequestBody req
-      logDebug hLogger ("  Body = " ++ (BL.unpack body))
-      case eitherDecode body :: Either String DraftUp of
-        Right correctlyParsedBody -> do 
-          logInfo hLogger ("  Update")
-          update id_author correctlyParsedBody        
-          respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-        _  -> do
+    post id_author = do
+      res <-  strictRequestBody req   >>=
+              getDraft                >>=
+              postDraft id_author     >>=
+              postTags                >>=
+              postOtherPhotos
+      case res of
+        Nothing    -> respond (responseLBS status400
+                               [("Content-Type", "text/plain")] "")
+        Just draft -> respond (responseLBS status200 
+                               [("Content-Type", "text/plain")] $ encode draft)                  
+      where 
+        getDraft body = do
           case eitherDecode body :: Either String DraftIn of
-            Right correctlyParsedBody -> do
-              logInfo hLogger ("  Insert")
-              insert id_author correctlyParsedBody
-            Left  e -> do              
-              logError hLogger ("  Invalid request body  - " ++ e)          
-              respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-              
-    insert id_author correctlyParsedBody = do
-      c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
-      correctlyParsedBody' <- verifiedDraftIn correctlyParsedBody
-      id <- insertDraft hDb pool correctlyParsedBody' id_author c_date
-      case id of
-        0 -> do
-          logError hLogger "  No category specified" 
-          respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-        _ -> do
-          idim   <- insertPhoto hDb pool id_author
-                     (mainPhoto correctlyParsedBody')
-          case idim of
+            Right draft -> return (Just draft)
+            Left  e     -> do              
+              logError hLogger ("  Invalid request body  - " ++ e)
+              return Nothing
+        postDraft _ Nothing              = return (0, Nothing)
+        postDraft id_author (Just draft) = do
+          c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"              
+          id     <- insertDraft hDb pool draft id_author c_date
+          case id of
             0 -> do
-              logError hLogger
-               "  Invalid photo type specified (only png, jpg, gif or bmp is allowed)"
-              respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-            _ -> do
-              updateDraft hDb pool id id_author "photo" (show idim)
-
-              -- updateByID hDb pool "draftPhoto" id (show idim)
-              photos <- mapM (insertPhoto hDb pool id_author)
-                             (fromMaybe [] (otherPhotos correctlyParsedBody'))
-              when (any (== 0) photos) $ do
-                logWarning hLogger 
-                       (" Some of the photos are of an invalid type" ++
-                        " (only png, jpg, gif or bmp is allowed).")              
-              updateDraft hDb pool id id_author "photos" (show photos)
-              -- updateByID hDb pool "draftPhotos" id (show photos)              
-              respond (responseLBS status201 [("Content-Type", "text/plain")]
-                       $ encode (DraftPost id idim (photos)))
-                       
-    update id_author correctlyParsedBody = do
-      draft <- verifiedDraftUp correctlyParsedBody
-      let id_dr = id_draft draft            
-      when (not (title_ draft == Nothing)) $ do
-        id <- updateDraft hDb pool id_dr id_author
-                    "title"
-                    (fromMaybe "" (title_ draft)) 
-        return ()                    
-      when (not (category_ draft == Nothing)) $ do
-        id <- updateDraft hDb pool  id_dr id_author
-                    "category" 
-                    $ show (fromMaybe 0 (category_ draft))
-        when (id == 0) $
-                  logError hLogger " The specified category was not found"
-        return ()
-      when (not (tags_ draft == Nothing)) $ do
-        id <- updateDraft hDb pool id_dr id_author "tags" $ show (fromMaybe [] (tags_ draft))
-        return ()
-      when (not (mainPhoto_ draft == Nothing)) $ do
-        id <- updateDraft hDb pool id_dr id_author "photo" $ show (fromMaybe 0 (mainPhoto_ draft))
-        return ()
-      when (not (otherPhotos_ draft == Nothing)) $ do
-        id <- updateDraft hDb pool id_dr id_author "photos" $ show (fromMaybe [] (otherPhotos_ draft))
-        return ()
-      respond (responseLBS status200 [("Content-Type", "text/plain")] "")
-        where
-          verifiedDraftUp draft = return draft        >>= 
-                                    verifiedID        >>=
-                                    verifiedTags      >>=
-                                    verifiedMainPhoto >>=
-                                    verifiedOtherPhotos          
-          verifiedID draft = do
-            id <- findDraft hDb pool (id_draft draft) id_author
-            case id of
-              Nothing -> do
-                logError hLogger ("  Draft not found")
-                return (DraftUp (id_draft draft) Nothing Nothing Nothing Nothing Nothing Nothing)
-              _       -> return draft
-          verifiedTags draft = do
-            case tags_ draft of
-              Nothing -> return draft
-              Just t  -> do
-                t' <- checkAvailabilityTags hDb pool t
-                when (not (t == t')) $ logWarning hLogger 
-                         ("  Not all tags were found. Required - " ++ (show t) 
-                              ++ " , found - " ++ (show t'))     
-                return draft {tags_ = (Just t')}
-          verifiedMainPhoto draft = do
-            case mainPhoto_ draft of
-              Nothing    -> return draft
-              Just photo -> do
-                id <- findPhoto hDb pool photo id_author
-                case id of
-                  Nothing -> do
-                    logError hLogger ("  Photo not found")
-                    return draft {mainPhoto_ = Nothing}
-                  _       -> return draft
-          verifiedOtherPhotos draft = do
-            case otherPhotos_ draft of
-              Nothing -> return draft
-              Just p -> do
-                p' <- checkAvailabilityPhotos hDb pool p id_author
-                when (not (p == p')) $ logWarning hLogger 
-                         ("  Not all photos were found. Required - " ++ (show p) 
-                              ++ " , found - " ++ (show p'))     
-                return draft {otherPhotos_ = (Just p')}
-                                            
+              logError hLogger "  Category not found"
+              return (0, Nothing)
+            _ -> return (id, (Just draft))
+        postTags (0, _)             = return (0, Nothing)
+        postTags (id, (Just draft)) = do
+           let listTags = tags draft
+           t <- mapM (insertTagDraft hDb pool id) listTags
+           when (t /= listTags) $ logWarning hLogger "  Not all tags were found"
+           return (id, Just (draft {tags = (filter (/= 0) t)}))           
+        postOtherPhotos (0, _)             = return Nothing
+        postOtherPhotos (id, (Just draft)) = do
+           let listPhotos = otherPhotos draft
+           p <- mapM (insertPhotoDraft hDb pool id) listPhotos           
+           when (p /= listPhotos) $ logWarning hLogger "  Not all photos were found"
+           return (Just (DraftPost id (tags draft) (filter (/= 0) p)))   
+    put id_author = do
+      res <-  strictRequestBody req >>=
+              getDraft              >>=
+              putDraft id_author    >>= 
+              putTags               >>=
+              putOtherPhotos
+      case res of
+        Nothing    -> respond (responseLBS status400
+                            [("Content-Type", "text/plain")] "")
+        Just draft -> respond (responseLBS status200 
+                               [("Content-Type", "text/plain")] $ encode draft)                   
+      where 
+        getDraft body = do
+          case eitherDecode body :: Either String DraftUp of
+            Right draft -> return (Just draft)
+            Left  e     -> do              
+              logError hLogger ("  Invalid request body  - " ++ e)
+              return Nothing
+        putDraft _ Nothing              = return Nothing
+        putDraft id_author (Just draft) = do
+          res <- updateDraft hDb pool draft id_author
+          case res of
+            Just draft -> return (Just draft)
+            Nothing    -> do              
+              logError hLogger "  Draft, category or main photo not found"
+              return Nothing
+        putTags Nothing              = return Nothing
+        putTags (Just draft)        
+          | newTags draft == Nothing  = return (Just draft)
+          | otherwise = do        
+             deleteByID hDb pool "tag_draft" (id_draft draft)
+             let listTags = fromMaybe [] (newTags draft)
+             logDebug hLogger ("  " ++ (show listTags))
+             t <- mapM (insertTagDraft hDb pool (id_draft draft)) listTags
+             when (t /= listTags) $ logWarning hLogger "  Not all tags were found"
+             return (Just (draft {newTags = Just (filter (/= 0) t)}))
+        putOtherPhotos Nothing               = return Nothing
+        putOtherPhotos (Just draft)
+          | newOtherPhotos draft == Nothing  = return (Just draft) 
+          | otherwise = do
+             deleteByID hDb pool "photo_draft" (id_draft draft)
+             let listPhotos = fromMaybe [] (newOtherPhotos draft)
+             logDebug hLogger ("  " ++ (show listPhotos))
+             p <- mapM (insertPhotoDraft hDb pool (id_draft draft)) listPhotos
+             when (p /= listPhotos) $ logWarning hLogger "  Not all photos were found"
+             return (Just (draft {newOtherPhotos = Just (filter (/= 0) p)}))
     delete id_author = do
-       let id   = toId req
-       when (id == 0) $ do
-         logError hLogger "  Invalid id"
-       deleteDraft hDb pool id id_author
-       respond (responseLBS status204 [("Content-Type", "text/plain")] "")
-    
+      let id   = toId req
+      when (id == 0) $ do
+        logError hLogger "  Invalid id"
+      deleteDraft hDb pool id id_author
+      respond (responseLBS status204 [("Content-Type", "text/plain")] "")    
     get id_author = do
       let id   = toId req
       when (id == 0) $ do
         logError hLogger "  Invalid id"
-      draftMb <- liftIO $ findDraftByID hDb pool id id_author
+      draftMb <- liftIO $ findDraftByID hDb pool id
       case draftMb of
         Nothing -> do
           logError hLogger "  Draft not exist"
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
-        Just draft -> do
-          tags <- liftIO $ findTags hDb pool id id_author
-          respond (responseLBS status200 [("Content-Type", "text/plain")]
-                                         $ encode (draft {tags_g = tags}))   
-      
-    verifiedDraftIn :: DraftIn -> IO DraftIn
-    verifiedDraftIn draft = 
-      case tags draft of
-        Nothing -> return draft
-        Just  t -> do    
-          t' <- checkAvailabilityTags hDb pool t
-          when (not (t == t')) $ logWarning hLogger 
-            ("  Not all tags were found. Required - " ++ (show t) 
-                              ++ " , found - " ++ (show t'))     
-          return draft {tags = (Just t')} 
+        Just draft -> respond (responseLBS status200 
+                               [("Content-Type", "text/plain")] $ encode draft) 

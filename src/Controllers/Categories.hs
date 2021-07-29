@@ -73,7 +73,9 @@ routes pool hLogger hToken hDb req respond = do
           Nothing -> do
             logError hLogger "  Category not exist"
             respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
-          Just category -> do 
+          Just category -> do
+            -- ac <- allCategories [id] [id]
+            -- logDebug hLogger (show ac)           
             respond (responseLBS status200 [("Content-Type", "text/plain")] $ encode category)
     delete vt = do
       case vt of
@@ -95,7 +97,7 @@ routes pool hLogger hToken hDb req respond = do
           let nameMb = (toParam req "name")
           when (not (nameMb == Nothing)) $ do
             let name = case nameMb of Just n -> n
-            updateByID hDb pool  "categories" id "name" name
+            updateByID hDb pool  "category" id "name" name
             logDebug hLogger ("  Update name to " ++ name)            
           let ownerMb = (toParam req "id_owner")
           case ownerMb of
@@ -113,3 +115,11 @@ routes pool hLogger hToken hDb req respond = do
           logError hLogger "  Administrator authority required"
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")    
 
+    allCategories :: [Integer] -> [Integer] -> IO [Integer]
+    allCategories [] tg = return tg
+    allCategories xs tg = do
+      subxs <- mapM getSubCat xs
+      allCategories (concat subxs) (tg ++ (concat subxs))
+      where getSubCat id = findSubCat hDb pool id
+  
+  

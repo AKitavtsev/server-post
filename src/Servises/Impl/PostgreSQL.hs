@@ -52,20 +52,25 @@ newHandle = do
       , SD.insertCategory          = insertCategory
       , SD.findCategoryByID        = findCategoryByID
       , SD.updateOwnerCategory     = updateOwnerCategory
+      , SD.findSubCat              = findSubCat
       , SD.insertTag               = insertTag
-      , SD.findTagByID             = findTagByID
+      , SD.insertTagDraft          = insertTagDraft
+      , SD.insertPhotoDraft        = insertPhotoDraft
       , SD.findTags                = findTags
-      , SD.checkAvailabilityTags   = checkAvailabilityTags
-      , SD.checkAvailabilityPhotos = checkAvailabilityPhotos
+      -- , SD.checkAvailabilityTags   = checkAvailabilityTags
+      -- , SD.checkAvailabilityPhotos = checkAvailabilityPhotos
       , SD.insertDraft             = insertDraft
       , SD.deleteDraft             = deleteDraft
       , SD.updateDraft             = updateDraft
       , SD.insertPhoto             = insertPhoto
+      -- , SD.updateMainPhoto         = updateMainPhoto
+      -- , SD.updateOtherPhotos       = updateOtherPhotos
+      , SD.findTagByID             = findTagByID 
       , SD.findPhotoByID           = findPhotoByID
-      , SD.findPhoto               = findPhoto
-      , SD.findDraft               = findDraft
+      -- , SD.findPhoto               = findPhoto
+      -- , SD.findDraft               = findDraft
       , SD.findDraftByID           = findDraftByID
-      , SD.takeWholeDraft          = takeWholeDraft
+      -- , SD.takeWholeDraft          = takeWholeDraft
       , SD.publishPost             = publishPost
       , SD.insertComment           = insertComment
       , SD.deleteComment           = deleteComment
@@ -82,33 +87,35 @@ newConn conf = connect defaultConnectInfo
 
 deleteByID pool model id = do
   -- let q = fromString ("DELETE FROM " ++ model ++ " WHERE id=?") :: Query
-  liftIO $ execSqlT pool [id] $ fromString ("DELETE FROM " ++ model ++ "s WHERE id=?")
-  -- case model of
-    -- "user"     -> do liftIO $ execSqlT pool [id] "DELETE FROM users WHERE id=?"
-    -- "author"   -> do liftIO $ execSqlT pool [id] "DELETE FROM authors WHERE id=?"
-    -- "category" -> do liftIO $ execSqlT pool [id] "DELETE FROM categories WHERE id=?"
-    -- "tag"      -> do liftIO $ execSqlT pool [id] "DELETE FROM tags WHERE id=?"
-    -- "comment"  -> do liftIO $ execSqlT pool [id] "DELETE FROM comments WHERE id=?"
+  -- liftIO $ execSqlT pool [id] $ fromString ("DELETE FROM " ++ model ++ "s WHERE id=?")
+  case model of
+    "user"        -> liftIO $ execSqlT pool [id]
+                            "DELETE FROM user_ WHERE user_id=?"
+    "author"      -> liftIO $ execSqlT pool [id] 
+                            "DELETE FROM author WHERE user_id=?"
+    "category"    -> liftIO $ execSqlT pool [id]
+                         "DELETE FROM category WHERE category_id=?"
+    "tag"         -> liftIO $ execSqlT pool [id] "DELETE FROM tag WHERE tag_id=?"
+    "comment"     -> liftIO $ execSqlT pool [id] "DELETE FROM comment WHERE id=?"
+    "tag_draft"   -> liftIO $ execSqlT pool [id] "DELETE FROM  tag_draft WHERE draft_id=?"
+    "photo_draft" -> liftIO $ execSqlT pool [id] "DELETE FROM  photo_draft WHERE draft_id=?"
   return ()
 
 updateByID pool model id fild value = do
-  putStrLn ("-----------------" ++ ("UPDATE " ++ model ++ 
-                       "SET " ++ fild ++ " =? WHERE id=?"))
-      
-  liftIO $ execSqlT pool [value, (show id)] 
-         $ fromString ("UPDATE " ++ model ++ 
-                       " SET " ++ fild ++ " =? WHERE id=?")
+  -- liftIO $ execSqlT pool [value, (show id)] 
+         -- $ fromString ("UPDATE " ++ model ++ 
+                       -- " SET " ++ fild ++ " =? WHERE id=?")
                        
-  -- case model of
-    -- "author"      -> do 
-      -- liftIO $ execSqlT pool [fild, (show id)] 
-                   -- "UPDATE authors SET description =? WHERE id=?"
-    -- "tag"         -> do
-      -- liftIO $ execSqlT pool [fild, (show id)] 
-                   -- "UPDATE tags SET tag=? WHERE id=?"
-    -- "category"    -> do
-      -- liftIO $ execSqlT pool [fild, (show id)]
-                   -- "UPDATE categories SET name=? WHERE id=?"
+  case model of
+    "author"      -> do 
+      liftIO $ execSqlT pool [value, (show id)] 
+             "UPDATE author SET description =? WHERE user_id=?"
+    "tag"         -> do
+      liftIO $ execSqlT pool [value, (show id)] 
+             "UPDATE tag SET tag=? WHERE tag_id=?"
+    "category"    -> do
+      liftIO $ execSqlT pool [value, (show id)]
+                   "UPDATE category SET category_name=? WHERE category_id=?"
     -- "draftPhoto"  -> do
       -- liftIO $ execSqlT pool [fild, (show id)]
                    -- "UPDATE drafts SET photo =? WHERE id=?"
@@ -119,7 +126,7 @@ updateByID pool model id fild value = do
 --User---------------------------------------------------------------------
 insertUser pool (UserIn name surname avatar login password) c_date = do
   res <- liftIO $ fetch pool [name, surname, login, password, c_date, "FALSE"]
-        "INSERT INTO users (name, surname, login, password, c_date, admin) VALUES(?,?,?,md5( ?) ,?,?) returning id"
+        "INSERT INTO user_ (user_name, surname, login, password, user_date, admin) VALUES(?,?,?,md5( ?) ,?,?) returning user_id"
   return $ pass res
   where 
     pass [Only id] = id
@@ -127,7 +134,7 @@ insertUser pool (UserIn name surname avatar login password) c_date = do
 
 findUserByLogin pool login password = do
          res <- liftIO $ fetch pool [login, password] 
-                "SELECT id, admin  FROM users WHERE login=? AND password = md5( ?)" ::
+                "SELECT user_id, admin  FROM user_ WHERE login=? AND password = md5( ?)" ::
                 IO [(Integer,  Bool)]
          return $ pass res
          where 
@@ -136,7 +143,7 @@ findUserByLogin pool login password = do
 
 findUserByID pool id = do
          res <- liftIO $ fetch pool (Only id) 
-                "SELECT name, surname, login, c_date::varchar, admin  FROM users WHERE id=?" ::
+                "SELECT user_name, surname, login, user_date::varchar, admin  FROM user_ WHERE user_id=?" ::
                 IO [(String, String, String, String, Bool)]
          return $ pass res
          where pass [(n, sn, log, dat, adm)] 
@@ -155,7 +162,7 @@ insertImage pool (UserIn name surname avatar login password) id = do
   case avatar of
     Just (Avatar im t) -> do
       res <- liftIO $ fetch pool [(show id), im, t]
-        "INSERT INTO images (id, image, image_type) VALUES (?,?,?) returning id"
+        "INSERT INTO image (user_id, image, image_type) VALUES (?,?,?) returning user_id"
       return $ pass res
       where
         pass [Only id] = id
@@ -164,7 +171,7 @@ insertImage pool (UserIn name surname avatar login password) id = do
   
 findImageByID pool id = do
          res <- liftIO $ fetch pool (Only id) 
-                "SELECT image, image_type FROM images WHERE id=?"
+                "SELECT image, image_type FROM image WHERE user_id=?"
                 :: IO [(String, String)]
          return $ pass res
          where pass [(img, t)] = Just (img, t)
@@ -172,7 +179,7 @@ findImageByID pool id = do
 --Author------------------------------------------
 insertAuthor pool (Author id description) = do
   res <- liftIO $ fetch pool [show id, T.unpack description]
-        "INSERT INTO authors  (id, description) VALUES(?,?) returning id"
+        "INSERT INTO author  (user_id, description) VALUES(?,?) returning user_id"
   return $ pass res
   where
     pass [Only id] = id
@@ -180,7 +187,7 @@ insertAuthor pool (Author id description) = do
 
 findAuthorByID pool id = do
     res <- liftIO $ fetch pool (Only id) 
-              "SELECT users.name, users.surname, authors.description FROM users, authors WHERE users.id = authors.id AND authors.id = ?;"           
+              "SELECT user_name, surname, description FROM user_ INNER JOIN author USING(user_id) WHERE user_.user_id = ?;"           
     return $ pass res
       where pass [(name, surname, descr)] = Just (AuthorOut name surname descr)
             pass _ = Nothing
@@ -189,11 +196,11 @@ insertCategory pool (Category name owner_id) = do
   case owner_id of
     Just owner -> do
       res <- liftIO $ fetch pool [name, show owner]
-        "INSERT INTO categories (name, id_owner) VALUES(?,?) returning id"
+        "INSERT INTO category (category_name, owner_id) VALUES(?,?) returning category_id"
       return $ pass res
     Nothing    -> do  
       res <- liftIO $ fetch pool [name]
-        "INSERT INTO categories (name) VALUES(?) returning id"
+        "INSERT INTO category (category_name) VALUES(?) returning category_id"
       return $ pass res 
   where
     pass [Only id] = id
@@ -201,7 +208,7 @@ insertCategory pool (Category name owner_id) = do
 
 findCategoryByID pool id = do
   res <- liftIO $ fetch pool (Only id)
-            "SELECT * FROM categories WHERE id=?"  :: IO [(Integer, String, Maybe Integer)]   
+            "SELECT * FROM category WHERE category_id=?"  :: IO [(Integer, String, Maybe Integer)]   
   return $ pass res
   where pass [(id, name, idOw)] = Just (Category name idOw)
         pass _                  = Nothing
@@ -210,136 +217,184 @@ updateOwnerCategory pool id owner = do
   case map toLower owner of
     "null" -> do
       res <- liftIO $ fetch pool [(show id)]
-                  "UPDATE categories SET id_owner=null WHERE id=? returning id"
+                  "UPDATE category SET owner_id=null WHERE category_id=? returning category_id"
       return $ pass res                  
     _      -> do
       res <- liftIO $ fetch pool [owner, (show id)]
-                  "UPDATE categories SET id_owner=? WHERE id=? returning id" 
+                  "UPDATE category SET owner_id=? WHERE category_id=? returning category_id" 
       return $ pass res                  
   where
     pass [Only id] = id
     pass _         = 0
+    
+findSubCat pool id = do
+    res <- liftIO $ fetch pool (Only id)
+            "SELECT category_id FROM category WHERE  owner_id=?"   
+    return $ pass res
+    where pass [] = []
+          pass xs = map fromOnly xs
+
 --Tag-------------------------------------------------------------------------     
 insertTag pool (Tag tag) = do
       liftIO $ execSqlT pool [tag]
-        "INSERT INTO tags (tag) VALUES(?)"
+        "INSERT INTO tag (tag) VALUES(?)"
       return ()
+
 
 findTagByID pool id = do
      res <- liftIO $ fetch pool (Only id)
-              "SELECT * FROM tags WHERE id=?"  :: IO [(Integer, String)]   
+              "SELECT * FROM tag WHERE tag_id=?"  :: IO [(Integer, String)]   
      return $ pass res
          where pass [(id, tag)] = Just (Tag tag)
                pass _                  = Nothing
  
 findTags pool id author = do
   res <- liftIO $ fetch pool [id, author]
-             "SELECT tag FROM tags WHERE array_position ((SELECT tags FROM drafts WHERE id = ? AND author = ?), id) IS NOT NULL"
+             "SELECT tag FROM tag WHERE array_position ((SELECT tags FROM drafts WHERE id = ? AND author = ?), id) IS NOT NULL"
   return $ pass res
     where pass [] = []
           pass xs = map fromOnly xs
                
-checkAvailabilityTags pool tags = do
-     res <- liftIO $ fetch pool (Only (In tags))
-              "SELECT id FROM tags WHERE id IN ?" 
-     return $ pass res 
-         where pass [] = []
-               pass xs = map fromOnly xs
+-- checkAvailabilityTags pool tags = do
+     -- res <- liftIO $ fetch pool (Only (In tags))
+              -- "SELECT id FROM tags WHERE id IN ?" 
+     -- return $ pass res 
+         -- where pass [] = []
+               -- pass xs = map fromOnly xs
 --Draft-------------------------------------------------------------------------------
 insertDraft pool (DraftIn title category tags t_content mainPhoto otherPhotos) 
                   id c_date = do
-  res <- liftIO $ fetch pool [ fromMaybe "" title
-                             , show id
+  res <- liftIO $ fetch pool [ title
                              , c_date
-                             , show $ category
-                             , listToSql $ show $ fromMaybe [] tags
-                             , T.unpack $ fromMaybe "" t_content]
-           "INSERT INTO drafts (title, author, c_date, category, tags, t_content) VALUES(?,?,?,?,?,?) returning id"
+                             , show id
+                             , show category
+                             , T.unpack t_content
+                             , show mainPhoto]
+           "INSERT INTO draft (title, draft_date, user_id, category_id, t_content, photo_id) VALUES(?,?,?,?,?,?) returning draft_id"
   return $ pass res
   where 
     pass [Only id] = id
     pass _         = 0
 
 deleteDraft pool id author = do
-  liftIO $ execSqlT pool [id, author] "DELETE FROM drafts WHERE id=? AND author =?" 
+  liftIO $ execSqlT pool [id, author] "DELETE FROM draft WHERE draft_id=? AND user_id =?" 
   return ()
-
-updateDraft pool id author fild content_ = do
-  res <- liftIO $ fetch pool [content, (show id), (show author)]  
-                $ fromString ("UPDATE drafts SET " 
-                              ++ fild ++ " =?"
-                              ++ " WHERE id=? AND author =? returning id")
-  -- case fild of
-    -- "title"    -> do 
-      -- res <- liftIO $ fetch pool [content, (show id), (show author)]
-                    -- "UPDATE drafts SET title=? WHERE id=? AND author =? returning id"
-      -- return $ pass res
-    -- "category" -> do 
-      -- res <- liftIO $ fetch pool [content, (show id), (show author)]
-                    -- "UPDATE drafts SET category=? WHERE id=? AND author =? returning id"
-      -- return $ pass res
-    -- "tags" -> do                    
-      -- res <- liftIO $ fetch pool [content, (show id), (show author)]
-                    -- "UPDATE drafts SET tags =? WHERE id=? AND author =? returning id" 
-      -- return $ pass res
-    -- "photos" -> do                    
-      -- res <- liftIO $ fetch pool [content, (show id), (show author)]
-                    -- "UPDATE drafts SET photos =? WHERE id=? AND author =? returning id" 
-      -- return $ pass res
-    -- "photo" -> do                    
-      -- res <- liftIO $ fetch pool [content, (show id), (show author)]
-                    -- "UPDATE drafts SET photo =? WHERE id=? AND author =? returning id" 
-  return $ pass res
-  where
-    content = if ((fild == "tags") || (fild == "photos")) 
-              then listToSql content_ 
-              else           content_
-    pass [Only id] = id
-    pass _         = 0
     
-findDraft pool id_d author = do
-     res <- liftIO $ fetch pool [id_d, author]
-              "SELECT id FROM drafts WHERE id=? AND author =?"
-     return $ pass res
-         where pass [Only id] = Just id
-               pass _    = Nothing
+updateDraft pool draft author = do
+  case partQuery of
+    "" -> return (Just draft)         
+    _  -> do
+         res <- liftIO $ fetch pool [id_draft draft, author] 
+                $ fromString ("UPDATE draft SET" ++ partQuery ++
+                              " WHERE draft_id=? AND user_id =? returning title, category_id, t_content, photo_id")
+         return $ pass res                               
+  where       
+    partQuery = if sets == "" then "" else init sets
+    sets = setTitle ++ setCategory ++ setContent ++ setPhoto
+    setTitle =  case newTitle draft of 
+                   Nothing -> "" 
+                   Just title -> (" title = '" ++ title ++ "',")
+    setCategory = case newCategory draft of 
+                    Nothing -> ""
+                    Just category -> (" category_id =" ++ (show category) ++ ",")
+    setContent =  case newContent draft of 
+                    Nothing -> ""
+                    Just content -> (" t_content ='" ++ (T.unpack content) ++ "',")
+    setPhoto = case newMainPhoto draft of 
+                    Nothing -> ""
+                    Just photo -> (" photo_id =" ++ (show photo) ++ ",")
+    pass [(t, c, tc, p)] = 
+         Just (draft { newTitle = newValue (newTitle draft) t
+                     , newCategory = newValue (newCategory draft) c
+                     , newContent = newValue (newContent  draft) tc
+                     , newMainPhoto = newValue (newMainPhoto draft) p})                  
+    pass _            = Nothing
+    newValue a na = if a == Nothing then Nothing else Just na
 
-findDraftByID pool id_d author = do
-  res <- liftIO $ fetch pool [id_d, author]
-              "SELECT  d.title, d.c_date::varchar, d.category, c.name, d.tags::varchar, d.photo :: varchar, d.photos::varchar, d.t_content FROM drafts d, categories c WHERE  d.category = c.id AND d.id=? AND d.author =?"
-              :: IO [(String, String, Integer, String, String, String, String, T.Text)]
+insertTagDraft pool id tag = do
+  res <- liftIO $ fetch pool [show tag, show id]
+           "INSERT INTO tag_draft (tag_id, draft_id) VALUES(?,?) returning tag_id"
   return $ pass res
     where 
-      pass [(title, c_date, id_cat, category, tags, photo, photos, t_content)]
-            = Just (DraftGet title c_date (id_cat, category) []
+      pass [Only id] = id
+      pass _         = 0
+
+insertPhotoDraft pool id photo = do
+  res <- liftIO $ fetch pool [show photo, show id]
+           "INSERT INTO photo_draft (photo_id, draft_id) VALUES(?,?) returning photo_id"
+  return $ pass res
+    where 
+      pass [Only id] = id
+      pass _         = 0
+-- updateDraft pool id author fild content_ = do
+  -- res <- liftIO $ fetch pool [content, (show id), (show author)]  
+                -- $ fromString ("UPDATE drafts SET " 
+                              -- ++ fild ++ " =?"
+                              -- ++ " WHERE id=? AND author =? returning id")
+
+  -- return $ pass res
+  -- where
+    -- content = if ((fild == "tags") || (fild == "photos")) 
+              -- then listToSql content_ 
+              -- else           content_
+    -- pass [Only id] = id
+    -- pass _         = 0
+    
+-- findDraft pool id_d author = do
+     -- res <- liftIO $ fetch pool [id_d, author]
+              -- "SELECT id FROM drafts WHERE id=? AND author =?"
+     -- return $ pass res
+         -- where pass [Only id] = Just id
+               -- pass _    = Nothing
+
+findDraftByID pool id_d  = do
+  res <- liftIO $ fetch pool [id_d]
+             "SELECT title, draft_date :: varchar, category_id, ARRAY (SELECT tag_id FROM tag_draft WHERE draft.draft_id=tag_draft.draft_id) :: varchar, photo_id  :: varchar, ARRAY (SELECT photo_id FROM photo_draft WHERE draft.draft_id=photo_draft.draft_id):: varchar, t_content FROM draft WHERE draft.draft_id = ?"    
+              :: IO [(String, String, Integer, String, String, String, T.Text)]
+  return $ pass res
+    where 
+      pass [(title, c_date, id_cat, tags, photo, photos, t_content)]
+            = Just (DraftGet title c_date id_cat
+                             (read (listFromSql tags) :: [Integer])
                              ("http://localhost:3000/photo/" ++ photo)
                              (map fromPhotoId (read (listFromSql photos) :: [Integer]))
                              t_content)
       pass _ = Nothing
 
-takeWholeDraft pool (id_d, id_a) = do
-  res <- liftIO $ fetch pool [id_d, id_a]
-              "SELECT id::varchar, title, c_date::varchar, author:: varchar, category::varchar, tags::varchar, photo::varchar, photos::varchar, t_content FROM drafts WHERE id=? AND author =?"
-              :: IO [(String, String, String, String, String, String, String,
-                      String, T.Text)]
-  return $ pass res
-    where 
-      pass [(i, t, d, a, c, ts, p, ps, t_c)] = [i, t, d, a, c, ts, p, ps, T.unpack t_c]
-      pass _ = []
+-- takeWholeDraft pool (id_d, id_a) = do
+  -- res <- liftIO $ fetch pool [id_d, id_a]
+              -- "SELECT id::varchar, title, c_date::varchar, author:: varchar, category::varchar, tags::varchar, photo::varchar, photos::varchar, t_content FROM drafts WHERE id=? AND author =?"
+              -- :: IO [(String, String, String, String, String, String, String,
+                      -- String, T.Text)]
+  -- return $ pass res
+    -- where 
+      -- pass [(i, t, d, a, c, ts, p, ps, t_c)] = [i, t, d, a, c, ts, p, ps, T.unpack t_c]
+      -- pass _ = []
 
-publishPost pool [] = return 0             
-publishPost pool (i:t:d:a:xs) = do
-  liftIO $ execSqlT pool [i, a] "DELETE FROM posts WHERE id=? AND author =?"  
-  res <- liftIO $ fetch pool (i:t:d:a:xs)
-           "INSERT INTO posts (id, title, c_date, author, category, tags, photo, photos, t_content) VALUES(?,?,?,?,?,?,?,?,?) returning id"
+publishPost pool draft author = do             
+  liftIO $ execSqlT pool [draft, author] "DELETE FROM post WHERE draft_id=? AND user_id =?"  
+  res <- liftIO $ fetch pool [draft, author]
+           "INSERT INTO post (draft_id, title, draft_date, user_id, category_id, photo_id, t_content) SELECT * FROM draft WHERE draft_id=? AND user_id=? returning draft_id"
   return $ pass res
   where 
     pass [Only id] = id
-    pass _         = 0           
+    pass _         = 0
+
+-- publishPost pool [] = return 0             
+-- publishPost pool (i:t:d:a:xs) = do
+  -- liftIO $ execSqlT pool [i, a] "DELETE FROM posts WHERE id=? AND author =?"  
+  -- res <- liftIO $ fetch pool (i:t:d:a:xs)
+           -- "INSERT INTO posts (id, title, c_date, author, category, tags, photo, photos, t_content) VALUES(?,?,?,?,?,?,?,?,?) returning id"
+  -- return $ pass res
+  -- where 
+    -- pass [Only id] = id
+    -- pass _         = 0
+    
+
 --Photo--------------------------------------------------------------------------------- 
-insertPhoto pool author (Photo im t)  = do
-  res <- liftIO $ fetch pool [im, t, show author]
-        "INSERT INTO photos (image, image_type, author) VALUES (?,?,?) returning id"
+insertPhoto pool (Photo im t)  = do
+  res <- liftIO $ fetch pool [im, t]
+        "INSERT INTO photo (image, image_type) VALUES (?,?) returning photo_id"
   return $ pass res
   where
         pass [Only id] = id
@@ -347,25 +402,44 @@ insertPhoto pool author (Photo im t)  = do
 
 findPhotoByID pool id = do
          res <- liftIO $ fetch pool (Only id)
-                "SELECT image, image_type FROM photos WHERE id=?"
+                "SELECT image, image_type FROM photo WHERE photo_id=?"
                 :: IO [(String, String)]
          return $ pass res
          where pass [(img, t)] = Just (img, t)
                pass _ = Nothing
-               
-findPhoto pool id_p author = do
-     res <- liftIO $ fetch pool [id_p, author] 
-              "SELECT id FROM photos WHERE id=? AND author =?"
-     return $ pass res
-         where pass [Only id] = Just id
-               pass _ = Nothing
 
-checkAvailabilityPhotos pool photos author = do
-     res <- liftIO $ fetch pool ((In photos), author)
-              "SELECT id FROM photos WHERE id IN ? AND author = ?" 
-     return $ pass res 
-         where pass [] = []
-               pass xs = map fromOnly xs
+-- updateMainPhoto pool author draft photo = do
+  -- res <- liftIO $ fetch pool [(show draft), (show photo), (show author)]
+         -- "UPDATE photo SET draft_id =?, main = TRUE WHERE photo_id =? AND user_id = ? returning photo_id"
+  -- return $ pass res                  
+  -- where
+    -- pass [Only id] = id
+    -- pass _         = 0
+    
+-- updateOtherPhotos pool author draft photos = do
+  -- res <- liftIO $ fetch pool [draft, author]
+             -- $ fromString ("UPDATE photo SET draft_id =?, main = FALSE WHERE  array_position (ARRAY" ++
+             -- (show photos) ++
+             -- ", photo_id) IS NOT NULL AND user_id = ? returning photo_id")
+  -- return $ pass res
+    -- where pass [] = []
+          -- pass xs = map fromOnly xs
+
+
+                
+-- findPhoto pool id_p author = do
+     -- res <- liftIO $ fetch pool [id_p, author] 
+              -- "SELECT id FROM photos WHERE id=? AND author =?"
+     -- return $ pass res
+         -- where pass [Only id] = Just id
+               -- pass _ = Nothing
+
+-- checkAvailabilityPhotos pool photos author = do
+     -- res <- liftIO $ fetch pool ((In photos), author)
+              -- "SELECT id FROM photos WHERE id IN ? AND author = ?" 
+     -- return $ pass res 
+         -- where pass [] = []
+               -- pass xs = map fromOnly xs
 --Comment----------------------------------------------------------------------
 insertComment pool (CommentIn post_id comment) 
                     author_id c_date = do
@@ -470,7 +544,7 @@ fetch pool args sql = withResource pool retrieve
            `catches` [Handler (\ (ex :: SqlError)    -> handleSql ex),
                       Handler (\ (ex :: ResultError) -> handleSql ex)]
         handleSql ex = do
-          putStrLn ("-----------------" ++ show ex)
+          putStrLn ("-------" ++ show ex)
           return []
           
                      -- do

@@ -1,4 +1,4 @@
-INSERT INTO tags (tag)
+INSERT INTO tag (tag)
   VALUES ('music'),
 		 ('rock'),
          ('pop'),

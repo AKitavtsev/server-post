@@ -85,7 +85,7 @@ routes pool hLogger hToken hDb req respond = do
            logError hLogger "  The \"description\" parameter is required"
            respond (responseLBS status400 [("Content-Type", "text/plain")] "")
          Just descr -> do
-           updateByID hDb pool "authors" id "description" descr
+           updateByID hDb pool "author" id "description" descr
            respond (responseLBS status200 [("Content-Type", "text/plain")]
                    $ encode (Author id $ T.pack descr))
 

@@ -19,7 +19,7 @@ import Database.PostgreSQL.Simple
 data Handle = Handle
     { close              :: Connection -> IO ()
     , newConn            :: Config -> IO Connection
-    , runMigrations      :: Logger.Handle 
+    , runMigrations      :: Logger.Handle
                          -> Connection -> Pool Connection -> FilePath -> IO ()
     , deleteByID         :: Pool Connection -> String -> Integer -> IO ()
     , updateByID         :: Pool Connection -> String -> Integer -> String -> String -> IO ()
@@ -34,21 +34,27 @@ data Handle = Handle
     , insertCategory     :: Pool Connection -> Category -> IO Integer
     , findCategoryByID   :: Pool Connection -> Integer -> IO (Maybe Category)
     , updateOwnerCategory:: Pool Connection -> Integer -> String -> IO Integer
+    , findSubCat         :: Pool Connection -> Integer -> IO [Integer]
     , insertTag          :: Pool Connection -> Tag     -> IO ()
+    , insertTagDraft     :: Pool Connection -> Integer -> Integer -> IO Integer
+    , insertPhotoDraft   :: Pool Connection -> Integer -> Integer -> IO Integer
     , findTagByID        :: Pool Connection -> Integer -> IO (Maybe Tag)
     , findTags           :: Pool Connection -> Integer -> Integer -> IO [String]
-    , checkAvailabilityTags :: Pool Connection -> [Integer] -> IO [Integer]
-    , checkAvailabilityPhotos :: Pool Connection -> [Integer] -> Integer -> IO [Integer]
+    -- , checkAvailabilityTags :: Pool Connection -> [Integer] -> IO [Integer]
+    -- , checkAvailabilityPhotos :: Pool Connection -> [Integer] -> Integer -> IO [Integer]
     , insertDraft        :: Pool Connection -> DraftIn -> Integer -> String -> IO Integer
     , deleteDraft        :: Pool Connection -> Integer -> Integer -> IO ()
-    , updateDraft        :: Pool Connection -> Integer -> Integer -> String -> String -> IO Integer
-    , insertPhoto        :: Pool Connection -> Integer -> Photo -> IO Integer   
+    , updateDraft        :: Pool Connection -> DraftUp -> Integer -> IO (Maybe DraftUp)
+    -- , updateDraft        :: Pool Connection -> Integer -> Integer -> String -> String -> IO Integer
+    , insertPhoto        :: Pool Connection -> Photo -> IO Integer
+    -- , updateMainPhoto    :: Pool Connection -> Integer -> Integer -> Integer -> IO Integer 
+    -- , updateOtherPhotos  :: Pool Connection -> Integer -> Integer -> [Integer] -> IO [Integer]    
     , findPhotoByID      :: Pool Connection -> Integer -> IO (Maybe (String, String))
-    , findPhoto          :: Pool Connection -> Integer -> Integer -> IO (Maybe Integer)
-    , findDraft          :: Pool Connection -> Integer -> Integer -> IO (Maybe Integer)
-    , findDraftByID      :: Pool Connection -> Integer -> Integer -> IO (Maybe DraftGet)
-    , takeWholeDraft     :: Pool Connection -> (Integer, Integer) -> IO [String]
-    , publishPost        :: Pool Connection -> [String] -> IO Integer
+    -- , findPhoto          :: Pool Connection -> Integer -> Integer -> IO (Maybe Integer)
+    -- , findDraft          :: Pool Connection -> Integer -> Integer -> IO (Maybe Integer)
+    , findDraftByID      :: Pool Connection -> Integer -> IO (Maybe DraftGet)
+    -- , takeWholeDraft     :: Pool Connection -> (Integer, Integer) -> IO [String]
+    , publishPost        :: Pool Connection -> Integer -> Integer -> IO Integer
     , insertComment      :: Pool Connection -> CommentIn -> Integer -> String -> IO Integer
     , deleteComment      :: Pool Connection -> Integer -> Integer -> IO ()
     , takeAllPosts       :: Pool Connection -> IO [Post]
