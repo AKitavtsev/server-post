@@ -6,41 +6,34 @@ module Models.Post (
   Post (..),
   ) where
 
-import  GHC.Generics
+import Models.Author (AuthorOut (..))
+
+import GHC.Generics
 import Data.Aeson
 
 import qualified Data.Text as T
 
--- data DraftGet  = DraftGet  { title_g       :: String
-                           -- , c_date        :: String
-                           -- , category_g    :: (Integer, String)
-                           -- , tags_g        :: [String]
-                           -- , mainPhoto_g   :: String
-                           -- , otherPhotos_g :: [String]
-                           -- , t_content_g   :: T.Text
-                           -- } deriving (Show, Generic, FromJSON, ToJSON)
-             
--- data Post  = Post  { id          :: Integer
+
+-- data Post  = Post  { id    :: Integer
                    -- , title       :: String
                    -- , c_date      :: String
-                   -- , author      :: Integer
+                   -- , author_name :: String
+                   -- , surname     :: String
+                   -- , description :: String
                    -- , category    :: Integer
                    -- , tags        :: [Integer]
-                   -- , photo       :: Integer
-                   -- , photos      :: [Integer]
-                   -- , t_content   :: T.Text
+                   -- , photo       :: String
+                   -- , photos      :: [String]
+                   -- , text_content   :: T.Text
                    -- } deriving (Show, Generic, FromJSON, ToJSON)
                    
-data Post  = Post  { id          :: Integer
+data Post  = Post  { id    :: Integer
                    , title       :: String
                    , c_date      :: String
-                   , name        :: String
-                   , surname     :: String
+                   , author      :: AuthorOut 
                    , category    :: String
-                   , tags        :: [String]
+                   , tags        :: [Integer]
                    , photo       :: String
                    , photos      :: [String]
-                   , t_content   :: T.Text
+                   , text_content   :: T.Text
                    } deriving (Show, Generic, FromJSON, ToJSON)
-                   
-data Posts = Posts [Post] deriving (Show, Generic, FromJSON, ToJSON)

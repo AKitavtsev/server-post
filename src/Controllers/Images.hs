@@ -27,38 +27,31 @@ import qualified Data.ByteString.Base64 as B64
 
 
 routes pool hLogger hToken hDb req respond = do
-  -- let token = toToken req
-  -- vt <- validToken hToken token
-  -- case  vt of
-    -- Nothing -> do
-       -- logError hLogger "  Invalid or outdated token"
-       -- respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-    -- Just _ -> do
-      let id = toIdImage req
-      when (id == 0) $ do
-        logError hLogger "  Invalid id"
-      imageMb <- liftIO $ findImageByID hDb pool id
-      case imageMb of
-        Nothing -> do
-          logError hLogger "  Image not found"
+  let id = toIdImage req
+  when (id == 0) $ logError hLogger "  Invalid id"
+  imageMb <- liftIO $ findImageByID hDb pool id
+  case imageMb of
+    Nothing -> do
+      logError hLogger "  Image not found"
+      respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
+          
 -- чисто для служебного пользования, для проекта надо оставить только
-          let file = toParam req "file"
-          case file of
-            Nothing   -> respond (responseLBS notFound404 
-                                  [("Content-Type", "text/plain")]
-                                  "image not exist")
-            Just fn -> do
-              imageFile <- BC.readFile ("Images/" ++ fn) 
-              let image = BC.unpack $ B64.encode imageFile              
-              insertImage' hDb pool id image (tail $ dropWhile (\x -> not (x == '.')) fn)         
-              respond (responseLBS notFound404 
-                       [("Content-Type", "text/plain")]
-                         "image adding")    
---------------------
-        Just (image, typ)  -> do
-          let typeImage = BC.pack ("image/" ++ typ)    
-          respond (responseLBS status200 [("Content-Type", typeImage)]
-              $ BL.pack $ BC.unpack $ B64.decodeLenient $ BC.pack image)
+          -- let file = toParam req "file"
+          -- case file of
+            -- Nothing   -> respond (responseLBS notFound404 
+                                  -- [("Content-Type", "text/plain")]
+                                  -- "image not exist")
+            -- Just fn -> do
+              -- imageFile <- BC.readFile ("Images/" ++ fn) 
+              -- let image = BC.unpack $ B64.encode imageFile              
+              -- insertImage' hDb pool id image (tail $ dropWhile (\x -> not (x == '.')) fn)         
+              -- respond (responseLBS notFound404 
+                       -- [("Content-Type", "text/plain")]
+                         -- "image adding")    
+
+    Just (image, typ)  -> respond (responseLBS status200    
+                            [("Content-Type", BC.pack ("image/" ++ typ))]
+                            $ BL.pack $ BC.unpack $ B64.decodeLenient $ BC.pack image)
 
   
 
