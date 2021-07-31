@@ -109,12 +109,6 @@ updateByID pool model id fild value = do
     "category"    -> do
       liftIO $ execSqlT pool [value, (show id)]
                    "UPDATE category SET category_name=? WHERE category_id=?"
-    -- "draftPhoto"  -> do
-      -- liftIO $ execSqlT pool [fild, (show id)]
-                   -- "UPDATE drafts SET photo =? WHERE id=?"
-    -- "draftPhotos" -> do
-      -- liftIO $ execSqlT pool [listToSql fild, (show id)]
-                   -- "UPDATE drafts SET photos =? WHERE id=?"
   return ()
 --User---------------------------------------------------------------------
 insertUser pool (UserIn name surname avatar login password) c_date = do
@@ -328,9 +322,9 @@ findDraftByID pool id_d  = do
     where 
       pass [(title, c_date, id_cat, tags, photo, photos, t_content)]
             = Just (DraftGet title c_date id_cat
-                             (read (listFromSql tags) :: [Integer])
+                             (toListInteger tags)
                              ("http://localhost:3000/photo/" ++ photo)
-                             (map fromPhotoId (read (listFromSql photos) :: [Integer]))
+                             (map fromPhotoId (toListInteger photos))
                              t_content)
       pass _ = Nothing
 
@@ -380,19 +374,24 @@ deleteComment pool id author = do
 -- Post------------------------------------------------------------------------
 findAllPosts pool = do
   res <- fetchSimple pool
-     "SELECT draft_id, title, draft_date :: varchar, user_name, surname, description, category_name, ARRAY (SELECT tag_id  FROM tag_draft INNER JOIN tag   USING (tag_id) WHERE post.draft_id=tag_draft.draft_id) :: varchar,   photo_id  :: varchar, ARRAY (SELECT photo_id FROM photo_draft WHERE  post.draft_id=photo_draft.draft_id):: varchar, t_content FROM post INNER JOIN user_ USING (user_id) INNER JOIN author USING (user_id) INNER JOIN category  USING (category_id)"
+     "SELECT draft_id, title, draft_date :: varchar, user_name, surname, description, category_name, ARRAY (SELECT tag  FROM tag_draft INNER JOIN tag   USING (tag_id) WHERE post.draft_id=tag_draft.draft_id) :: varchar,   photo_id  :: varchar, ARRAY (SELECT photo_id FROM photo_draft WHERE  post.draft_id=photo_draft.draft_id):: varchar, t_content FROM post INNER JOIN user_ USING (user_id) INNER JOIN author USING (user_id) INNER JOIN category  USING (category_id)"
+  -- printTags res 
   return $ pass res
     where 
       pass []  = []
-      pass xs = map toPost xs                  
+      pass xs = map toPost xs
       toPost (id, title, c_date, user_name, surname,
               description, category, tags, photo, photos, t_content) = 
         Post id title c_date
-             (AuthorOut user_name surname description) category 
-             (read (listFromSql tags) :: [Integer])
+             (AuthorOut user_name surname description) category
+             (toListString tags)
+             -- (read (listFromSql tags) :: [Integer])
              ("http://localhost:3000/photo/" ++ photo)
-             (map fromPhotoId (read (listFromSql photos) :: [Integer]))
+             (map fromPhotoId (toListInteger photos))
              t_content
+      -- printTags [(id, title, c_date, user_name, surname,
+              -- description, category, tags, photo, photos, t_content)] =
+              -- putStrLn tags
 
 -- takeAllPosts pool = do
   -- res <- fetchSimple pool "SELECT p.id, p.title, p.c_date :: varchar, u.name, u.surname, c.name, p.tags :: varchar, p.photo, p.photos :: varchar, p.t_content FROM posts p, users u, categories c WHERE p.author = u.id AND p.category = c.id"
@@ -463,13 +462,18 @@ fetchSimple pool sql = withResource pool retrieve
 execSqlT :: ToRow q => Pool Connection -> q -> Query -> IO Int64
 execSqlT pool args sql = withResource pool ins
        where ins conn = withTransaction conn $ execute conn sql args
---------------------------------------------------------------------------------
-listToSql :: String -> String
-listToSql list = init ('{': (tail list)) ++ "}"
-
-listFromSql :: String -> String
-listFromSql list = init ('[': (tail list)) ++ "]"
-
-      
+--------------------------------------------------------------------------------      
 fromPhotoId :: Integer -> String      
-fromPhotoId id = "http://localhost:3000/photo/" ++ (show id)     
+fromPhotoId id = "http://localhost:3000/photo/" ++ (show id)
+
+toListString :: String -> [String]
+toListString arraySql = words [if x == ',' then ' ' else x|
+                               x <- arraySql, 
+                               x /= '{' && x /= '}']
+                               
+toListInteger :: String -> [Integer]
+toListInteger arraySql = read $ init ('[': (tail arraySql)) ++ "]"
+
+                              
+
+     

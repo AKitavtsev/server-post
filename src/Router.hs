@@ -36,7 +36,7 @@ routes pool hLogger hToken hDb req respond  = do
       "photo"    -> Controllers.Photos.routes pool hLogger hToken hDb req respond
       "publish"  -> Controllers.Publish.routes pool hLogger hToken hDb req respond
       "comment"  -> Controllers.Comments.routes pool hLogger hToken hDb req respond
-      "post"     -> Controllers.Posts.routes pool hLogger hToken hDb req respond       
+      "posts"    -> Controllers.Posts.routes pool hLogger hToken hDb req respond       
       _          -> do
           logError hLogger "  Path not found"
           respond $ responseLBS status404 [("Content-Type", "text/plain")] ""

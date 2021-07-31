@@ -32,7 +32,7 @@ data Post  = Post  { id    :: Integer
                    , c_date      :: String
                    , author      :: AuthorOut 
                    , category    :: String
-                   , tags        :: [Integer]
+                   , tags        :: [String]
                    , photo       :: String
                    , photos      :: [String]
                    , text_content   :: T.Text
