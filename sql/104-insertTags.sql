@@ -3,5 +3,5 @@ INSERT INTO tag (tag)
 		 ('rock'),
          ('pop'),
 		 ('Beatles'),
-		 ('John Lenon'),
-		 ('Poul McCartney');
+		 ('John'),
+		 ('Paul')

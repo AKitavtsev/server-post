@@ -176,7 +176,9 @@ findAuthorByID pool id = do
     res <- liftIO $ fetch pool (Only id) 
               "SELECT user_name, surname, description FROM user_ INNER JOIN author USING(user_id) WHERE user_.user_id = ?;"           
     return $ pass res
-      where pass [(name, surname, descr)] = Just (AuthorOut name surname descr)
+      where pass [(name, surname, descr)] =
+                 Just (AuthorOut name surname descr 
+                                 ("http://localhost:3000/image/" ++ (show id)))
             pass _ = Nothing
 --Category------------------------------
 insertCategory pool (Category name owner_id) = do
@@ -373,49 +375,47 @@ deleteComment pool id author = do
   return ()
 -- Post------------------------------------------------------------------------
 findAllPosts pool = do
-  res <- fetchSimple pool
-     "SELECT draft_id, title, draft_date :: varchar, user_name, surname, description, category_name, ARRAY (SELECT tag  FROM tag_draft INNER JOIN tag   USING (tag_id) WHERE post.draft_id=tag_draft.draft_id) :: varchar,   photo_id  :: varchar, ARRAY (SELECT photo_id FROM photo_draft WHERE  post.draft_id=photo_draft.draft_id):: varchar, t_content FROM post INNER JOIN user_ USING (user_id) INNER JOIN author USING (user_id) INNER JOIN category  USING (category_id)"
-  -- printTags res 
+  let query = "WITH "
+           ++ "gettags (t_id, t_name, d_id)"
+           ++ "  AS (SELECT tag_id, tag, draft_id"
+           ++ "      FROM tag_draft"
+           ++ "           INNER JOIN tag USING (tag_id)"
+           ++ "           INNER JoIN post USING (draft_id)),"
+           ++ "getphotos (p_id, d_id)"
+           ++ "  AS (SELECT photo_draft.photo_id, draft_id"
+           ++ "      FROM photo_draft"
+           ++ "           INNER JOIN post USING (draft_id)) "           
+           ++ "SELECT draft_id, title,"
+           ++ "       draft_date :: varchar,"
+           ++ "       category_name,"
+           ++ "       user_id::varchar , user_name, surname, description,"
+           ++ "       ARRAY (SELECT t_name"
+           ++ "              FROM gettags"
+           ++ "              WHERE d_id = draft_id):: varchar,"
+           ++ "       photo_id  :: varchar,"
+           ++ "       ARRAY (SELECT p_id"
+           ++ "              FROM getphotos"
+           ++ "              WHERE d_id = draft_id):: varchar,"
+           ++ "       t_content "
+           ++ "FROM post"
+           ++ "     INNER JOIN user_ USING (user_id)"
+           ++ "     INNER JOIN author USING (user_id)"
+           ++ "     INNER JOIN category USING (category_id)"             
+  res <- fetchSimple pool $ fromString query
   return $ pass res
     where 
       pass []  = []
       pass xs = map toPost xs
-      toPost (id, title, c_date, user_name, surname,
-              description, category, tags, photo, photos, t_content) = 
+      toPost (id, title, c_date, category, user_id, user_name, surname,
+              description,  tags, photo, photos, t_content) = 
         Post id title c_date
-             (AuthorOut user_name surname description) category
+             (AuthorOut user_name surname description
+                        ("http://localhost:3000/image/" ++ user_id))
+             category
              (toListString tags)
-             -- (read (listFromSql tags) :: [Integer])
              ("http://localhost:3000/photo/" ++ photo)
              (map fromPhotoId (toListInteger photos))
              t_content
-      -- printTags [(id, title, c_date, user_name, surname,
-              -- description, category, tags, photo, photos, t_content)] =
-              -- putStrLn tags
-
--- takeAllPosts pool = do
-  -- res <- fetchSimple pool "SELECT p.id, p.title, p.c_date :: varchar, u.name, u.surname, c.name, p.tags :: varchar, p.photo, p.photos :: varchar, p.t_content FROM posts p, users u, categories c WHERE p.author = u.id AND p.category = c.id"
-     -- :: IO [(Integer, String, String,
-             -- String, String,
-             -- String,
-             -- String,
-             -- Integer, String, T.Text)] 
-  -- mapM joinPost res          
-  -- where 
-    -- joinPost :: (Integer, String, String, String, String, String, String, Integer, String, T.Text) -> IO Post
-    -- joinPost (i, t, d, n, sn, c, ts, p, ps, t_c) = do
-      -- tss <- mapM tagFromInteger (read (listFromSql ts) :: [Integer])
-      -- return (Post i t d n sn c
-                   -- tss
-                   -- (fromPhotoId p)
-                   -- (map fromPhotoId (read (listFromSql ps) :: [Integer]))
-                   -- t_c)
-           
-    -- tagFromInteger id = do 
-      -- nameTagMb <- findTagByID pool id
-      -- case nameTagMb of
-        -- Just (Tag nameTag) -> return nameTag
-        -- Nothing            -> return ""
 --------------------------------------------------------------------------------
 -- Utilities for interacting with the DB.
 -- No transactions.

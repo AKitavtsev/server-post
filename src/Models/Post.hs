@@ -14,18 +14,6 @@ import Data.Aeson
 import qualified Data.Text as T
 
 
--- data Post  = Post  { id    :: Integer
-                   -- , title       :: String
-                   -- , c_date      :: String
-                   -- , author_name :: String
-                   -- , surname     :: String
-                   -- , description :: String
-                   -- , category    :: Integer
-                   -- , tags        :: [Integer]
-                   -- , photo       :: String
-                   -- , photos      :: [String]
-                   -- , text_content   :: T.Text
-                   -- } deriving (Show, Generic, FromJSON, ToJSON)
                    
 data Post  = Post  { id    :: Integer
                    , title       :: String

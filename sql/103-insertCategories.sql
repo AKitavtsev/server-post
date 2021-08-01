@@ -5,6 +5,6 @@ INSERT INTO category (category_name, owner_id)
 		 ('Others', 1),
 		 ('Beatles', 3),
 		 ('John', 5),
-		 ('Poul', 5),
+		 ('Paul', 5),
 		 ('George', 5),
 		 ('Ringo', 5);

@@ -4,12 +4,16 @@ SELECT draft_id, title,
 	   user_name, surname, description,
        ARRAY (SELECT tag 
 	          FROM tag_draft
-                   INNER JOIN tag USING (tag_id)	 		  
-	          WHERE post.draft_id=tag_draft.draft_id),
+                   INNER JOIN tag USING (tag_id)				   
+	          WHERE post.draft_id=tag_draft.draft_id) AS tags_names,
+       ARRAY (SELECT tag_id 
+	          FROM tag_draft
+                   INNER JOIN tag USING (tag_id)				   
+	          WHERE post.draft_id=tag_draft.draft_id) AS tags_ids,
        photo_id  :: varchar,
-       ARRAY (SELECT photo_id FROM photo_draft WHERE post.draft_id=photo_draft.draft_id),
-	   t_content
+       ARRAY (SELECT photo_id FROM photo_draft WHERE post.draft_id=photo_draft.draft_id) AS photos_id
 FROM post
      INNER JOIN user_ USING (user_id)
 	 INNER JOIN author USING (user_id)
-	 INNER JOIN category USING (category_id);
+	 INNER JOIN category USING (category_id)
+WHERE (SELECT count (photo_id) FROM photo_draft WHERE post.draft_id=photo_draft.draft_id) >4;

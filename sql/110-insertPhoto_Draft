@@ -1,6 +1,5 @@
 INSERT INTO photo_draft (photo_id, draft_id)
-  VALUES (1, 1),
-         (2, 1),
+  VALUES (2, 1),
 		 (3, 1),
          (4, 1),
 		 (5, 1);

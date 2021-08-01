@@ -18,4 +18,5 @@ data Author  = Author  { author_id      :: Integer
 data AuthorOut = AuthorOut { name        :: String
                            , surname     :: String
                            , description :: T.Text
+                           , avatar      :: String
                            } deriving (Show, Generic, FromJSON, ToJSON)
