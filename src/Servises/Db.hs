@@ -12,9 +12,9 @@ import Models.Post
 import Models.Tag
 import Models.User
 
-
 import Data.Pool
 import Database.PostgreSQL.Simple
+import Network.Wai (Request (..))
 
 data Handle = Handle
     { close              :: Connection -> IO ()
@@ -49,5 +49,5 @@ data Handle = Handle
     , publishPost        :: Pool Connection -> Integer -> Integer -> IO Integer
     , insertComment      :: Pool Connection -> CommentIn -> Integer -> String -> IO Integer
     , deleteComment      :: Pool Connection -> Integer -> Integer -> IO ()
-    , findAllPosts       :: Pool Connection -> IO [Post]
+    , findAllPosts       :: Pool Connection -> Request -> IO [Post]
     }

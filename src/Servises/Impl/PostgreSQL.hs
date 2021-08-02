@@ -17,6 +17,7 @@ import Models.Draft
 import Models.Post
 import Models.Tag
 import Models.User
+import Servises.Impl.PostgreSQL.Internal
 import Servises.Impl.PostgreSQL.Migrations
 
 import Database.PostgreSQL.Simple
@@ -374,33 +375,35 @@ deleteComment pool id author = do
   liftIO $ execSqlT pool [id, author] "DELETE FROM comments WHERE id=? AND user_id =?" 
   return ()
 -- Post------------------------------------------------------------------------
-findAllPosts pool = do
+findAllPosts pool req = do
   let query = "WITH "
            ++ "gettags (t_id, t_name, d_id)"
-           ++ "  AS (SELECT tag_id, tag, draft_id"
-           ++ "      FROM tag_draft"
-           ++ "           INNER JOIN tag USING (tag_id)"
-           ++ "           INNER JoIN post USING (draft_id)),"
+           ++   " AS (SELECT tag_id, tag, draft_id"
+           ++   " FROM tag_draft"
+           ++   " INNER JOIN tag USING (tag_id)"
+           ++   " INNER JoIN post USING (draft_id)),"
            ++ "getphotos (p_id, d_id)"
-           ++ "  AS (SELECT photo_draft.photo_id, draft_id"
-           ++ "      FROM photo_draft"
-           ++ "           INNER JOIN post USING (draft_id)) "           
+           ++   " AS (SELECT photo_draft.photo_id, draft_id"
+           ++       " FROM photo_draft"
+           ++       " INNER JOIN post USING (draft_id)) "           
            ++ "SELECT draft_id, title,"
-           ++ "       draft_date :: varchar,"
-           ++ "       category_name,"
-           ++ "       user_id::varchar , user_name, surname, description,"
-           ++ "       ARRAY (SELECT t_name"
-           ++ "              FROM gettags"
-           ++ "              WHERE d_id = draft_id):: varchar,"
-           ++ "       photo_id  :: varchar,"
-           ++ "       ARRAY (SELECT p_id"
-           ++ "              FROM getphotos"
-           ++ "              WHERE d_id = draft_id):: varchar,"
-           ++ "       t_content "
+           ++       " draft_date :: varchar,"
+           ++       " category_name,"
+           ++       " user_id::varchar , user_name, surname, description,"
+           ++       " ARRAY (SELECT t_name"
+           ++              " FROM gettags"
+           ++              " WHERE d_id = draft_id):: varchar,"
+           ++       " photo_id  :: varchar,"
+           ++       " ARRAY (SELECT p_id"
+           ++              " FROM getphotos"
+           ++              " WHERE d_id = draft_id):: varchar,"
+           ++       " t_content "
            ++ "FROM post"
-           ++ "     INNER JOIN user_ USING (user_id)"
-           ++ "     INNER JOIN author USING (user_id)"
-           ++ "     INNER JOIN category USING (category_id)"             
+           ++     " INNER JOIN user_ USING (user_id)"
+           ++     " INNER JOIN author USING (user_id)"
+           ++     " INNER JOIN category USING (category_id)"
+           ++ (queryWhere req)
+  putStrLn  query           
   res <- fetchSimple pool $ fromString query
   return $ pass res
     where 
@@ -437,7 +440,15 @@ fetch pool args sql = withResource pool retrieve
 -- No arguments -- just pure sql
 fetchSimple :: FromRow r => Pool Connection -> Query -> IO [r]
 fetchSimple pool sql = withResource pool retrieve
-       where retrieve conn = query_ conn sql
+      where 
+        retrieve conn = 
+          (query_ conn sql)
+           `catches` [Handler (\ (ex :: SqlError)    -> handleSql ex),
+                      Handler (\ (ex :: ResultError) -> handleSql ex)]
+        handleSql ex = do
+          putStrLn ("-------" ++ show ex)
+          return []
+
 
 -- Update database
 -- execSql :: ToRow q => Pool Connection -> q -> Query -> IO Int64
