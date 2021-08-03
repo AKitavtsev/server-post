@@ -38,7 +38,7 @@ routes pool hLogger hToken hDb req respond = do
       posts <- liftIO $ findAllPosts hDb pool req
       case posts of
         [] -> do
-          logError hLogger "  Posts not found"
+          logInfo hLogger "  Posts not found"
           respond (responseLBS status404 [("Content-Type", "text/plain")] "")
         xs  -> do   
           respond (responseLBS status200 [("Content-Type", "text/plain")]

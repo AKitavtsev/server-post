@@ -53,7 +53,7 @@ newHandle = do
       , SD.insertCategory          = insertCategory
       , SD.findCategoryByID        = findCategoryByID
       , SD.updateOwnerCategory     = updateOwnerCategory
-      , SD.findSubCat              = findSubCat
+      -- , SD.findSubCat              = findSubCat
       , SD.insertTag               = insertTag
       , SD.insertTagDraft          = insertTagDraft
       , SD.insertPhotoDraft        = insertPhotoDraft
@@ -217,12 +217,6 @@ updateOwnerCategory pool id owner = do
     pass [Only id] = id
     pass _         = 0
     
-findSubCat pool id = do
-    res <- liftIO $ fetch pool (Only id)
-            "SELECT category_id FROM category WHERE  owner_id=?"   
-    return $ pass res
-    where pass [] = []
-          pass xs = map fromOnly xs
 
 --Tag-------------------------------------------------------------------------     
 insertTag pool (Tag tag) = do
@@ -388,7 +382,7 @@ findAllPosts pool req = do
            ++       " INNER JOIN post USING (draft_id)) "           
            ++ "SELECT draft_id, title,"
            ++       " draft_date :: varchar,"
-           ++       " category_name,"
+           ++       " category_name, category_id,"
            ++       " user_id::varchar , user_name, surname, description,"
            ++       " ARRAY (SELECT t_name"
            ++              " FROM gettags"
@@ -402,23 +396,41 @@ findAllPosts pool req = do
            ++     " INNER JOIN user_ USING (user_id)"
            ++     " INNER JOIN author USING (user_id)"
            ++     " INNER JOIN category USING (category_id)"
-           ++ (queryWhere req)
+           ++ (queryWhere req) ++ (queryOrder req)
   putStrLn  query           
   res <- fetchSimple pool $ fromString query
-  return $ pass res
+  mapM toPost res
     where 
-      pass []  = []
-      pass xs = map toPost xs
-      toPost (id, title, c_date, category, user_id, user_name, surname,
-              description,  tags, photo, photos, t_content) = 
-        Post id title c_date
-             (AuthorOut user_name surname description
+      toPost (id, title, c_date, category, category_id, user_id, user_name, surname,
+              description,  tags, photo, photos, t_content) = do
+        subcat <- allCategories [category_id] []
+        subcatName <- mapM getNameSC subcat       
+        return (Post id title c_date
+                     (AuthorOut user_name surname description
                         ("http://localhost:3000/image/" ++ user_id))
-             category
-             (toListString tags)
-             ("http://localhost:3000/photo/" ++ photo)
-             (map fromPhotoId (toListInteger photos))
-             t_content
+                     (Categories category subcatName)
+                     (toListString tags)
+                     ("http://localhost:3000/photo/" ++ photo)
+                     (map fromPhotoId (toListInteger photos))
+                     t_content)
+      allCategories :: [Integer] -> [Integer] -> IO [Integer]
+      allCategories [] tg = return tg
+      allCategories xs tg = do
+        subxs <- mapM getSubCat xs        
+        allCategories (concat subxs) (tg ++ (concat subxs))
+        where getSubCat id = findSubCat pool id
+      findSubCat pool id = do
+        res <- liftIO $ fetch pool (Only id)
+                "SELECT category_id FROM category WHERE  owner_id=?" 
+        return  (map fromOnly res)
+      findNameSC pool id =  do
+        res <- liftIO $ fetch pool (Only id)
+                "SELECT category_name FROM category WHERE  category_id=?" 
+        return $ pass res
+          where 
+            pass [Only name] = name
+            pass _         = ""  
+      getNameSC id = findNameSC  pool id   
 --------------------------------------------------------------------------------
 -- Utilities for interacting with the DB.
 -- No transactions.
@@ -474,16 +486,7 @@ execSqlT :: ToRow q => Pool Connection -> q -> Query -> IO Int64
 execSqlT pool args sql = withResource pool ins
        where ins conn = withTransaction conn $ execute conn sql args
 --------------------------------------------------------------------------------      
-fromPhotoId :: Integer -> String      
-fromPhotoId id = "http://localhost:3000/photo/" ++ (show id)
 
-toListString :: String -> [String]
-toListString arraySql = words [if x == ',' then ' ' else x|
-                               x <- arraySql, 
-                               x /= '{' && x /= '}']
-                               
-toListInteger :: String -> [Integer]
-toListInteger arraySql = read $ init ('[': (tail arraySql)) ++ "]"
 
                               
 

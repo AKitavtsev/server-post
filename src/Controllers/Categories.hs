@@ -115,11 +115,5 @@ routes pool hLogger hToken hDb req respond = do
           logError hLogger "  Administrator authority required"
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")    
 
-    allCategories :: [Integer] -> [Integer] -> IO [Integer]
-    allCategories [] tg = return tg
-    allCategories xs tg = do
-      subxs <- mapM getSubCat xs
-      allCategories (concat subxs) (tg ++ (concat subxs))
-      where getSubCat id = findSubCat hDb pool id
   
   

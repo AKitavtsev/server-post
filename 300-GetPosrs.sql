@@ -25,7 +25,7 @@ FROM post
 WHERE array_position (ARRAY (SELECT t_id FROM gettags WHERE d_id = draft_id), 5) IS NOT NULL
       AND title LIKE '%John Len%'
 
-ORDER BY (SELECT count (*) FROM getphotos);
+ORDER BY (SELECT count (*) FROM getphotos WHERE d_id = draft_id);
 
 
 
