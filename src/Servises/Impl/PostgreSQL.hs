@@ -26,7 +26,7 @@ import Control.Exception
 import Control.Monad.Trans (liftIO)
 import Control.Monad (when, forM_)
 import Data.Char (toLower)
-import Data.Maybe
+-- import Data.Maybe
 import Data.Pool (Pool (..), withResource)
 import Data.String (fromString)
 import GHC.Int (Int64 (..))
@@ -76,12 +76,8 @@ newConn conf = connect defaultConnectInfo
                        , connectPassword = C.password conf
                        , connectDatabase = C.name conf
                        }
--- q :: Query
--- q = fromString ("select" ++ " ?")
 
 deleteByID pool model id = do
-  -- let q = fromString ("DELETE FROM " ++ model ++ " WHERE id=?") :: Query
-  -- liftIO $ execSqlT pool [id] $ fromString ("DELETE FROM " ++ model ++ "s WHERE id=?")
   case model of
     "user"        -> liftIO $ execSqlT pool [id]
                             "DELETE FROM user_ WHERE user_id=?"
@@ -95,11 +91,7 @@ deleteByID pool model id = do
     "photo_draft" -> liftIO $ execSqlT pool [id] "DELETE FROM  photo_draft WHERE draft_id=?"
   return ()
 
-updateByID pool model id fild value = do
-  -- liftIO $ execSqlT pool [value, (show id)] 
-         -- $ fromString ("UPDATE " ++ model ++ 
-                       -- " SET " ++ fild ++ " =? WHERE id=?")
-                       
+updateByID pool model id fild value = do                       
   case model of
     "author"      -> do 
       liftIO $ execSqlT pool [value, (show id)] 
@@ -369,7 +361,8 @@ deleteComment pool id author = do
   liftIO $ execSqlT pool [id, author] "DELETE FROM comments WHERE id=? AND user_id =?" 
   return ()
 -- Post------------------------------------------------------------------------
-findAllPosts pool req = do
+findAllPosts pool req id = do
+  endQuery <- queryWhereOrder pool req id
   let query = "WITH "
            ++ "gettags (t_id, t_name, d_id)"
            ++   " AS (SELECT tag_id, tag, draft_id"
@@ -396,7 +389,7 @@ findAllPosts pool req = do
            ++     " INNER JOIN user_ USING (user_id)"
            ++     " INNER JOIN author USING (user_id)"
            ++     " INNER JOIN category USING (category_id)"
-           ++ (queryWhere req) ++ (queryOrder req)
+           ++ endQuery
   putStrLn  query           
   res <- fetchSimple pool $ fromString query
   mapM toPost res

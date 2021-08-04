@@ -49,5 +49,5 @@ data Handle = Handle
     , publishPost        :: Pool Connection -> Integer -> Integer -> IO Integer
     , insertComment      :: Pool Connection -> CommentIn -> Integer -> String -> IO Integer
     , deleteComment      :: Pool Connection -> Integer -> Integer -> IO ()
-    , findAllPosts       :: Pool Connection -> Request -> IO [Post]
+    , findAllPosts       :: Pool Connection -> Request -> Integer -> IO [Post]
     }

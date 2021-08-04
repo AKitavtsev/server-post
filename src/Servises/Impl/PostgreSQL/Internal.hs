@@ -2,7 +2,12 @@
 
 module Servises.Impl.PostgreSQL.Internal 
   where
+  
+import Servises.Impl.PostgreSQL.Pagination
 
+import Database.PostgreSQL.Simple
+import Data.Pool (Pool (..))
+import Data.Char (isDigit) 
 import Network.Wai (Request (..))
 import Control.Applicative ((<|>))
 
@@ -10,6 +15,18 @@ import Control.Applicative ((<|>))
 
 import FromRequest
 
+queryWhereOrder :: Pool Connection -> Request -> Integer -> IO String
+queryWhereOrder pool req id_user = 
+  case toParam req "page" of
+    Nothing    -> do
+      newPagination pool  "post" id_user ((queryWhere req) ++ (queryOrder req))
+      return ((queryWhere req) ++ (queryOrder req) ++ " LIMIT 1")
+    Just page  -> do
+--     
+      q <- continuePagination pool "post" id_user
+      return  (q ++ "LIMIT 1 OFFSET 2")    
+  where read' i = if (all isDigit i) then read i ::Integer else 1
+          
 queryWhere :: Request -> String
 queryWhere req = case qw of
                    "" -> ""
@@ -107,7 +124,6 @@ queryOrder req =
         "photo"       -> acc ++ " (SELECT count (*) FROM getphotos WHERE d_id = draft_id),"
         _             -> acc
        
-
 fromPhotoId :: Integer -> String      
 fromPhotoId id = "http://localhost:3000/photo/" ++ (show id)
 
