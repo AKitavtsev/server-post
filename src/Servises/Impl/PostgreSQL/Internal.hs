@@ -15,18 +15,17 @@ import Control.Applicative ((<|>))
 
 import FromRequest
 
-queryWhereOrder :: Pool Connection -> Request -> Integer -> IO String
-queryWhereOrder pool req id_user = 
+queryWhereOrder :: Pool Connection -> Request -> Integer -> Integer -> IO String
+queryWhereOrder pool req limit id_user = 
   case toParam req "page" of
     Nothing    -> do
       newPagination pool  "post" id_user ((queryWhere req) ++ (queryOrder req))
-      return ((queryWhere req) ++ (queryOrder req) ++ " LIMIT 1")
+      return ((queryWhere req) ++ (queryOrder req) ++ " LIMIT " ++ (show limit))
     Just page  -> do
---     
       q <- continuePagination pool "post" id_user
-      return  (q ++ "LIMIT 1 OFFSET 2")    
-  where read' i = if (all isDigit i) then read i ::Integer else 1
-          
+      return  (q ++ "LIMIT " ++ (show limit) ++ "OFFSET "
+                 ++ (show (limit * (read' page - 1))))   
+        
 queryWhere :: Request -> String
 queryWhere req = case qw of
                    "" -> ""
@@ -134,4 +133,6 @@ toListString arraySql = words [if x == ',' then ' ' else x|
                                
 toListInteger :: String -> [Integer]
 toListInteger arraySql = read $ init ('[': (tail arraySql)) ++ "]"
-      
+
+read' :: String -> Integer 
+read' i = if (all isDigit i) then read i ::Integer else 1 

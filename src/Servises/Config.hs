@@ -35,6 +35,7 @@ newtype Handle = Handle
 data Config = DbConfig    { name      :: !String
                           , user      :: !String
                           , password  :: !String
+                          , limit     :: !Integer
                           }
             | LogConfig   { level     :: !Priority
                           }

@@ -10,7 +10,7 @@ import Models.Post
 import Servises.Db
 import Servises.Logger
 import Servises.Token
-import Servises.Config
+-- import Servises.Config
 
 import Control.Monad.Trans
 import Data.Aeson
@@ -34,8 +34,13 @@ routes pool hLogger hToken hDb req respond = do
     Nothing -> do
        logError hLogger "  Invalid or outdated token"
        respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-    Just (id_user, _) -> do
-      posts <- liftIO $ findAllPosts hDb pool req id_user
+    Just (id_user, _) -> 
+      case toId req of
+        0       -> getPosts id_user
+        _ -> getComments $ toId req
+  where
+    getPosts id_user = do  
+      posts <- liftIO $ findAllPosts hDb pool req (limit hDb) id_user
       case posts of
         [] -> do
           logInfo hLogger "  Posts not found"
@@ -43,6 +48,15 @@ routes pool hLogger hToken hDb req respond = do
         xs  -> do   
           respond (responseLBS status200 [("Content-Type", "text/plain")]
               $ encode xs)
-
-  
+    
+    getComments id_post = do
+      comments <- liftIO $ findComments hDb pool req (limit hDb) id_post
+      case comments of
+        [] -> do
+          logInfo hLogger "  Commets for this post not found"
+          respond (responseLBS status404 [("Content-Type", "text/plain")] "")
+        xs  -> do   
+          respond (responseLBS status200 [("Content-Type", "text/plain")]
+              $ encode xs)
+    
 

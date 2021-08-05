@@ -6,6 +6,8 @@ curl -v POST http://localhost:3000/draft/2.0202111091126065c8b019cf55009a53f6ba5
 curl -v http://localhost:3000/publish/2.0202111091126065c8b019cf55009a53f6ba5de31eec170/3
 curl -v POST http://localhost:3000/draft/2.0202111091126065c8b019cf55009a53f6ba5de31eec170 -d "{\"title\":\"George Harrison\", \"category\":8, \"tags\":[4],  \"t_content\":\"...Harrison died of lung cancer in 2001\", \"mainPhoto\":3, \"otherPhotos\":[1]}"
 curl -v http://localhost:3000/publish/2.0202111091126065c8b019cf55009a53f6ba5de31eec170/4
-
+curl -v POST http://localhost:3000/comment/1.120210901202553ff034f3847c1d22f091dde7cde045264 -d "{\"post_id\": 1, \"comment\":\"OK!!!!!!\"}"
+curl -v POST http://localhost:3000/comment/1.120210901202553ff034f3847c1d22f091dde7cde045264 -d "{\"post_id\": 1, \"comment\":\"Go on, brother\"}"
+curl -v POST http://localhost:3000/comment/2.0202111091126065c8b019cf55009a53f6ba5de31eec170 -d "{\"post_id\": 1, \"comment\":\"You are wrong brother\"}"
 
 

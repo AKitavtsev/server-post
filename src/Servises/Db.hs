@@ -17,7 +17,8 @@ import Database.PostgreSQL.Simple
 import Network.Wai (Request (..))
 
 data Handle = Handle
-    { close              :: Connection -> IO ()
+    { limit              :: Integer
+    , close              :: Connection -> IO ()
     , newConn            :: Config -> IO Connection
     , runMigrations      :: Logger.Handle
                          -> Connection -> Pool Connection -> FilePath -> IO ()
@@ -49,5 +50,6 @@ data Handle = Handle
     , publishPost        :: Pool Connection -> Integer -> Integer -> IO Integer
     , insertComment      :: Pool Connection -> CommentIn -> Integer -> String -> IO Integer
     , deleteComment      :: Pool Connection -> Integer -> Integer -> IO ()
-    , findAllPosts       :: Pool Connection -> Request -> Integer -> IO [Post]
+    , findAllPosts       :: Pool Connection -> Request -> Integer -> Integer -> IO [Post]
+    , findComments       :: Pool Connection -> Request -> Integer -> Integer -> IO [Comment]
     }

@@ -4,7 +4,6 @@
 
 module Models.Comment (
   CommentIn (..),
-  CommentOut (..),
   CommentID (..)
   ) where
 
@@ -13,12 +12,6 @@ import Data.Aeson
 
              
 data CommentIn  = CommentIn  { post_id  :: Integer
-                             , comment  :: String
-                             } deriving (Show, Generic, FromJSON, ToJSON)
-
-data CommentOut = CommentOut { id       :: Integer
-                             , c_date   :: String
-                             , post_id  :: Integer
                              , comment  :: String
                              } deriving (Show, Generic, FromJSON, ToJSON)
 

@@ -21,7 +21,8 @@ getconfig fm =  do
       name     <- C.lookupDefault "" conf (T.pack "database.name") :: IO String
       user     <- C.lookupDefault "" conf (T.pack "database.user") :: IO String    
       password <- C.lookupDefault "" conf (T.pack "database.password") :: IO String 
-      return (SC.DbConfig name user password)
+      limit    <- C.lookupDefault 1 conf (T.pack "database.limit") :: IO Integer
+      return (SC.DbConfig name user password limit)
     SC.LOG -> do
       levelStr  <- C.lookupDefault "INFO" conf (T.pack "logger.level") :: IO String 
       let level = case levelStr of

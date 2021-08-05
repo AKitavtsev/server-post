@@ -10,6 +10,7 @@ module Servises.Impl.PostgreSQL
 import qualified Servises.Config as C
 import qualified Servises.Db as SD
 
+import FromRequest
 import Models.Author
 import Models.Category
 import Models.Comment
@@ -34,10 +35,11 @@ import GHC.Int (Int64 (..))
 import qualified Data.ByteString.Lazy.Char8 as LC
 import qualified Data.Text as T
 
-newHandle :: IO SD.Handle
-newHandle = do
+newHandle :: C.Config -> IO SD.Handle
+newHandle config = do
     return $ SD.Handle
-      { SD.close                   = close
+      { SD.limit                   = C.limit config
+      , SD.close                   = close
       , SD.newConn                 = newConn
       , SD.runMigrations           = runMigrations
       , SD.deleteByID              = deleteByID
@@ -68,8 +70,10 @@ newHandle = do
       , SD.publishPost             = publishPost
       , SD.insertComment           = insertComment
       , SD.deleteComment           = deleteComment
-      , SD.findAllPosts             = findAllPosts
+      , SD.findAllPosts            = findAllPosts
+      , SD.findComments            = findComments
       }
+
 
 newConn conf = connect defaultConnectInfo
                        { connectUser = C.user conf
@@ -351,7 +355,7 @@ insertComment pool (CommentIn post_id comment)
                              , comment
                              , show author_id
                              ]
-           "INSERT INTO comments (c_date, post_id, comment, user_id) VALUES(?,?,?,?) returning id"
+           "INSERT INTO comment (comment_date, draft_id, comment, user_id) VALUES(?,?,?,?) returning comment_id"
   return $ pass res
   where 
     pass [Only id] = id
@@ -361,8 +365,8 @@ deleteComment pool id author = do
   liftIO $ execSqlT pool [id, author] "DELETE FROM comments WHERE id=? AND user_id =?" 
   return ()
 -- Post------------------------------------------------------------------------
-findAllPosts pool req id = do
-  endQuery <- queryWhereOrder pool req id
+findAllPosts pool req limit id = do
+  endQuery <- queryWhereOrder pool req limit id
   let query = "WITH "
            ++ "gettags (t_id, t_name, d_id)"
            ++   " AS (SELECT tag_id, tag, draft_id"
@@ -423,7 +427,36 @@ findAllPosts pool req id = do
           where 
             pass [Only name] = name
             pass _         = ""  
-      getNameSC id = findNameSC  pool id   
+      getNameSC id = findNameSC  pool id
+
+findComments pool req limit id_post = do
+   let offset = case toParam req "page" of
+                  Nothing -> 0
+                  Just page -> limit * (read' page - 1)
+       query = "SELECT comment_date :: varchar," ++
+               " user_id ::varchar, user_name, surname, comment "
+            ++ "FROM comment INNER JOIN user_ USING (user_id) "
+            ++ "WHERE draft_id = " ++ show id_post
+            ++ " LIMIT " ++ show limit
+            ++ " OFFSET "  ++ show offset
+ -- SELECT comment_date, user_id, user_name, surname, comment
+             -- FROM comment INNER JOIN user_ USING (user_id)
+             -- WHERE draft_id = 1
+             -- LIMIT 1 
+             -- OFFSET 0           
+            
+   res <- fetchSimple pool $ fromString query
+   return (map toComment res)
+     where
+       toComment (comment_data, user_id, user_name, surname, comment) =
+         Comment comment_data
+                 (User user_name surname
+                 ("http://localhost:3000/image/" ++ user_id))
+                 comment
+                          
+
+      
+       
 --------------------------------------------------------------------------------
 -- Utilities for interacting with the DB.
 -- No transactions.

@@ -29,7 +29,7 @@ main = do
   dbConf     <- getDbConfig hConfig
   poolConfig <- getPoolConfig hConfig
   
-  hDb        <- SB.newHandle
+  hDb        <- SB.newHandle dbConf
   
   conn <- newConn hDb dbConf  
   pool <- createPool (newConn hDb dbConf)

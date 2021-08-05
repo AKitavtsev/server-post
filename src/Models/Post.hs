@@ -4,7 +4,9 @@
 
 module Models.Post (
   Post (..),
-  Categories (..)
+  Categories (..),
+  Comment (..),
+  User (..),
   ) where
 
 import Models.Author (AuthorOut (..))
@@ -28,3 +30,14 @@ data Post  = Post  { id             :: Integer
                    , photos         :: [String]
                    , text_content   :: T.Text
                    } deriving (Show, Generic, FromJSON, ToJSON)
+                   
+data Comment = Comment { c_data  :: String
+                       , author  :: User
+                       , comment :: String
+                       } deriving (Show, Generic, FromJSON, ToJSON)
+
+data User = User { name    :: String
+                 , surname :: String
+                 , avatar  :: String
+                 } deriving (Show, Generic, FromJSON, ToJSON)
+                                    
