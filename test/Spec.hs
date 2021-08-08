@@ -5,8 +5,11 @@
 module  Main where
 
 import TokenTest
+import DbTest
+import FromRequestTest
 
 main :: IO ()
 main = do
     tokenTest
- 
+    dbTest
+    fromRequestTest

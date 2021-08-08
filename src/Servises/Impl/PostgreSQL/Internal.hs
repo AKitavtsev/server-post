@@ -11,8 +11,6 @@ import Data.Char (isDigit)
 import Network.Wai (Request (..))
 import Control.Applicative ((<|>))
 
--- import qualified Data.ByteString.Char8 as BC
-
 import FromRequest
 
 queryWhereOrder :: Pool Connection -> Request -> Integer -> Integer -> IO String
@@ -97,7 +95,6 @@ queryWhereCategory req =
 
 queryWhereFind :: Request -> String
 queryWhereFind req =
-
   case toParam req "find" of
                 Nothing -> "" 
                 Just t  -> " (array_position " ++ "(" ++ 

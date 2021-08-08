@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d1c21308150dce0bc58b6db319556225ea1c6f13196f8887d8bad2ab0ac40da5
+-- hash: b622ac5f075804d51df0162acfcab183d284dcc0ea4c755532a070e285f92f16
 
 name:           server-post
 version:        0.1.0.0
@@ -52,6 +52,7 @@ library
       Servises.Db
       Servises.Impl.Configurator
       Servises.Impl.MD5
+      Servises.Impl.MD5.Internal
       Servises.Impl.PostgreSQL
       Servises.Impl.PostgreSQL.Internal
       Servises.Impl.PostgreSQL.Migrations
@@ -113,6 +114,8 @@ test-suite server-post-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      DbTest
+      FromRequestTest
       TokenTest
       Paths_server_post
   hs-source-dirs:

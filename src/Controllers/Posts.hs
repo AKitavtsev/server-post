@@ -28,6 +28,7 @@ import qualified Data.ByteString.Base64 as B64
 
 
 routes pool hLogger hToken hDb req respond = do
+  logDebug hLogger (show req)
   let token = toToken req
   vt <- validToken hToken token
   case  vt of

@@ -6,15 +6,13 @@ import qualified Servises.Token as ST
 import qualified Servises.Config as SC
 
 import Control.Monad (when)
-import Data.Char (isDigit)
+
 import Data.Hash.MD5
 import Data.Time.Clock
-
+import Servises.Impl.MD5.Internal
 
 import qualified Data.Time as Time
 
-
--- import Control.Monad (when)
 
 newHandle :: SC.Config -> IO ST.Handle
 newHandle config = do
@@ -25,7 +23,7 @@ newHandle config = do
     }      
     where
       createToken id adm = do
-        time <- expirationTime config 
+        time <- expirationTime config
         let admStr    = if adm then  "1" else "0"
             idAdmTime = show id ++ "." ++ admStr ++ time
         return (idAdmTime  ++ (md5s $ Str idAdmTime))
@@ -53,16 +51,4 @@ expirationTime config = do
     let et = addUTCTime  (fromInteger lt :: NominalDiffTime) ct
     return (Time.formatTime Time.defaultTimeLocale "%Y%m%d%H%M%S" et)
     
-idAdmFromToken :: String -> Maybe (String, String)
-idAdmFromToken tok = case (takeWhile isDigit tok) of
-                      [] -> Nothing
-                      xs -> Just (xs, adm)
-    where adm = case (dropWhile isDigit tok) of
-                      ('.':'1':_) -> "1"
-                      _           -> "0"
-                      
-timeFromToken :: String -> String
-timeFromToken tok = case (dropWhile isDigit tok) of                      
-                      ('.':_:xs) -> take 14 xs
-                      _ -> []
     
