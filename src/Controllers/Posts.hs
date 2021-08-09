@@ -38,7 +38,7 @@ routes pool hLogger hToken hDb req respond = do
     Just (id_user, _) -> 
       case toId req of
         0       -> getPosts id_user
-        _ -> getComments $ toId req
+        _       -> getComments $ toId req
   where
     getPosts id_user = do  
       posts <- liftIO $ findAllPosts hDb pool req (limit hDb) id_user
