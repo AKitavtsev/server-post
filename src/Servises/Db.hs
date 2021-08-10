@@ -28,14 +28,12 @@ data Handle = Handle
     , findUserByLogin    :: Pool Connection -> String -> String -> IO (Maybe (Integer, Bool))
     , findUserByID       :: Pool Connection -> Integer -> IO (Maybe UserOut)
     , insertImage        :: Pool Connection -> UserIn ->  Integer -> IO Integer
-    -- , insertImage'       :: Pool Connection -> Integer -> String -> String -> IO ()
     , findImageByID      :: Pool Connection -> Integer -> IO (Maybe (String, String))
     , insertAuthor       :: Pool Connection -> Author -> IO Integer
     , findAuthorByID     :: Pool Connection -> Integer -> IO (Maybe AuthorOut)
     , insertCategory     :: Pool Connection -> Category -> IO Integer
     , findCategoryByID   :: Pool Connection -> Integer -> IO (Maybe Category)
     , updateOwnerCategory:: Pool Connection -> Integer -> String -> IO Integer
-    -- , findSubCat         :: Pool Connection -> Integer -> IO [Integer]
     , insertTag          :: Pool Connection -> Tag     -> IO ()
     , insertTagDraft     :: Pool Connection -> Integer -> Integer -> IO Integer
     , insertPhotoDraft   :: Pool Connection -> Integer -> Integer -> IO Integer

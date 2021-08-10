@@ -10,9 +10,28 @@ import Data.Pool (Pool (..))
 import Data.Char (isDigit) 
 import Network.Wai (Request (..))
 import Control.Applicative ((<|>))
+import qualified Data.Text as T (unpack)
+
 
 import FromRequest
+import Models.Draft  (DraftUp (..))
 
+partQuery :: DraftUp -> String
+partQuery draft = if sets == "" then "" else init sets
+  where
+    sets = setTitle ++ setCategory ++ setContent ++ setPhoto
+    setTitle =  case newTitle draft of 
+                   Nothing -> "" 
+                   Just title -> (" title = '" ++ title ++ "',")
+    setCategory = case newCategory draft of 
+                    Nothing -> ""
+                    Just category -> (" category_id =" ++ (show category) ++ ",")
+    setContent =  case newContent draft of 
+                    Nothing -> ""
+                    Just content -> (" t_content ='" ++ (T.unpack content) ++ "',")
+    setPhoto = case newMainPhoto draft of 
+                    Nothing -> ""
+                    Just photo -> (" photo_id =" ++ (show photo) ++ ",")
 queryWhereOrder :: Pool Connection -> Request -> Integer -> Integer -> IO String
 queryWhereOrder pool req limit id_user = 
   case toParam req "page" of
@@ -114,11 +133,12 @@ queryOrder req =
   where
     addBy acc x = 
       case x of
-        "date"        -> acc ++ " draft_date,"
-        "author"      -> acc ++ " user_name,"
-        "category"    -> acc ++ " category_name,"
-        "photo"       -> acc ++ " (SELECT count (*) FROM getphotos WHERE d_id = draft_id),"
-        _             -> acc
+        "date"     -> acc ++ " draft_date,"
+        "author"   -> acc ++ " user_name,"
+        "category" -> acc ++ " category_name,"
+        "photo"    -> acc ++
+                      " (SELECT count (*) FROM getphotos WHERE d_id = draft_id),"
+        _          -> acc
        
 fromPhotoId :: Integer -> String      
 fromPhotoId id = "http://localhost:3000/photo/" ++ (show id)

@@ -15,7 +15,8 @@ newHandle = do
       { SC.getConfig = getconfig }
       
 getconfig fm =  do   
-  conf  <- C.load [C.Optional "server.conf", C.Optional "local_server.conf"]
+  conf  <- C.load [C.Required "server.conf"]
+  -- conf  <- C.load [C.Optional "server.conf", C.Optional "local_server.conf"]
   case fm of
     SC.DB -> do
       name     <- C.lookupDefault "" conf (T.pack "database.name") :: IO String

@@ -48,14 +48,12 @@ newHandle config = do
       , SD.findUserByLogin         = findUserByLogin
       , SD.findUserByID            = findUserByID
       , SD.insertImage             = insertImage
-      -- , SD.insertImage'            = insertImage'
       , SD.findImageByID           = findImageByID
       , SD.insertAuthor            = insertAuthor
       , SD.findAuthorByID          = findAuthorByID
       , SD.insertCategory          = insertCategory
       , SD.findCategoryByID        = findCategoryByID
       , SD.updateOwnerCategory     = updateOwnerCategory
-      -- , SD.findSubCat              = findSubCat
       , SD.insertTag               = insertTag
       , SD.insertTagDraft          = insertTagDraft
       , SD.insertPhotoDraft        = insertPhotoDraft
@@ -135,13 +133,7 @@ findUserByID pool id = do
                            ("http://localhost:3000/image/" ++ (show id))
                            log dat adm)
                pass _ = Nothing
---------------------------------------------------------------------------------
--- чисто для служебного пользования
--- insertImage' pool id im t = do
-  -- liftIO $ execSqlT pool [(show id) , im, t]
-      -- "INSERT INTO images (id, image, image_type) VALUES (?,?,?)"
-  -- return ()     
-----------------------------------
+               
 insertImage pool (UserIn name surname avatar login password) id = do
   case avatar of
     Just (Avatar im t) -> do
@@ -213,7 +205,6 @@ updateOwnerCategory pool id owner = do
     pass [Only id] = id
     pass _         = 0
     
-
 --Tag-------------------------------------------------------------------------     
 insertTag pool (Tag tag) = do
       liftIO $ execSqlT pool [tag]
@@ -223,7 +214,7 @@ insertTag pool (Tag tag) = do
 
 findTagByID pool id = do
      res <- liftIO $ fetch pool (Only id)
-              "SELECT * FROM tag WHERE tag_id=?"  :: IO [(Integer, String)]   
+              "SELECT * FROM tag WHERE tag_id=?" :: IO [(Integer, String)]   
      return $ pass res
          where pass [(id, tag)] = Just (Tag tag)
                pass _                  = Nothing
@@ -234,14 +225,7 @@ findTags pool id author = do
   return $ pass res
     where pass [] = []
           pass xs = map fromOnly xs
-               
--- checkAvailabilityTags pool tags = do
-     -- res <- liftIO $ fetch pool (Only (In tags))
-              -- "SELECT id FROM tags WHERE id IN ?" 
-     -- return $ pass res 
-         -- where pass [] = []
-               -- pass xs = map fromOnly xs
---Draft-------------------------------------------------------------------------------
+--Draft------------------------------------------------------------------------
 insertDraft pool (DraftIn title category tags t_content mainPhoto otherPhotos) 
                   id c_date = do
   res <- liftIO $ fetch pool [ title
@@ -261,33 +245,19 @@ deleteDraft pool id author = do
   return ()
     
 updateDraft pool draft author = do
-  case partQuery of
+  case partQuery draft of
     "" -> return (Just draft)         
     _  -> do
          res <- liftIO $ fetch pool [id_draft draft, author] 
-                $ fromString ("UPDATE draft SET" ++ partQuery ++
+                $ fromString ("UPDATE draft SET" ++ partQuery draft ++
                               " WHERE draft_id=? AND user_id =? returning title, category_id, t_content, photo_id")
          return $ pass res                               
   where       
-    partQuery = if sets == "" then "" else init sets
-    sets = setTitle ++ setCategory ++ setContent ++ setPhoto
-    setTitle =  case newTitle draft of 
-                   Nothing -> "" 
-                   Just title -> (" title = '" ++ title ++ "',")
-    setCategory = case newCategory draft of 
-                    Nothing -> ""
-                    Just category -> (" category_id =" ++ (show category) ++ ",")
-    setContent =  case newContent draft of 
-                    Nothing -> ""
-                    Just content -> (" t_content ='" ++ (T.unpack content) ++ "',")
-    setPhoto = case newMainPhoto draft of 
-                    Nothing -> ""
-                    Just photo -> (" photo_id =" ++ (show photo) ++ ",")
     pass [(t, c, tc, p)] = 
          Just (draft { newTitle = newValue (newTitle draft) t
                      , newCategory = newValue (newCategory draft) c
                      , newContent = newValue (newContent  draft) tc
-                     , newMainPhoto = newValue (newMainPhoto draft) p})                  
+                     , newMainPhoto = newValue (newMainPhoto draft) p})
     pass _            = Nothing
     newValue a na = if a == Nothing then Nothing else Just na
 
@@ -439,12 +409,6 @@ findComments pool req limit id_post = do
             ++ "WHERE draft_id = " ++ show id_post
             ++ " LIMIT " ++ show limit
             ++ " OFFSET "  ++ show offset
- -- SELECT comment_date, user_id, user_name, surname, comment
-             -- FROM comment INNER JOIN user_ USING (user_id)
-             -- WHERE draft_id = 1
-             -- LIMIT 1 
-             -- OFFSET 0           
-            
    res <- fetchSimple pool $ fromString query
    return (map toComment res)
      where
@@ -452,8 +416,7 @@ findComments pool req limit id_post = do
          Comment comment_data
                  (User user_name surname
                  ("http://localhost:3000/image/" ++ user_id))
-                 comment
-                          
+                 comment                         
 
       
        

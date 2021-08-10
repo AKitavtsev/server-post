@@ -40,7 +40,7 @@ routes pool hLogger hToken hDb req respond = do
         "DELETE" -> delete id_author
         _        -> do 
           logError hLogger "  Invalid method"
-          respond $ responseLBS status404 [("Content-Type", "text/plain")] ""          
+          respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
   where
     post id_author = do
       res <-  strictRequestBody req   >>=
@@ -52,7 +52,7 @@ routes pool hLogger hToken hDb req respond = do
         Nothing    -> respond (responseLBS status400
                                [("Content-Type", "text/plain")] "")
         Just draft -> respond (responseLBS status200 
-                               [("Content-Type", "text/plain")] $ encode draft)                  
+                               [("Content-Type", "text/plain")] $ encode draft)
       where 
         getDraft body = do
           case eitherDecode body :: Either String DraftIn of
@@ -91,7 +91,7 @@ routes pool hLogger hToken hDb req respond = do
         Nothing    -> respond (responseLBS status400
                             [("Content-Type", "text/plain")] "")
         Just draft -> respond (responseLBS status200 
-                               [("Content-Type", "text/plain")] $ encode draft)                   
+                            [("Content-Type", "text/plain")] $ encode draft)
       where 
         getDraft body = do
           case eitherDecode body :: Either String DraftUp of

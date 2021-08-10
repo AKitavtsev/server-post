@@ -8,6 +8,7 @@ import Network.Wai
 import Test.Hspec
 
 import Servises.Impl.PostgreSQL.Internal
+import Models.Draft (DraftUp (..))
 
 req = defaultRequest 
        { requestMethod = "GET"
@@ -22,6 +23,15 @@ req = defaultRequest
                         ,"1.120210901202553ff034f3847c1d22f091dde7cde045264"
                         , "1"]
        }
+draft = DraftUp { id_draft = 1
+                , newTitle = Just "it is Title"
+                , newCategory = Just 5
+                , newTags = Just [1, 3, 10]
+                , newContent = Just "it is content"
+                , newMainPhoto = Just 4
+                , newOtherPhotos = Just [1, 3, 10]
+                }                    
+
 dbTest :: IO ()
 dbTest = hspec $ do
     describe "Servises.Impl.PostgreSQL.Internal" $ do
@@ -39,6 +49,22 @@ dbTest = hspec $ do
           read' "123" `shouldBe` 123
         it "is wrong integer " $ 
           read' "12h" `shouldBe` 1
+      describe "partQuery draft" $ do
+        it "Updated all fields" $ 
+           partQuery draft `shouldBe`
+           " title = 'it is Title', category_id =5, t_content ='it is content', photo_id =4"
+        it "Updeted only title " $ 
+           partQuery (DraftUp 1 (Just "it is Title") 
+                      Nothing Nothing Nothing Nothing Nothing)
+             `shouldBe` " title = 'it is Title'"
+        it "Updated title and photo" $ 
+           partQuery (DraftUp 1 (Just "it is Title")
+                      Nothing Nothing Nothing (Just 4) Nothing)
+             `shouldBe` " title = 'it is Title', photo_id =4"
+        it "nothing unupdated" $ 
+           partQuery (DraftUp 1 Nothing
+                      Nothing Nothing Nothing Nothing Nothing)
+             `shouldBe` ""
       describe "queryWhereTag" $ do
         it "tag=2" $
           queryWhereTag (req {queryString =[ ("tag",Just "2")]})

@@ -34,21 +34,6 @@ routes pool hLogger hToken hDb req respond = do
     Nothing -> do
       logError hLogger "  Image not found"
       respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
-          
--- чисто для служебного пользования, для проекта надо оставить только
-          -- let file = toParam req "file"
-          -- case file of
-            -- Nothing   -> respond (responseLBS notFound404 
-                                  -- [("Content-Type", "text/plain")]
-                                  -- "image not exist")
-            -- Just fn -> do
-              -- imageFile <- BC.readFile ("Images/" ++ fn) 
-              -- let image = BC.unpack $ B64.encode imageFile              
-              -- insertImage' hDb pool id image (tail $ dropWhile (\x -> not (x == '.')) fn)         
-              -- respond (responseLBS notFound404 
-                       -- [("Content-Type", "text/plain")]
-                         -- "image adding")    
-
     Just (image, typ)  -> respond (responseLBS status200    
                             [("Content-Type", BC.pack ("image/" ++ typ))]
                             $ BL.pack $ BC.unpack $ B64.decodeLenient $ BC.pack image)

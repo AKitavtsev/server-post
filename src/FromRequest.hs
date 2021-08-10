@@ -3,8 +3,6 @@
 module FromRequest
     where
 
--- import qualified Data.ByteString.Lazy as BL
--- import qualified Data.ByteString.Internal as BS
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.Text as T
 import qualified Data.Time as Time
