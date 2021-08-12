@@ -10,9 +10,6 @@ import Data.Pool (Pool)
 
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as BL
--- import qualified Data.Text as T
--- import qualified Data.Text.Lazy as TL
--- import qualified Data.Time as Time
 
 import Control.Monad (when)
 import GHC.Generics
@@ -20,10 +17,8 @@ import Network.HTTP.Types
 import Network.Wai
 import Database.PostgreSQL.Simple (Connection (..))
 
--- import Controllers.Token (Token (..))
 import FromRequest
 import Models.Tag
--- import Servises.Config
 import Servises.Logger
 import Servises.Token
 import Servises.Db
@@ -44,7 +39,8 @@ routes pool hLogger hToken hDb req respond = do
         _        -> do 
           logError hLogger "  Invalid method"
           respond $ responseLBS status404 [("Content-Type", "text/plain")] ""          
-  where 
+  where
+-- tag creation (see example)  
     post vt = do
       case vt of
         Just (_, True) -> do         
@@ -60,6 +56,8 @@ routes pool hLogger hToken hDb req respond = do
         Just (_, False) -> do
           logError hLogger "  Administrator authority required"
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")    
+-- show tag, like
+-- http://localhost:3000/tag/1.120210901202553ff034f3847c1d22f091dde7cde045264/1
     get = do
         let id  = toId req
         when (id == 0) $ do
@@ -71,6 +69,7 @@ routes pool hLogger hToken hDb req respond = do
             respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
           Just tag -> do 
             respond (responseLBS status200 [("Content-Type", "text/plain")] $ encode tag)
+-- deleting a tag
     delete vt = do
       case vt of
         Just (_, True) -> do
@@ -82,6 +81,7 @@ routes pool hLogger hToken hDb req respond = do
         Just (_, False) -> do
           logError hLogger "  Administrator authority required"
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")    
+-- tag editing
     put vt = do
       case vt of
         Just (_, True) -> do

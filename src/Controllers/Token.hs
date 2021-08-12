@@ -11,19 +11,12 @@ import Servises.Db
 import Servises.Logger
 import Servises.Token
 
--- import Control.Monad.Trans
--- import Database.PostgreSQL.Simple
--- import Data.Pool (Pool)
--- import Network.HTTP.Types.Status
-
 import Control.Monad.Trans
 import Data.Aeson
 import Data.Char (isDigit)
 import Data.Hash.MD5
-import Data.Pool (Pool)
 import Data.Time.Clock
 import GHC.Generics
--- import Network.HTTP.Types.Status
 import Network.HTTP.Types
 import Network.Wai
 
@@ -31,9 +24,8 @@ import Network.Wai
 data Token = Token {token :: String}  
              deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
--- routes :: Pool Connection -> Request
-       -- -> (Response -> IO ResponseReceived)
-       -- -> IO ResponseReceived
+-- getting a token like
+--  http://localhost:3000/token/?login=login&password=password
 routes pool hLogger hToken hDb req respond = do
   case (\x y -> (x,y)) <$> toParam req "login" <*> toParam req "password" of
     Nothing -> do 

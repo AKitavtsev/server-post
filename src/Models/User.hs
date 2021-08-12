@@ -34,6 +34,6 @@ data UserOut = UserOut { name_    :: String
                        } deriving (Show, Generic, FromJSON, ToJSON)
 
 data UserID = UserID   { id    :: Integer
-                        , token :: String
+                       , token :: String
                        } deriving (Show, Generic, FromJSON, ToJSON)
 

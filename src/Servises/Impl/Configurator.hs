@@ -1,13 +1,13 @@
 module Servises.Impl.Configurator
   ( newHandle
   ) where
+  
 import Servises.Data (Priority (..))
 
 import qualified Servises.Config as SC
-
 import qualified Data.Configurator as C
 import qualified Data.Text as T
-import Servises.Data (Priority (..))
+
 
 newHandle :: IO SC.Handle
 newHandle = do
@@ -16,7 +16,6 @@ newHandle = do
       
 getconfig fm =  do   
   conf  <- C.load [C.Required "server.conf"]
-  -- conf  <- C.load [C.Optional "server.conf", C.Optional "local_server.conf"]
   case fm of
     SC.DB -> do
       name     <- C.lookupDefault "" conf (T.pack "database.name") :: IO String
@@ -39,6 +38,6 @@ getconfig fm =  do
     SC.POOL -> do
       subpools <- C.lookupDefault 1 conf (T.pack "poll.subpools") :: IO Int
       time     <- C.lookupDefault 40 conf (T.pack "poll.time") :: IO Integer
-      resours <- C.lookupDefault 10 conf (T.pack "poll.resours") :: IO Int
+      resours  <- C.lookupDefault 10 conf (T.pack "poll.resours") :: IO Int
       return (SC.PoolConfig subpools time resours)
        

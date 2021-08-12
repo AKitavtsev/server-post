@@ -6,7 +6,6 @@ module Controllers.Comments
 
 import Control.Monad.Trans
 import Data.Aeson (eitherDecode, encode )
-import Data.Pool (Pool)
 
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as BL
@@ -31,12 +30,12 @@ routes pool hLogger hToken hDb req respond = do
       logInfo hLogger ("  Method = " ++ (BC.unpack $ toMethod req))         
       case  toMethod req of
         "POST"   -> post id_author        
-        -- "GET"    -> get
         "DELETE" -> delete id_author adm
         _        -> do 
           logError hLogger "  Invalid method"
           respond $ responseLBS status404 [("Content-Type", "text/plain")] ""          
   where
+-- comment creation (see example)  
     post id_author = do    
       body <- strictRequestBody req
       logDebug hLogger ("  Body = " ++ (BL.unpack body))
@@ -53,7 +52,7 @@ routes pool hLogger hToken hDb req respond = do
         Left  e -> do              
               logError hLogger ("  Invalid request body  - " ++ e)          
               respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-                                            
+-- deleting a comment                                           
     delete id_author adm = do
        let id   = toId req
        case id of

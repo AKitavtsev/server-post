@@ -14,8 +14,8 @@ import Servises.Token
 
 import Control.Monad.Trans
 import Data.Aeson
-import Data.List (dropWhile)
-import Control.Monad (when)
+-- import Data.List (dropWhile)
+-- import Control.Monad (when)
 import GHC.Generics
 import Network.HTTP.Types.Status
 import Network.HTTP.Types
@@ -28,7 +28,6 @@ import qualified Data.ByteString.Base64 as B64
 
 
 routes pool hLogger hToken hDb req respond = do
-  logDebug hLogger (show req)
   let token = toToken req
   vt <- validToken hToken token
   case  vt of
@@ -40,6 +39,18 @@ routes pool hLogger hToken hDb req respond = do
         0       -> getPosts id_user
         _       -> getComments $ toId req
   where
+ -- show posts, like
+ -- http://localhost:3000/posts/<token>?<filtering and sorting options> 
+ -- filtering options:
+   -- tag=<Integer> tag_in=<[Integer]>, tag_all=<[Integer]>,
+   -- created_gt=yyyy-mm-dd, created_lt= , created_at=,
+   -- title= , name=, 
+   -- category=<Integer>,
+   -- text=, find=
+ -- sorting option:
+   -- order=[fild,...], like order=[photo,date,author,category]
+ -- or
+ -- http://localhost:3000/posts/<token>?page=<номер страницы пагинации>
     getPosts id_user = do  
       posts <- liftIO $ findAllPosts hDb pool req (limit hDb) id_user
       case posts of
@@ -49,7 +60,10 @@ routes pool hLogger hToken hDb req respond = do
         xs  -> do   
           respond (responseLBS status200 [("Content-Type", "text/plain")]
               $ encode xs)
-    
+ -- show comments for post id, like
+ -- http://localhost:3000/posts/<token>/<id>
+ -- or
+ -- http://localhost:3000/posts/<token>/<id>?page=<номер страницы пагинации>
     getComments id_post = do
       comments <- liftIO $ findComments hDb pool req (limit hDb) id_post
       case comments of

@@ -3,8 +3,6 @@
 module Controllers.Publish 
     where
 
-import Data.Pool (Pool)
-
 import Network.HTTP.Types
 import Network.Wai
 
@@ -13,6 +11,8 @@ import Servises.Logger
 import Servises.Token
 import Servises.Db
 
+-- publication of a draft, like
+-- http://localhost:3000/publish/1.120210901202553ff034f3847c1d22f091dde7cde045264/1
 routes pool hLogger hToken hDb req respond = do
   vt <- validToken hToken (toToken req)
   case vt of

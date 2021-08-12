@@ -14,7 +14,7 @@ import Data.Aeson
 import GHC.Generics
 
 import qualified Data.Text as T
--- (title, draft_date, user_id, category_id, photos, t_content)
+
 
 data Photo  = Photo { image :: String
                     , typ   :: String

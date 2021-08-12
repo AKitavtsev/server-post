@@ -42,7 +42,8 @@ routes pool hLogger hToken hDb req respond = do
         _        -> do 
           logError hLogger "  Invalid method"
           respond $ responseLBS status404 [("Content-Type", "text/plain")] ""          
-  where 
+  where
+-- author creation (see example)  
     post = do
       body <- strictRequestBody req
       logDebug hLogger ("  Body = " ++ (BL.unpack body))
@@ -57,6 +58,9 @@ routes pool hLogger hToken hDb req respond = do
               logError hLogger "  There is no user with this ID, or the user is already the author"
               respond (responseLBS status500 [("Content-Type", "text/plain")] "")
             _ -> respond (responseLBS created201 [("Content-Type", "text/plain")] "")    
+
+-- show author, like
+-- http://localhost:3000/author/<token>/<id>
     get = do
       let id   = toId req
       when (id == 0) $ do
@@ -68,6 +72,8 @@ routes pool hLogger hToken hDb req respond = do
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "author not exist")
         Just author -> do 
           respond (responseLBS status200 [("Content-Type", "text/plain")] $ encode author)
+          
+-- delete author (see example) 
     delete = do
        let id   = toId req
        when (id == 0) $ do
@@ -75,6 +81,8 @@ routes pool hLogger hToken hDb req respond = do
        -- deleteAuthorByID hDb pool id
        deleteByID hDb pool "author" id
        respond (responseLBS status204 [("Content-Type", "text/plain")] "")
+       
+-- author editing (see example)
     put = do
        let id      = toId req
            descrMb = toParam req "description"

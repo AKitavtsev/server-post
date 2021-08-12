@@ -14,15 +14,6 @@ module Servises.Config
 
 import Servises.Data (Priority (..))
 
--- import Control.Monad (when)
--- import Data.List (all)
--- import Data.Char
--- import System.Exit
- 
--- import qualified Data.Configurator as C
--- import qualified Data.Configurator.Types as TC
--- import qualified Data.Text as T
-
 data ForModule = DB 
                | LOG 
                | TOKEN 
@@ -46,7 +37,6 @@ data Config = DbConfig    { name      :: !String
                           , resours   :: !Int
                           }
              deriving (Show)
-
 
 
 getDbConfig, getLogConfig, getTokenConfig :: Handle -> IO Config

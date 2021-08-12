@@ -1,18 +1,13 @@
 {-# LANGUAGE DeriveGeneric, OverloadedStrings #-}
 
-
 module Controllers.Categories (routes)
     where
 
 import Control.Monad.Trans
 import Data.Aeson (eitherDecode, encode )
-import Data.Pool (Pool)
 
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as BL
--- import qualified Data.Text as T
--- import qualified Data.Text.Lazy as TL
--- import qualified Data.Time as Time
 
 import Control.Monad (when)
 import GHC.Generics
@@ -20,13 +15,12 @@ import Network.HTTP.Types
 import Network.Wai
 import Database.PostgreSQL.Simple (Connection (..))
 
--- import Controllers.Token (Token (..))
 import FromRequest
 import Models.Category
--- import Servises.Config
 import Servises.Logger
 import Servises.Token
 import Servises.Db
+
 
 routes pool hLogger hToken hDb req respond = do
   vt <- validToken hToken (toToken req)
@@ -44,7 +38,8 @@ routes pool hLogger hToken hDb req respond = do
         _        -> do 
           logError hLogger "  Invalid method"
           respond $ responseLBS status404 [("Content-Type", "text/plain")] ""          
-  where 
+  where
+-- caterories creation (see example)
     post vt = do
       case vt of
         Just (_, True) -> do         
@@ -64,6 +59,8 @@ routes pool hLogger hToken hDb req respond = do
         Just (_, False) -> do
           logError hLogger "  Administrator authority required"
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")    
+-- show category, like
+-- http://localhost:3000/category/1.120210901202553ff034f3847c1d22f091dde7cde045264/1
     get = do
         let id  = toId req
         when (id == 0) $ do
@@ -77,6 +74,7 @@ routes pool hLogger hToken hDb req respond = do
             -- ac <- allCategories [id] [id]
             -- logDebug hLogger (show ac)           
             respond (responseLBS status200 [("Content-Type", "text/plain")] $ encode category)
+-- deleting a caterory  (see example)
     delete vt = do
       case vt of
         Just (_, True) -> do
@@ -88,6 +86,7 @@ routes pool hLogger hToken hDb req respond = do
         Just (_, False) -> do
           logError hLogger "  Administrator authority required"
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")    
+-- category editing
     put vt = do
       case vt of
         Just (_, True) -> do

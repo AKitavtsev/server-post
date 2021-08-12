@@ -2,8 +2,8 @@
 
 module Main where
 
-import Router
-import Servises.Db (newConn, runMigrations, close)
+import Router (routes)
+import Servises.Db (newConn, close)
 import Servises.Logger
 import Servises.Config
 
@@ -16,41 +16,26 @@ import Data.Pool (Pool, createPool, withResource)
 import Data.Time.Clock
 import Control.Monad (when)
 import System.Environment
--- import Network.Wai
 import Network.Wai.Handler.Warp (run)
-
--- import Network.HTTP.Types
-
 
 main :: IO ()
 main = do
-  hConfig <- SC.newHandle
-  
+  hConfig    <- SC.newHandle  
   dbConf     <- getDbConfig hConfig
-  poolConfig <- getPoolConfig hConfig
-  
-  hDb        <- SB.newHandle dbConf
-  
-  conn <- newConn hDb dbConf  
-  pool <- createPool (newConn hDb dbConf)
-                     (close hDb)  
-                     (subpools poolConfig)
-                     (fromInteger (time poolConfig) :: NominalDiffTime)
-                     (resours poolConfig)
+  poolConfig <- getPoolConfig hConfig  
+  hDb        <- SB.newHandle dbConf  
+  conn       <- newConn hDb dbConf  
+  pool       <- createPool (newConn hDb dbConf)
+                           (close hDb)  
+                           (subpools poolConfig)
+                           (fromInteger (time poolConfig) :: NominalDiffTime)
+                           (resours poolConfig)
   logConf     <- getLogConfig hConfig 
-  hLogger     <- SL.newHandle logConf
-  
-  -- mig <- getArgs
-  -- when (mig == ["-m"]) $ do
-  logInfo hLogger "  Run migrations"
-  runMigrations hDb hLogger conn pool "sql"
-  
+  hLogger     <- SL.newHandle logConf  
   tokenConfig <- getTokenConfig hConfig
-  hToken      <- ST.newHandle tokenConfig
-  
+  hToken      <- ST.newHandle tokenConfig 
   
   logInfo hLogger "  Listen port 3000"
   
-  run 3000 (routes pool hLogger hToken hDb)
+  run 3000 (routes conn pool hLogger hToken hDb)
     
-

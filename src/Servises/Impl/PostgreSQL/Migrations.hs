@@ -2,11 +2,11 @@
 {-# LANGUAGE QuasiQuotes #-}
 
 module Servises.Impl.PostgreSQL.Migrations (runMigrations)
-
     where
+
 import Servises.Logger
 
-import Control.Monad (forM_, void, when)
+import Control.Monad (forM_, void)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Types (Query (..))
 import Data.Pool
@@ -21,7 +21,7 @@ runMigrations hLogger conn pool dir = do
     begin conn
     fn <- scriptsInDirectory dir 
     withResource pool $ \conn -> do
-      forM_ fn (executeMigration hLogger conn ) 
+      forM_ fn (executeMigration hLogger conn) 
     commit conn
           
 executeMigration :: Servises.Logger.Handle -> Connection -> FilePath -> IO ()

@@ -38,6 +38,8 @@ routes pool hLogger hToken hDb req respond = do
       logError hLogger "  Invalid method"
       respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
   where
+-- show photo, like
+-- http://localhost:3000/photo/1
   get = do
     let id = toIdImage req
     when (id == 0) $ do
@@ -51,6 +53,7 @@ routes pool hLogger hToken hDb req respond = do
         let typeImage = BC.pack ("image/" ++ typ)    
         respond (responseLBS status200 [("Content-Type", typeImage)]
               $ BL.pack $ BC.unpack $ B64.decodeLenient $ BC.pack image)
+-- loading photo into DB from the request body (see example)
   post = do
     vt <- validToken hToken (toToken req)
     case  vt of
@@ -73,7 +76,8 @@ routes pool hLogger hToken hDb req respond = do
           Left  e -> do
             logError hLogger ("  Invalid request body  - " ++ e)          
             return (Photo "" "")
-
+-- uploading a photo to DB from a catalog file Images of the project root directory, like
+-- PUT http://localhost:3000/photo/1.120210901202553ff034f3847c1d22f091dde7cde045264/?file=star.gif
   put = do
     vt <- validToken hToken (toToken req)
     case vt of

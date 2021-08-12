@@ -6,18 +6,15 @@ module Controllers.Users
 
 import Control.Monad.Trans
 import Data.Aeson (eitherDecode, encode )
-import Data.Pool (Pool)
 
-import qualified Data.ByteString.Char8 as BC
-import qualified Data.ByteString.Lazy.Char8 as BL
-import qualified Data.Text.Lazy as TL
+import qualified Data.ByteString.Char8 as BC (unpack)
+import qualified Data.ByteString.Lazy.Char8 as BL (pack, unpack)
 
 import Control.Monad (when)
 import GHC.Generics
 import Network.HTTP.Types
 import Network.Wai
 
--- import Controllers.Token (Token (..))
 import FromRequest
 import Models.User
 import Servises.Config
@@ -38,7 +35,8 @@ routes pool hLogger hToken hDb req respond = do
     _        -> do 
       logError hLogger "  Invalid method"
       respond $ responseLBS status404 [("Content-Type", "text/plain")] ""          
-  where 
+  where
+-- user creation (see example)  
     post = do
       body <- strictRequestBody req
       logDebug hLogger ("  Body = " ++ (BL.unpack body))
@@ -60,6 +58,9 @@ routes pool hLogger hToken hDb req respond = do
               token <- (createToken hToken) id False
               respond (responseLBS created201 
                       [("Content-Type", "text/plain")] $ encode (UserID id token))
+
+-- show user, like 
+-- http://localhost:3000/user/1.120210901202553ff034f3847c1d22f091dde7cde045264
     get = do
       vt <- validToken hToken (toToken req)
       case vt of
@@ -75,6 +76,8 @@ routes pool hLogger hToken hDb req respond = do
               respond (responseLBS status200 [("Content-Type", "text/plain")] $ encode user)
         Nothing -> do
           logError hLogger "  Invalid or outdated token"
+
+-- delete user (see example)
           respond (responseLBS status400 [("Content-Type", "text/plain")] "")        
     delete = do
       let id    = toId req
@@ -90,10 +93,3 @@ routes pool hLogger hToken hDb req respond = do
         Just (_, False) -> do
           logError hLogger "  Administrator authority required"
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")
-
--- curTimeStr :: String -> IO String
--- curTimeStr form = do
-    -- utc <- Time.getCurrentTime
-    -- return (Time.formatTime Time.defaultTimeLocale form utc)
-
-

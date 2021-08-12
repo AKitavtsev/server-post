@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 
 module Servises.Impl.PostgreSQL 
     ( newHandle
@@ -23,14 +22,13 @@ import Servises.Impl.PostgreSQL.Migrations
 
 import Database.PostgreSQL.Simple
 
-import Control.Exception
+-- import Control.Exception
 import Control.Monad.Trans (liftIO)
 import Control.Monad (when, forM_)
 import Data.Char (toLower)
 -- import Data.Maybe
 import Data.Pool (Pool (..), withResource)
 import Data.String (fromString)
-import GHC.Int (Int64 (..))
 
 import qualified Data.ByteString.Lazy.Char8 as LC
 import qualified Data.Text as T
@@ -363,8 +361,7 @@ findAllPosts pool req limit id = do
            ++     " INNER JOIN user_ USING (user_id)"
            ++     " INNER JOIN author USING (user_id)"
            ++     " INNER JOIN category USING (category_id)"
-           ++ endQuery
-  putStrLn  query           
+           ++ endQuery          
   res <- fetchSimple pool $ fromString query
   mapM toPost res
     where 
@@ -401,7 +398,7 @@ findAllPosts pool req limit id = do
 
 findComments pool req limit id_post = do
    let offset = case toParam req "page" of
-                  Nothing -> 0
+                  Nothing   -> 0
                   Just page -> limit * (read' page - 1)
        query = "SELECT comment_date :: varchar," ++
                " user_id ::varchar, user_name, surname, comment "
@@ -416,65 +413,7 @@ findComments pool req limit id_post = do
          Comment comment_data
                  (User user_name surname
                  ("http://localhost:3000/image/" ++ user_id))
-                 comment                         
-
-      
-       
---------------------------------------------------------------------------------
--- Utilities for interacting with the DB.
--- No transactions.
---
--- Accepts arguments
-     
-fetch :: (FromRow r, ToRow q) => Pool Connection -> q -> Query -> IO [r]
-fetch pool args sql = withResource pool retrieve
-      where 
-        retrieve conn = 
-          (query conn sql args)
-           `catches` [Handler (\ (ex :: SqlError)    -> handleSql ex),
-                      Handler (\ (ex :: ResultError) -> handleSql ex)]
-        handleSql ex = do
-          putStrLn ("-------" ++ show ex)
-          return []
-             
-      
--- No arguments -- just pure sql
-fetchSimple :: FromRow r => Pool Connection -> Query -> IO [r]
-fetchSimple pool sql = withResource pool retrieve
-      where 
-        retrieve conn = 
-          (query_ conn sql)
-           `catches` [Handler (\ (ex :: SqlError)    -> handleSql ex),
-                      Handler (\ (ex :: ResultError) -> handleSql ex)]
-        handleSql ex = do
-          putStrLn ("-------" ++ show ex)
-          return []
-
-
--- Update database
--- execSql :: ToRow q => Pool Connection -> q -> Query -> IO Int64
--- execSql pool args sql = withResource pool ins
-       -- where ins conn = execute conn sql args
-
--------------------------------------------------------------------------------
--- Utilities for interacting with the DB.
--- Transactions.
---
--- Accepts arguments
--- fetchT :: (FromRow r, ToRow q) => Pool Connection -> q -> Query -> IO [r]
--- fetchT pool args sql = withResource pool retrieve
-      -- where retrieve conn = withTransaction conn $ query conn sql args
-
--- No arguments -- just pure sql
--- fetchSimpleT :: FromRow r => Pool Connection -> Query -> IO [r]
--- fetchSimpleT pool sql = withResource pool retrieve
-       -- where retrieve conn = withTransaction conn $ query_ conn sql
-
--- Update database
-execSqlT :: ToRow q => Pool Connection -> q -> Query -> IO Int64
-execSqlT pool args sql = withResource pool ins
-       where ins conn = withTransaction conn $ execute conn sql args
---------------------------------------------------------------------------------      
+                 comment                                
 
 
                               

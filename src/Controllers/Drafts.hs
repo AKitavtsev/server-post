@@ -42,6 +42,7 @@ routes pool hLogger hToken hDb req respond = do
           logError hLogger "  Invalid method"
           respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
   where
+-- draft creation (see example)
     post id_author = do
       res <-  strictRequestBody req   >>=
               getDraft                >>=
@@ -81,6 +82,7 @@ routes pool hLogger hToken hDb req respond = do
            p <- mapM (insertPhotoDraft hDb pool id) listPhotos           
            when (p /= listPhotos) $ logWarning hLogger "  Not all photos were found"
            return (Just (DraftPost id (tags draft) (filter (/= 0) p)))   
+-- draft editing (see example)
     put id_author = do
       res <-  strictRequestBody req >>=
               getDraft              >>=
@@ -127,12 +129,15 @@ routes pool hLogger hToken hDb req respond = do
              p <- mapM (insertPhotoDraft hDb pool (id_draft draft)) listPhotos
              when (p /= listPhotos) $ logWarning hLogger "  Not all photos were found"
              return (Just (draft {newOtherPhotos = Just (filter (/= 0) p)}))
+-- deleting a drft
     delete id_author = do
       let id   = toId req
       when (id == 0) $ do
         logError hLogger "  Invalid id"
       deleteDraft hDb pool id id_author
       respond (responseLBS status204 [("Content-Type", "text/plain")] "")    
+-- show draft, like
+-- http://localhost:3000/draft/1.120210901202553ff034f3847c1d22f091dde7cde045264/1
     get id_author = do
       let id   = toId req
       when (id == 0) $ do

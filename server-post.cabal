@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b622ac5f075804d51df0162acfcab183d284dcc0ea4c755532a070e285f92f16
+-- hash: 10e0f8ce4d2fa915761801348b8b4cdafd1b4f174d5f33879842d25c874b74db
 
 name:           server-post
 version:        0.1.0.0
@@ -56,7 +56,6 @@ library
       Servises.Impl.PostgreSQL
       Servises.Impl.PostgreSQL.Internal
       Servises.Impl.PostgreSQL.Migrations
-      Servises.Impl.PostgreSQL.Pagination
       Servises.Impl.StdOut
       Servises.Logger
       Servises.Token

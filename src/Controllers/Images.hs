@@ -20,12 +20,12 @@ import Network.HTTP.Types.Status
 import Network.HTTP.Types
 import Network.Wai
 
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy.Char8 as BL
-import qualified Data.ByteString.Char8 as BC
-import qualified Data.ByteString.Base64 as B64
+import qualified Data.ByteString.Lazy.Char8 as BL (pack)
+import qualified Data.ByteString.Char8 as BC (pack, unpack)
+import qualified Data.ByteString.Base64 as B64 (decodeLenient)
 
-
+-- show avatar, like
+-- http://localhost:3000/image/1
 routes pool hLogger hToken hDb req respond = do
   let id = toIdImage req
   when (id == 0) $ logError hLogger "  Invalid id"
