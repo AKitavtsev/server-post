@@ -1,13 +1,13 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module Models.Tag (
-  Tag (..),
-  ) where
+    Tag (..),
+) where
 
-import  GHC.Generics
 import Data.Aeson (FromJSON, ToJSON)
+import GHC.Generics
 
-data Tag = Tag {tag :: String}  
-             deriving (Eq, Show, Generic, FromJSON, ToJSON)
+data Tag = Tag {tag :: String}
+    deriving (Eq, Show, Generic, FromJSON, ToJSON)

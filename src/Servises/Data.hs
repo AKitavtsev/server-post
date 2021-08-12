@@ -1,9 +1,12 @@
-module Servises.Data
-    (Priority (..)) where
+module Servises.Data (Priority (..)) where
 
 data Priority
-    = DEBUG    -- ^ Debug messages
-    | INFO     -- ^ Notable information that requires no immediate action.
-    | WARN     -- ^ Something is probably wrong, and we should investigate.
-    | ERROR    -- ^ Something is wrong and immediate action is required.
+    = -- | Debug messages
+      DEBUG
+    | -- | Notable information that requires no immediate action.
+      INFO
+    | -- | Something is probably wrong, and we should investigate.
+      WARN
+    | -- | Something is wrong and immediate action is required.
+      ERROR
     deriving (Eq, Ord, Show)

@@ -1,20 +1,22 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module Models.Comment (
-  CommentIn (..),
-  CommentID (..)
-  ) where
+    CommentIn (..),
+    CommentID (..),
+) where
 
-import  GHC.Generics
 import Data.Aeson
+import GHC.Generics
 
-             
-data CommentIn  = CommentIn  { post_id  :: Integer
-                             , comment  :: String
-                             } deriving (Show, Generic, FromJSON, ToJSON)
+data CommentIn = CommentIn
+    { post_id :: Integer
+    , comment :: String
+    }
+    deriving (Show, Generic, FromJSON, ToJSON)
 
-data CommentID  = CommentID  { id :: Integer
-                             } deriving (Show, Generic, FromJSON, ToJSON)
-
+data CommentID = CommentID
+    { id :: Integer
+    }
+    deriving (Show, Generic, FromJSON, ToJSON)

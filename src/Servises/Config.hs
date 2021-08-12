@@ -1,47 +1,51 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Servises.Config
-  ( Handle(..)
-  , ForModule (..)
-  , Config (..)
-  , getDbConfig 
-  , getLogConfig
-  , getTokenConfig
-  , getPoolConfig
-  ) where
+module Servises.Config (
+    Handle (..),
+    ForModule (..),
+    Config (..),
+    getDbConfig,
+    getLogConfig,
+    getTokenConfig,
+    getPoolConfig,
+) where
 
 import Servises.Data (Priority (..))
 
-data ForModule = DB 
-               | LOG 
-               | TOKEN 
-               | POOL 
-               deriving (Eq, Ord, Show)
+data ForModule
+    = DB
+    | LOG
+    | TOKEN
+    | POOL
+    deriving (Eq, Ord, Show)
 
 newtype Handle = Handle
-    { getConfig :: ForModule -> IO Config}  
+    {getConfig :: ForModule -> IO Config}
 
-data Config = DbConfig    { name      :: !String
-                          , user      :: !String
-                          , password  :: !String
-                          , limit     :: !Integer
-                          }
-            | LogConfig   { level     :: !Priority
-                          }
-            | TokenConfig { lifetime  :: !Integer
-                          }
-            | PoolConfig  { subpools  :: !Int
-                          , time      :: !Integer
-                          , resours   :: !Int
-                          }
-             deriving (Show)
-
+data Config
+    = DbConfig
+        { name :: !String
+        , user :: !String
+        , password :: !String
+        , limit :: !Integer
+        }
+    | LogConfig
+        { level :: !Priority
+        }
+    | TokenConfig
+        { lifetime :: !Integer
+        }
+    | PoolConfig
+        { subpools :: !Int
+        , time :: !Integer
+        , resours :: !Int
+        }
+    deriving (Show)
 
 getDbConfig, getLogConfig, getTokenConfig :: Handle -> IO Config
-getDbConfig    = (`getConfig` DB)
-getLogConfig   = (`getConfig` LOG)
+getDbConfig = (`getConfig` DB)
+getLogConfig = (`getConfig` LOG)
 getTokenConfig = (`getConfig` TOKEN)
-getPoolConfig  = (`getConfig` POOL)
-
+getPoolConfig = (`getConfig` POOL)
