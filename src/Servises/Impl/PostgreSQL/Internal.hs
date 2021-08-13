@@ -8,6 +8,7 @@ import Control.Applicative ((<|>))
 import Control.Exception
 import Control.Monad.Trans (liftIO)
 import Data.Char (isDigit)
+import Data.Maybe (fromMaybe)
 import Data.Pool (Pool (..), withResource)
 import Database.PostgreSQL.Simple
 import GHC.Int (Int64 (..))
@@ -25,29 +26,29 @@ partQuery draft = if sets == "" then "" else init sets
     sets = setTitle ++ setCategory ++ setContent ++ setPhoto
     setTitle = case newTitle draft of
         Nothing -> ""
-        Just title -> (" title = '" ++ title ++ "',")
+        Just title -> " title = '" ++ title ++ "',"
     setCategory = case newCategory draft of
         Nothing -> ""
-        Just category -> (" category_id =" ++ (show category) ++ ",")
+        Just category -> " category_id =" ++ show category ++ ","
     setContent = case newContent draft of
         Nothing -> ""
-        Just content -> (" t_content ='" ++ (T.unpack content) ++ "',")
+        Just content -> " t_content ='" ++ T.unpack content ++ "',"
     setPhoto = case newMainPhoto draft of
         Nothing -> ""
-        Just photo -> (" photo_id =" ++ (show photo) ++ ",")
+        Just photo -> " photo_id =" ++ show photo ++ ","
 
 -- Forms part of the querry for SELECT post
 queryWhereOrder :: Pool Connection -> Request -> Integer -> Integer -> IO String
 queryWhereOrder pool req limit id_user =
     case toParam req "page" of
         Nothing -> do
-            newPagination pool "post" id_user ((queryWhere req) ++ (queryOrder req))
-            return ((queryWhere req) ++ (queryOrder req) ++ " LIMIT " ++ (show limit))
+            newPagination pool "post" id_user (queryWhere req ++ queryOrder req)
+            return (queryWhere req ++ queryOrder req ++ " LIMIT " ++ show limit)
         Just page -> do
             q <- continuePagination pool "post" id_user
             return
-                ( q ++ "LIMIT " ++ (show limit) ++ "OFFSET "
-                    ++ (show (limit * (read' page - 1)))
+                ( q ++ "LIMIT " ++ show limit ++ "OFFSET "
+                    ++ show (limit * (read' page - 1))
                 )
 
 -- Forms part of the querry for SELECT post WHERE
@@ -57,19 +58,17 @@ queryWhere req = case qw of
     _ -> " WHERE" ++ reverse (drop 4 $ reverse qw)
   where
     qw =
-        (queryWhereTag req)
-            ++ (queryWhereTitle req)
-            ++ (queryWhereText req)
-            ++ (queryWhereDate req)
-            ++ (queryWhereAuthor req)
-            ++ (queryWhereCategory req)
-            ++ (queryWhereFind req)
+        queryWhereTag req
+            ++ queryWhereTitle req
+            ++ queryWhereText req
+            ++ queryWhereDate req
+            ++ queryWhereAuthor req
+            ++ queryWhereCategory req
+            ++ queryWhereFind req
 
 -- part of the querry for SELECT post WHERE tag
 queryWhereTag :: Request -> String
-queryWhereTag req = case tag <|> tagsIn <|> tagsAll of
-    Nothing -> ""
-    Just str -> str
+queryWhereTag req = fromMaybe "" (tag <|> tagsIn <|> tagsAll)
   where
     array = " ARRAY (SELECT t_id FROM gettags WHERE d_id = draft_id)"
     tag = case toParam req "tag" of
@@ -103,11 +102,9 @@ queryWhereText req =
         Nothing -> ""
         Just t -> " t_content LIKE '%" ++ t ++ "%' AND"
 
--- fot date (created)
+-- for date (created)
 queryWhereDate :: Request -> String
-queryWhereDate req = case dateAT <|> dateLT <|> dateGT of
-    Nothing -> ""
-    Just str -> str
+queryWhereDate req = fromMaybe "" (dateAT <|> dateLT <|> dateGT) 
   where
     beg = " draft_date :: date "
     dateAT = case toParam req "created_at" of
@@ -182,13 +179,13 @@ queryOrder req =
 
 newPagination :: Pool Connection -> String -> Integer -> String -> IO ()
 newPagination pool model user_id halfQuery = do
-    liftIO $
-        execSqlT
+    _ <- liftIO $
+          execSqlT
             pool
             [show user_id, model]
             "DELETE FROM pagination WHERE user_id=? AND model = ?"
-    liftIO $
-        execSqlT
+    _ <- liftIO $
+          execSqlT
             pool
             [show user_id, model, halfQuery]
             "INSERT INTO pagination (user_id, model, part_query) VALUES(?,?,?)"
@@ -205,9 +202,10 @@ continuePagination pool model user_id = do
     return $ pass res
   where
     pass [Only pq] = pq
+    pass _ = ""
 
 fromPhotoId :: Integer -> String
-fromPhotoId id = "http://localhost:3000/photo/" ++ (show id)
+fromPhotoId i = "http://localhost:3000/photo/" ++ show i
 
 toListString :: String -> [String]
 toListString arraySql =
@@ -218,10 +216,10 @@ toListString arraySql =
         ]
 
 toListInteger :: String -> [Integer]
-toListInteger arraySql = read $ init ('[' : (tail arraySql)) ++ "]"
+toListInteger arraySql = read $ init ('[' : tail arraySql) ++ "]"
 
 read' :: String -> Integer
-read' i = if (all isDigit i) then read i :: Integer else 1
+read' i = if all isDigit i then read i :: Integer else 1
 
 --------------------------------------------------------------------------------
 -- Utilities for interacting with the DB.
@@ -233,11 +231,11 @@ fetch :: (FromRow r, ToRow q) => Pool Connection -> q -> Query -> IO [r]
 fetch pool args sql = withResource pool retrieve
   where
     retrieve conn =
-        (query conn sql args)
+        query conn sql args
             `catches` [ Handler (\(ex :: SqlError) -> handleSql ex)
                       , Handler (\(ex :: ResultError) -> handleSql ex)
                       ]
-    handleSql ex = do
+    handleSql _ = do
         return []
 
 -- No arguments -- just pure sql
@@ -245,11 +243,11 @@ fetchSimple :: FromRow r => Pool Connection -> Query -> IO [r]
 fetchSimple pool sql = withResource pool retrieve
   where
     retrieve conn =
-        (query_ conn sql)
+        query_ conn sql
             `catches` [ Handler (\(ex :: SqlError) -> handleSql ex)
                       , Handler (\(ex :: ResultError) -> handleSql ex)
                       ]
-    handleSql ex = do
+    handleSql _ = do
         return []
 
 -- Update database

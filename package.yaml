@@ -24,29 +24,18 @@ dependencies:
 - aeson
 - bytestring
 - base64-bytestring
-# - containers
 - configurator
 - directory
-# - file-embed
 - hspec
-# - hspec-wai
-# - hspec-wai-json
 - http-types
 - MissingH
 - mtl
 - postgresql-simple
-# - postgresql-simple-migration
 - resource-pool
-# - scientific
-# - scotty
-# - sorted-list
-# - stm
 - text
 - time
-# - uuid
 - wai
 - warp
-# - wai-extra
 library:
   source-dirs: src
 
@@ -55,6 +44,8 @@ executables:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
+    - -Wall
+    - -Werror
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N

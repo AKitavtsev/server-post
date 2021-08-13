@@ -1,5 +1,3 @@
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 module Servises.Impl.PostgreSQL.Migrations (runMigrations) where
 
@@ -18,8 +16,8 @@ runMigrations :: Servises.Logger.Handle -> Connection -> Pool Connection -> File
 runMigrations hLogger conn pool dir = do
     begin conn
     fn <- scriptsInDirectory dir
-    withResource pool $ \conn -> do
-        forM_ fn (executeMigration hLogger conn)
+    withResource pool $ \con -> do
+        forM_ fn (executeMigration hLogger con)
     commit conn
 
 executeMigration :: Servises.Logger.Handle -> Connection -> FilePath -> IO ()
@@ -32,5 +30,5 @@ executeMigration hLogger con fileName = do
 -- | Lists all files in the given 'FilePath' 'dir' in alphabetical order.
 scriptsInDirectory :: FilePath -> IO [FilePath]
 scriptsInDirectory dir = do
-    sortListDir <- fmap L.sort $ listDirectory dir
+    sortListDir <- L.sort <$> listDirectory dir
     return (map (\x -> dir ++ "/" ++ x) sortListDir)

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 10e0f8ce4d2fa915761801348b8b4cdafd1b4f174d5f33879842d25c874b74db
+-- hash: a71657db37d66cc650e6a7345c9e2039176b96f2de20093a0b75a9e36f9c0d87
 
 name:           server-post
 version:        0.1.0.0
@@ -88,7 +88,7 @@ executable server-post-exe
       Paths_server_post
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       MissingH
     , aeson

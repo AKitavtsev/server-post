@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-
+--
 module Models.Draft (
     Photo (..),
     DraftIn (..),
@@ -33,12 +33,12 @@ data DraftIn = DraftIn
 
 data DraftUp = DraftUp
     { id_draft :: Integer
-    , newTitle :: (Maybe String)
-    , newCategory :: (Maybe Integer)
-    , newTags :: (Maybe [Integer])
-    , newContent :: (Maybe T.Text)
-    , newMainPhoto :: (Maybe Integer)
-    , newOtherPhotos :: (Maybe [Integer])
+    , newTitle :: Maybe String
+    , newCategory :: Maybe Integer
+    , newTags :: Maybe [Integer]
+    , newContent :: Maybe T.Text
+    , newMainPhoto :: Maybe Integer
+    , newOtherPhotos :: Maybe [Integer]
     }
     deriving (Show, Generic, FromJSON, ToJSON)
 

@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Controllers.Authors where
@@ -6,13 +5,13 @@ module Controllers.Authors where
 import Control.Monad.Trans
 import Data.Aeson (eitherDecode, encode)
 import Data.Pool (Pool)
+import Database.PostgreSQL.Simple.Internal
 
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.Text as T
 
 import Control.Monad (when)
-import GHC.Generics
 import Network.HTTP.Types
 import Network.Wai
 
@@ -22,17 +21,24 @@ import Servises.Db
 import Servises.Logger
 import Servises.Token
 
+routes :: Pool Connection
+                -> Servises.Logger.Handle
+                -> Servises.Token.Handle
+                -> Servises.Db.Handle
+                -> Request
+                -> (Response -> IO b)
+                -> IO b
 routes pool hLogger hToken hDb req respond = do
     vt <- validToken hToken (toToken req)
     case vt of
         Nothing -> do
             logError hLogger "  Invalid or outdated token"
             respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-        Just (id, False) -> do
+        Just (_, False) -> do
             logError hLogger "  Administrator authority required"
             respond (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")
-        Just (id, True) -> do
-            logInfo hLogger ("  Method = " ++ (BC.unpack $ toMethod req))
+        Just (_, True) -> do
+            logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
             case toMethod req of
                 "POST" -> post
                 "GET" -> get
@@ -45,26 +51,26 @@ routes pool hLogger hToken hDb req respond = do
     -- author creation (see example)
     post = do
         body <- strictRequestBody req
-        logDebug hLogger ("  Body = " ++ (BL.unpack body))
+        logDebug hLogger ("  Body = " ++ BL.unpack body)
         case eitherDecode body :: Either String Author of
             Left e -> do
                 logError hLogger ("  Invalid request body  - " ++ e)
                 respond (responseLBS status400 [("Content-Type", "text/plain")] "")
             Right correctlyParsedBody -> do
-                id <- insertAuthor hDb pool correctlyParsedBody
-                case id of
+                id_ <- insertAuthor hDb pool correctlyParsedBody
+                case id_ of
                     0 -> do
                         logError hLogger "  There is no user with this ID, or the user is already the author"
                         respond (responseLBS status500 [("Content-Type", "text/plain")] "")
                     _ -> respond (responseLBS created201 [("Content-Type", "text/plain")] "")
 
     -- show author, like
-    -- http://localhost:3000/author/<token>/<id>
+    -- http://localhost:3000/author/<token>/<id''>
     get = do
-        let id = toId req
-        when (id == 0) $ do
-            logError hLogger "  Invalid id"
-        authorMb <- liftIO $ findAuthorByID hDb pool id
+        let id_ = toId req
+        when (id_ == 0) $ do
+            logError hLogger "  Invalid id''"
+        authorMb <- liftIO $ findAuthorByID hDb pool id_
         case authorMb of
             Nothing -> do
                 logError hLogger "  Author not exist"
@@ -74,26 +80,26 @@ routes pool hLogger hToken hDb req respond = do
 
     -- delete author (see example)
     delete = do
-        let id = toId req
-        when (id == 0) $ do
-            logError hLogger "  Invalid id"
-        -- deleteAuthorByID hDb pool id
-        deleteByID hDb pool "author" id
+        let id_ = toId req
+        when (id_ == 0) $ do
+            logError hLogger "  Invalid id''"
+        -- deleteAuthorByID hDb pool id_
+        deleteByID hDb pool "author" id_
         respond (responseLBS status204 [("Content-Type", "text/plain")] "")
 
     -- author editing (see example)
     put = do
-        let id = toId req
+        let id_ = toId req
             descrMb = toParam req "description"
-        when (id == 0) $ do
-            logError hLogger "  Invalid id"
+        when (id_ == 0) $ do
+            logError hLogger "  Invalid id''"
         case descrMb of
             Nothing -> do
                 logError hLogger "  The \"description\" parameter is required"
                 respond (responseLBS status400 [("Content-Type", "text/plain")] "")
             Just descr -> do
-                updateByID hDb pool "author" id "description" descr
+                updateByID hDb pool "author" id_ descr
                 respond
                     ( responseLBS status200 [("Content-Type", "text/plain")] $
-                        encode (Author id $ T.pack descr)
+                        encode (Author id_ $ T.pack descr)
                     )

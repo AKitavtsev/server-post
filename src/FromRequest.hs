@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-
+--
 module FromRequest where
 
 import qualified Data.ByteString.Char8 as BC
@@ -22,39 +22,38 @@ toParam req name = case parBS of
 
 toPath :: Request -> T.Text
 toPath req =
-    case (pathInfo req) of
+    case pathInfo req of
         [] -> ""
-        (x : xs) -> x
+        (x : _) -> x
 
 toMethod :: Request -> BC.ByteString
-toMethod req = requestMethod req
+toMethod  = requestMethod
 
 toToken :: Request -> String
 toToken req = case pathInfo req of
-    (x : y : xs) -> T.unpack y
+    (_ : y : _) -> T.unpack y
     _ -> []
 
 toId :: Request -> Integer
 toId req = case pathInfo req of
-    (x : y : z : xs) -> read_ $ T.unpack z
+    (_ : _ : z : _) -> read_ $ T.unpack z
     _ -> 0
   where
     read_ x =
-        if ((not (x == [])) && (all isDigit x))
+        if x /= [] && all isDigit x
             then read x
             else 0
 
 toIdImage :: Request -> Integer
 toIdImage req = case pathInfo req of
-    (x : y : xs) -> read_ $ T.unpack y
+    (_ : y : _) -> read_ $ T.unpack y
     _ -> 0
   where
     read_ x =
-        if (x /= []) && (all isDigit x)
+        if (x /= []) && all isDigit x
             then read x
             else 0
 
 curTimeStr :: String -> IO String
-curTimeStr form = do
-    utc <- Time.getCurrentTime
-    return (Time.formatTime Time.defaultTimeLocale form utc)
+curTimeStr form = 
+  Time.formatTime Time.defaultTimeLocale form <$> Time.getCurrentTime

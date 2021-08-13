@@ -16,19 +16,31 @@ import qualified Controllers.Tags
 import qualified Controllers.Token
 import qualified Controllers.Users
 
-import Servises.Db (runMigrations)
 import Servises.Logger
+import Servises.Token
+import Servises.Db
 
-import qualified Data.Text as T
 import Network.HTTP.Types
 import Network.Wai
+import Data.Pool (Pool)
+import Database.PostgreSQL.Simple.Internal
 
+import qualified Data.Text as T
+
+routes :: Connection
+                -> Pool Connection
+                -> Servises.Logger.Handle
+                -> Servises.Token.Handle
+                -> Servises.Db.Handle
+                -> Request
+                -> (Response -> IO b)
+                -> IO b
 routes conn pool hLogger hToken hDb req respond = do
-    logInfo hLogger ("  Path = " ++ (T.unpack $ toPath req))
+    logInfo hLogger ("  Path = " ++ T.unpack (toPath req))
     case toPath req of
         "user" -> Controllers.Users.routes pool hLogger hToken hDb req respond
         "token" -> Controllers.Token.routes pool hLogger hToken hDb req respond
-        "image" -> Controllers.Images.routes pool hLogger hToken hDb req respond
+        "image" -> Controllers.Images.routes pool hLogger hDb req respond
         "author" -> Controllers.Authors.routes pool hLogger hToken hDb req respond
         "category" -> Controllers.Categories.routes pool hLogger hToken hDb req respond
         "tag" -> Controllers.Tags.routes pool hLogger hToken hDb req respond

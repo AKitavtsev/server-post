@@ -1,5 +1,4 @@
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Servises.Config (
@@ -44,7 +43,7 @@ data Config
         }
     deriving (Show)
 
-getDbConfig, getLogConfig, getTokenConfig :: Handle -> IO Config
+getDbConfig, getLogConfig, getTokenConfig, getPoolConfig :: Handle -> IO Config
 getDbConfig = (`getConfig` DB)
 getLogConfig = (`getConfig` LOG)
 getTokenConfig = (`getConfig` TOKEN)

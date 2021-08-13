@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-
+--
 module Models.Comment (
     CommentIn (..),
     CommentID (..),
@@ -16,7 +16,7 @@ data CommentIn = CommentIn
     }
     deriving (Show, Generic, FromJSON, ToJSON)
 
-data CommentID = CommentID
+newtype CommentID = CommentID
     { id :: Integer
     }
     deriving (Show, Generic, FromJSON, ToJSON)

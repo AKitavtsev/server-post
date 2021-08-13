@@ -1,15 +1,12 @@
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+
+
 
 module Controllers.Photos where
 
 import FromRequest
 
--- import Controllers.Token
-
 import Models.Draft (Photo (..))
-import Servises.Config
 import Servises.Db
 import Servises.Logger
 import Servises.Token
@@ -19,17 +16,23 @@ import Control.Monad (when)
 import Control.Monad.Trans
 import Data.Aeson
 import Data.List (dropWhile)
-import GHC.Generics
+import Data.Pool (Pool)
+import Database.PostgreSQL.Simple.Internal
 import Network.HTTP.Types
-import Network.HTTP.Types.Status
 import Network.Wai
 
-import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as BL
-import qualified Data.Text as T
 
+
+routes :: Pool Connection
+                -> Servises.Logger.Handle
+                -> Servises.Token.Handle
+                -> Servises.Db.Handle
+                -> Request
+                -> (Response -> IO b)
+                -> IO b
 routes pool hLogger hToken hDb req respond = do
     case toMethod req of
         "POST" -> post
@@ -42,19 +45,19 @@ routes pool hLogger hToken hDb req respond = do
     -- show photo, like
     -- http://localhost:3000/photo/1
     get = do
-        let id = toIdImage req
-        when (id == 0) $ do
-            logError hLogger "  Invalid id"
-        imageMb <- liftIO $ findPhotoByID hDb pool id
+        let id_ = toIdImage req
+        when (id_ == 0) $ do
+            logError hLogger "  Invalid id_"
+        imageMb <- liftIO $ findPhotoByID hDb pool id_
         case imageMb of
             Nothing -> do
                 logError hLogger "  Photo not found"
                 respond $ responseLBS status400 [("Content-Type", "text/plain")] ""
-            Just (image, typ) -> do
-                let typeImage = BC.pack ("image/" ++ typ)
+            Just (image_, typ_) -> do
+                let typeImage = BC.pack ("image/" ++ typ_)
                 respond
                     ( responseLBS status200 [("Content-Type", typeImage)] $
-                        BL.pack $ BC.unpack $ B64.decodeLenient $ BC.pack image
+                        BL.pack $ BC.unpack $ B64.decodeLenient $ BC.pack image_
                     )
     -- loading photo into DB from the request body (see example)
     post = do
@@ -63,7 +66,7 @@ routes pool hLogger hToken hDb req respond = do
             Nothing -> do
                 logError hLogger "  Invalid or outdated token"
                 respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-            Just (id_author, _) -> do
+            _ -> do
                 photo <- getPhoto
                 idim <- insertPhotoToDB photo
                 case idim of
@@ -71,12 +74,12 @@ routes pool hLogger hToken hDb req respond = do
                     _ ->
                         respond
                             ( responseLBS status201 [("Content-Type", "text/plain")] $
-                                BL.pack ("{photo_id:" ++ (show idim) ++ "}")
+                                BL.pack ("{photo_id:" ++ show idim ++ "}")
                             )
       where
         getPhoto = do
             body <- strictRequestBody req
-            logDebug hLogger ("  Body = " ++ (BL.unpack body))
+            logDebug hLogger ("  Body = " ++ BL.unpack body)
             case eitherDecode body :: Either String Photo of
                 Right correctlyParsedBody -> return correctlyParsedBody
                 Left e -> do
@@ -90,7 +93,7 @@ routes pool hLogger hToken hDb req respond = do
             Nothing -> do
                 logError hLogger "  Invalid or outdated token"
                 respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-            Just (id_author, _) -> do
+            _ -> do
                 idim <- insertPhotoFromFile
                 case idim of
                     0 -> respond (responseLBS status404 [("Content-Type", "text/plain")] "")
@@ -99,19 +102,18 @@ routes pool hLogger hToken hDb req respond = do
                             ( responseLBS
                                 status201
                                 [("Content-Type", "text/plain")]
-                                $ BL.pack ("{photo_id:" ++ (show idim) ++ "}")
+                                $ BL.pack ("{photo_id:" ++ show idim ++ "}")
                             )
       where
         insertPhotoFromFile =
-            return (Photo "" "")
-                >>= verifiedParam
+                verifiedParam (Photo "" "")
                 >>= readPhotoFromFile
                 >>= verifiedTypePhoto
                 >>= insertPhotoToDB
         verifiedParam photo = do
             case toParam req "file" of
                 Nothing -> do
-                    logError hLogger ("  the \"file\" parameter is required")
+                    logError hLogger "  the \"file\" parameter is required"
                     return photo
                 Just fn -> return (Photo "" fn)
         readPhotoFromFile (Photo _ "") = return (Photo "" "")
@@ -127,23 +129,23 @@ routes pool hLogger hToken hDb req respond = do
             return (Photo (BC.unpack $ B64.encode photoFile) fn)
         verifiedTypePhoto (Photo _ "") = return (Photo "" "")
         verifiedTypePhoto (Photo photo fn) = do
-            let dropFn = dropWhile (\x -> not (x == '.')) fn
+            let dropFn = dropWhile (/= '.') fn
             case dropFn of
                 "" -> do
-                    logError hLogger ("  File type is not defined")
+                    logError hLogger "  File type is not defined"
                     return (Photo photo fn)
                 _ -> return (Photo photo (tail dropFn))
 
     insertPhotoToDB :: Photo -> IO Integer
-    insertPhotoToDB (Photo photo typ) =
-        if ((photo == "") || (typ == ""))
+    insertPhotoToDB (Photo photo typ_) =
+        if (photo == "") || (typ_ == "")
             then return 0
             else do
-                id <- insertPhoto hDb pool (Photo photo typ)
-                when (id == 0) $ do
+                id_ <- insertPhoto hDb pool (Photo photo typ_)
+                when (id_ == 0) $ do
                     logError
                         hLogger
                         ( " Photo are of an invalid type"
                             ++ " (only png, jpg, gif or bmp is allowed)."
                         )
-                return id
+                return id_

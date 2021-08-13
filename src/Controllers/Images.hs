@@ -1,22 +1,17 @@
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Controllers.Images where
 
 import FromRequest
-import Servises.Config
 import Servises.Db
 import Servises.Logger
-import Servises.Token
 
 import Control.Monad (when)
 import Control.Monad.Trans
-import Data.Aeson
-import Data.List (dropWhile)
-import GHC.Generics
+import Data.Pool (Pool)
+import Database.PostgreSQL.Simple.Internal
+
 import Network.HTTP.Types
-import Network.HTTP.Types.Status
 import Network.Wai
 
 import qualified Data.ByteString.Base64 as B64 (decodeLenient)
@@ -25,10 +20,17 @@ import qualified Data.ByteString.Lazy.Char8 as BL (pack)
 
 -- show avatar, like
 -- http://localhost:3000/image/1
-routes pool hLogger hToken hDb req respond = do
-    let id = toIdImage req
-    when (id == 0) $ logError hLogger "  Invalid id"
-    imageMb <- liftIO $ findImageByID hDb pool id
+routes :: Pool Connection
+                -> Servises.Logger.Handle
+                -> Servises.Db.Handle
+                -> Request
+                -> (Response -> IO b)
+                -> IO b
+
+routes pool hLogger hDb req respond = do
+    let id_ = toIdImage req
+    when (id_ == 0) $ logError hLogger "  Invalid id_"
+    imageMb <- liftIO $ findImageByID hDb pool id_
     case imageMb of
         Nothing -> do
             logError hLogger "  Image not found"

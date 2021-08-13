@@ -12,11 +12,9 @@ import qualified Servises.Impl.MD5 as ST
 import qualified Servises.Impl.PostgreSQL as SB
 import qualified Servises.Impl.StdOut as SL
 
-import Control.Monad (when)
-import Data.Pool (Pool, createPool, withResource)
+import Data.Pool (createPool)
 import Data.Time.Clock
 import Network.Wai.Handler.Warp (run)
-import System.Environment
 
 main :: IO ()
 main = do

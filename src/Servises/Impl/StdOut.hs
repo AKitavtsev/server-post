@@ -1,6 +1,7 @@
 module Servises.Impl.StdOut (
     newHandle,
 ) where
+import Servises.Data (Priority (..))
 
 import qualified Servises.Config as SC
 import qualified Servises.Logger as SL
@@ -18,6 +19,6 @@ newHandle config = do
     logPriority prio msg = do
         let lev = case config of
                 (SC.LogConfig x) -> x
+                _ -> ERROR
         when (prio >= lev) $ do
-            putStrLn ((show prio) ++ msg)
-        return ()
+            putStrLn (show prio ++ msg)

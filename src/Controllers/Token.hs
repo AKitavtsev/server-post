@@ -11,20 +11,26 @@ import Servises.Token
 
 import Control.Monad.Trans
 import Data.Aeson
-import Data.Char (isDigit)
-import Data.Hash.MD5
-import Data.Time.Clock
+import Data.Pool (Pool)
+import Database.PostgreSQL.Simple.Internal
 import GHC.Generics
 import Network.HTTP.Types
 import Network.Wai
 
-data Token = Token {token :: String}
+newtype Token = Token {token :: String}
     deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
 -- getting a token like
 --  http://localhost:3000/token/?login=login&password=password
+routes :: Pool Connection
+                -> Servises.Logger.Handle
+                -> Servises.Token.Handle
+                -> Servises.Db.Handle
+                -> Request
+                -> (Response -> IO b)
+                -> IO b
 routes pool hLogger hToken hDb req respond = do
-    case (\x y -> (x, y)) <$> toParam req "login" <*> toParam req "password" of
+    case (,) <$> toParam req "login" <*> toParam req "password" of
         Nothing -> do
             logError hLogger "  Required Parameters \"Login \" and \"Password\""
             respond (responseLBS status400 [("Content-Type", "text/plain")] "")
@@ -34,9 +40,9 @@ routes pool hLogger hToken hDb req respond = do
                 Nothing -> do
                     logError hLogger "  Invalid Login/Password"
                     respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
-                Just (id, adm) -> do
-                    token <- (createToken hToken) id adm
+                Just (id_, adm) -> do
+                    token_ <- createToken hToken id_ adm
                     respond
                         ( responseLBS created201 [("Content-Type", "text/plain")] $
-                            encode (Token token)
+                            encode (Token token_)
                         )
