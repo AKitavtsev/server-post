@@ -1,6 +1,6 @@
-module Servises.Impl.MD5 (
-    newHandle,
-) where
+module Servises.Impl.MD5
+  ( newHandle
+  ) where
 
 import qualified Servises.Config as SC
 import qualified Servises.Token as ST
@@ -13,40 +13,44 @@ import qualified Data.Time as Time
 
 newHandle :: SC.Config -> IO ST.Handle
 newHandle config = do
-    return $
-        ST.Handle
-            { ST.config = config
-            , ST.createToken = createToken
-            , ST.validToken = validToken
-            }
+  return $
+    ST.Handle
+      { ST.config = config
+      , ST.createToken = createToken
+      , ST.validToken = validToken
+      }
   where
     createToken id_ adm = do
-        time <- expirationTime config
-        let admStr = if adm then "1" else "0"
-            idAdmTime = show id_ ++ "." ++ admStr ++ time
-        return (idAdmTime ++ md5s (Str idAdmTime))
+      time <- expirationTime config
+      let admStr =
+            if adm
+              then "1"
+              else "0"
+          idAdmTime = show id_ ++ "." ++ admStr ++ time
+      return (idAdmTime ++ md5s (Str idAdmTime))
     validToken token = do
-        utc <- Time.getCurrentTime
-        case idAdmFromToken token of
-            Nothing -> return Nothing
-            Just (id_, adm) -> do
-                let tt = timeFromToken token
-                    content = id_ ++ "." ++ adm ++ tt
-                    sample = content ++ md5s (Str content)
-                    res =
-                        (token == sample)
-                            && (tt > Time.formatTime Time.defaultTimeLocale "%Y%m%d%H%M%S" utc)
-                case res of
-                    False -> return Nothing
-                    True -> do
-                        let admin = adm == "1"
-                        return (Just (read id_ :: Integer, admin))
+      utc <- Time.getCurrentTime
+      case idAdmFromToken token of
+        Nothing -> return Nothing
+        Just (id_, adm) -> do
+          let tt = timeFromToken token
+              content = id_ ++ "." ++ adm ++ tt
+              sample = content ++ md5s (Str content)
+              res =
+                (token == sample) &&
+                (tt > Time.formatTime Time.defaultTimeLocale "%Y%m%d%H%M%S" utc)
+          case res of
+            False -> return Nothing
+            True -> do
+              let admin = adm == "1"
+              return (Just (read id_ :: Integer, admin))
 
 expirationTime :: SC.Config -> IO String
 expirationTime config = do
-    ct <- Time.getCurrentTime
-    let lt = case config of
-            (SC.TokenConfig x) -> x
-            _ -> 0
-    let et = addUTCTime (fromInteger lt :: NominalDiffTime) ct
-    return (Time.formatTime Time.defaultTimeLocale "%Y%m%d%H%M%S" et)
+  ct <- Time.getCurrentTime
+  let lt =
+        case config of
+          (SC.TokenConfig x) -> x
+          _ -> 0
+  let et = addUTCTime (fromInteger lt :: NominalDiffTime) ct
+  return (Time.formatTime Time.defaultTimeLocale "%Y%m%d%H%M%S" et)

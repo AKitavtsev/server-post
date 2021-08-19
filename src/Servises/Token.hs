@@ -1,8 +1,11 @@
-module Servises.Token (Handle (..)) where
+module Servises.Token
+  ( Handle(..)
+  ) where
 
-import Servises.Config (Config (..))
+import Servises.Config (Config(..))
 
-data Handle = Handle
+data Handle =
+  Handle
     { config :: Config
     , createToken :: Integer -> Bool -> IO String
     , validToken :: String -> IO (Maybe (Integer, Bool))

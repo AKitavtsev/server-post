@@ -2,33 +2,36 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Models.User (
-    Avatar (..),
-    UserIn (..),
-    UserOut (..),
-    UserID (..),
-) where
+module Models.User
+  ( Avatar(..)
+  , UserIn(..)
+  , UserOut(..)
+  , UserID(..)
+  ) where
 
 import Data.Aeson
 import GHC.Generics
 
 -- represents a user
-data Avatar = Avatar
+data Avatar =
+  Avatar
     { image :: String
     , typ :: String
     }
-    deriving (Eq, Show, Generic, FromJSON, ToJSON)
+  deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
-data UserIn = UserIn
+data UserIn =
+  UserIn
     { name :: String
     , surname :: String
     , avatar :: Maybe Avatar
     , login :: String
     , password :: String
     }
-    deriving (Show, Generic, FromJSON, ToJSON)
+  deriving (Show, Generic, FromJSON, ToJSON)
 
-data UserOut = UserOut
+data UserOut =
+  UserOut
     { name_ :: String
     , surname_ :: String
     , avatar_ :: String
@@ -36,10 +39,11 @@ data UserOut = UserOut
     , c_data :: String
     , admin :: Bool
     }
-    deriving (Show, Generic, FromJSON, ToJSON)
+  deriving (Show, Generic, FromJSON, ToJSON)
 
-data UserID = UserID
+data UserID =
+  UserID
     { id :: Integer
     , token :: String
     }
-    deriving (Show, Generic, FromJSON, ToJSON)
+  deriving (Show, Generic, FromJSON, ToJSON)

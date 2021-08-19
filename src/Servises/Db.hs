@@ -1,6 +1,8 @@
-module Servises.Db (Handle (..)) where
+module Servises.Db
+  ( Handle(..)
+  ) where
 
-import Servises.Config (Config (..))
+import Servises.Config (Config(..))
 import qualified Servises.Logger as Logger
 
 import Models.Author
@@ -13,22 +15,19 @@ import Models.User
 
 import Data.Pool
 import Database.PostgreSQL.Simple
-import Network.Wai (Request (..))
+import Network.Wai (Request(..))
 
-data Handle = Handle
+data Handle =
+  Handle
     { limit :: Integer
     , close :: Connection -> IO ()
     , newConn :: Config -> IO Connection
-    , runMigrations ::
-        Logger.Handle ->
-        Connection ->
-        Pool Connection ->
-        FilePath ->
-        IO ()
+    , runMigrations :: Logger.Handle -> Connection -> Pool Connection -> FilePath -> IO ()
     , deleteByID :: Pool Connection -> String -> Integer -> IO ()
     , updateByID :: Pool Connection -> String -> Integer -> String -> IO ()
     , insertUser :: Pool Connection -> UserIn -> String -> IO Integer
-    , findUserByLogin :: Pool Connection -> String -> String -> IO (Maybe (Integer, Bool))
+    , findUserByLogin :: Pool Connection -> String -> String -> IO (Maybe ( Integer
+                                                                          , Bool))
     , findUserByID :: Pool Connection -> Integer -> IO (Maybe UserOut)
     , insertImage :: Pool Connection -> UserIn -> Integer -> IO Integer
     , findImageByID :: Pool Connection -> Integer -> IO (Maybe (String, String))

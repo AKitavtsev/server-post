@@ -1,27 +1,29 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
---
-module Models.Draft (
-    Photo (..),
-    DraftIn (..),
-    DraftPost (..),
-    DraftUp (..),
-    DraftGet (..),
-) where
+
+module Models.Draft
+  ( Photo(..)
+  , DraftIn(..)
+  , DraftPost(..)
+  , DraftUp(..)
+  , DraftGet(..)
+  ) where
 
 import Data.Aeson
 import GHC.Generics
 
 import qualified Data.Text as T
 
-data Photo = Photo
+data Photo =
+  Photo
     { image :: String
     , typ :: String
     }
-    deriving (Eq, Show, Generic, FromJSON, ToJSON)
+  deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
-data DraftIn = DraftIn
+data DraftIn =
+  DraftIn
     { title :: String
     , category :: Integer
     , tags :: [Integer]
@@ -29,9 +31,10 @@ data DraftIn = DraftIn
     , mainPhoto :: Integer
     , otherPhotos :: [Integer]
     }
-    deriving (Show, Generic, FromJSON, ToJSON)
+  deriving (Show, Generic, FromJSON, ToJSON)
 
-data DraftUp = DraftUp
+data DraftUp =
+  DraftUp
     { id_draft :: Integer
     , newTitle :: Maybe String
     , newCategory :: Maybe Integer
@@ -40,9 +43,10 @@ data DraftUp = DraftUp
     , newMainPhoto :: Maybe Integer
     , newOtherPhotos :: Maybe [Integer]
     }
-    deriving (Show, Generic, FromJSON, ToJSON)
+  deriving (Show, Generic, FromJSON, ToJSON)
 
-data DraftGet = DraftGet
+data DraftGet =
+  DraftGet
     { title_g :: String
     , c_date :: String
     , category_g :: Integer
@@ -51,11 +55,12 @@ data DraftGet = DraftGet
     , otherPhotos_g :: [String]
     , t_content_g :: T.Text
     }
-    deriving (Show, Generic, FromJSON, ToJSON)
+  deriving (Show, Generic, FromJSON, ToJSON)
 
-data DraftPost = DraftPost
+data DraftPost =
+  DraftPost
     { id :: Integer
     , tags' :: [Integer]
     , photos :: [Integer]
     }
-    deriving (Show, Generic, FromJSON, ToJSON)
+  deriving (Show, Generic, FromJSON, ToJSON)

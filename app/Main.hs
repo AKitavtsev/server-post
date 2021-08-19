@@ -18,23 +18,21 @@ import Network.Wai.Handler.Warp (run)
 
 main :: IO ()
 main = do
-    hConfig <- SC.newHandle
-    dbConf <- getDbConfig hConfig
-    poolConfig <- getPoolConfig hConfig
-    hDb <- SB.newHandle dbConf
-    conn <- newConn hDb dbConf
-    pool <-
-        createPool
-            (newConn hDb dbConf)
-            (close hDb)
-            (subpools poolConfig)
-            (fromInteger (time poolConfig) :: NominalDiffTime)
-            (resours poolConfig)
-    logConf <- getLogConfig hConfig
-    hLogger <- SL.newHandle logConf
-    tokenConfig <- getTokenConfig hConfig
-    hToken <- ST.newHandle tokenConfig
-
-    logInfo hLogger "  Listen port 3000"
-
-    run 3000 (routes conn pool hLogger hToken hDb)
+  hConfig <- SC.newHandle
+  dbConf <- getDbConfig hConfig
+  poolConfig <- getPoolConfig hConfig
+  hDb <- SB.newHandle dbConf
+  conn <- newConn hDb dbConf
+  pool <-
+    createPool
+      (newConn hDb dbConf)
+      (close hDb)
+      (subpools poolConfig)
+      (fromInteger (time poolConfig) :: NominalDiffTime)
+      (resours poolConfig)
+  logConf <- getLogConfig hConfig
+  hLogger <- SL.newHandle logConf
+  tokenConfig <- getTokenConfig hConfig
+  hToken <- ST.newHandle tokenConfig
+  logInfo hLogger "  Listen port 3000"
+  run 3000 (routes conn pool hLogger hToken hDb)
