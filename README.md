@@ -1,4 +1,4 @@
-# sercer-post
+# server-post
 
 This repo contains a RESTful service written in Haskell as requested by MetaLamp (https://rizzoma.com/topic/c27faf1cfa188c1120f59af4c35e6099/0_b_9n8n_8jl2l/).
 
@@ -42,8 +42,8 @@ stack test
       - `Impl/` - service implementations
 - `test` - our specs, for testing some internal functions. 
 - `sql` - sql database migration queries. Database is built and minimal initial seeding is ensured
-- `bat`- batch files for easy testing of the application. Contains requests to the server passed by the `curl` utility for all endpoints of mseh entities (for Windows). In addition, `migration.bat` is a request for migration, a `test.bat` is a series of requests to fill the database for testing filtering and sorting of posts, `where-order.bat` - examples of tests for filtering and sorting of posts, `token.bat` - to refresh the token.
-- `sh`- shell script files for easy testing of the application. Contains requests to the server passed by the `curl` utility for all endpoints of mseh entities (for Linux).
+- `bat`- batch files for easy testing of the application. Contains requests to the server passed by the `curl` utility for all endpoints of entities (for Windows). In addition, `migration.bat` is a request for migration, a `test.bat` is a series of requests to fill the database for testing filtering and sorting of posts, `where-order.bat` - examples of tests for filtering and sorting of posts, `token.bat` - to refresh the token.
+- `sh`- shell script files for easy testing of the application. Contains requests to the server passed by the `curl` utility for all endpoints of entities (for Linux).
 - `image` - folder from which you can upload photos to the database.
 
 
@@ -71,8 +71,10 @@ Links for getting avatars ('image') and photos ('photo').
 
 Сreating or republishing an article based on a draft.
 
-### Endpoint for filtering and  ordering posts
+### Endpoint for filtering and ordering posts
 
+This same endpoint allows you to get all the comments for a particular post. To do this, in the request path after the token, you must specify the post ID.
+Pagination of posts and comments is supported. To do this, you must specify the number of the page of interest as the only parameter.
 File 'where-order' (bat or sh) contains examples of using the endpoint for filtering and ordering posts.
 
 ### Endpoint 'migration'
