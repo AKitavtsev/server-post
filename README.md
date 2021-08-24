@@ -42,203 +42,46 @@ stack test
       - `Impl/` - service implementations
 - `test` - our specs, for testing some internal functions. 
 - `sql` - sql database migration queries. Database is built and minimal initial seeding is ensured
-- 'bat' - batch files for easy testing of the application. Contains requests to the server passed by the `curl` utility for all endpoints of mseh entities (for Windows). In addition, `migration.bat` is a request for migration, a `test.bat` is a series of requests to fill the database for testing filtering and sorting of posts, `where-order.bat` - examples of tests for filtering and sorting of posts, `token.bat` - to refresh the token.
+- `bat`- batch files for easy testing of the application. Contains requests to the server passed by the `curl` utility for all endpoints of mseh entities (for Windows). In addition, `migration.bat` is a request for migration, a `test.bat` is a series of requests to fill the database for testing filtering and sorting of posts, `where-order.bat` - examples of tests for filtering and sorting of posts, `token.bat` - to refresh the token.
+- `sh`- shell script files for easy testing of the application. Contains requests to the server passed by the `curl` utility for all endpoints of mseh entities (for Linux).
 - `image` - folder from which you can upload photos to the database.
-
-## Database
-A [`TVar`](http://hackage.haskell.org/package/stm-2.5.0.0/docs/Control-Concurrent-STM-TVar.html) was used for storing our database. It provides atomic concurrency-safe transactions. It is bootstrapped during the server startup, and helper functions in `src/Core.hs` allow it to be accessed in a transactional way.
 
 
 ## Endpoints
 
-### POST /accounts
+Examples of all endpoints are provided as examples in batch files for Windows (folder 'bat') and files of shell script for Linux (folder 'sh'). Among them:
 
-Creates an account. It requires an `owner` String in the body. The account ID returned is needed for all the following requests.
+### Entity endpoints
 
-It fails with `400` if there is no `owner` passed.
+Designed to perform basic operations on entities - creat, read, update, delete (CRUD)
 
-```
-curl -v -X POST http://localhost:3000/accounts -d '{"owner": "kostis"}'
+### Endpoint 'token'
 
-# POST /accounts
-# {
-#   "owner": "kostis"
-# }
-#
-# 200 OK
-# {
-#   "status": "success",
-#   "data": {
-#     "owner": "kostis",
-#     "id": "dfcf2ebe-4923-4b49-ac12-7de0734daa4b",
-#     "type": "Account"
-#   }
-# }
-```
+Endpoint of token renewal (at token expiration)
 
-### GET /accounts
+### Photo endpoints
 
-Gets an account. Nothing too exciting. It returns `404` if the account does not exist.
+Two endpoints for loading photos into the database from the request body (using the POST method) or from a file (PUT method).
 
-```
-curl -v http://localhost:3000/accounts/dfcf2ebe-4923-4b49-ac12-7de0734daa4b
+### Viewing pictures
 
-# GET /accounts/dfcf2ebe-4923-4b49-ac12-7de0734daa4b
-#
-# 200 OK
-# {
-#   "status": "success",
-#   "data": {
-#     "owner": "kostis",
-#     "id": "dfcf2ebe-4923-4b49-ac12-7de0734daa4b",
-#     "type": "Account"
-#   }
-# }
-```
+Links for getting avatars ('image') and photos ('photo').
 
-### POST /operations
+### Endpoint 'publish'
 
-It creates an operation for an account. The operation type can be either credit or debit. `amount` always appears as positive. It also requires an `accountId`, an ISO8601 `date`, and a `decription`. 
+Сreating or republishing an article based on a draft.
 
-They service supports creating operations in any order, as they are stored in a `Set` in the background.
+### Endpoint for filtering and  ordering posts
 
-If one of these fields is missing, `accountId` does not correspond to a created account, `amount` is negative, `operationType` is not either `"credit"` or `"debit"`, it fails with `400`.
+File 'where-order' (bat or sh) contains examples of using the endpoint for filtering and ordering posts.
 
-```
-curl -v -X POST http://localhost:3000/operations -d '{"accountId": "dfcf2ebe-4923-4b49-ac12-7de0734daa4b", "operationType": "debit", "amount": 1000, "date": "2019-07-21", "description": "airline tickets to New York"}'
+### Endpoint 'migration'
 
-# POST /operations
-# {
-#   "accountId": "dfcf2ebe-4923-4b49-ac12-7de0734daa4b",
-#   "operationType": "debit",
-#   "amount": 1000,
-#   "date": "2019-07-21",
-#   "description": "airline tickets to New York"
-# }
-#
-# 200 OK
-# {
-#   "status": "success",
-#   "data": {
-#     "amount": 1000,
-#     "date": "2019-07-21",
-#     "accountId": "dfcf2ebe-4923-4b49-ac12-7de0734daa4b",
-#     "id": "4f2f24bd-5ca5-43b1-8249-f84f6c1bde97",
-#     "operationType": "debit",
-#     "type": "Operation",
-#     "description": "airline tickets to New York"
-#   }
-# }
-```
+Initializing the database.
 
-### GET /accounts/:id/balance
 
-Retrieve the account's balance. Fails with `404` if there's no account with such ID.
 
-```
-curl -v http://localhost:3000/accounts/dfcf2ebe-4923-4b49-ac12-7de0734daa4b/balance
 
-# GET /accounts/dfcf2ebe-4923-4b49-ac12-7de0734daa4b/balance
-#
-# 200 OK
-# {
-#   "status": "success",
-#   "data": -700.0
-# }
-```
 
-### GET /accounts/:id/statement
+ 
 
-Get an accounts bank statement. `fromDate` and `toDate` query params are used to pass ISO8601 date strings that define the start and end (included) of the statement. 
-
-If the query params are missing, they're not ISO8601 strings, or `fromDate` is greater than `toDate`, the request fails with `400`. If there is no account with such ID, it fails with `404`. 
-
-```
-curl -v "http://localhost:3000/accounts/dfcf2ebe-4923-4b49-ac12-7de0734daa4b/statement?fromDate=2018-01-01&toDate=2020-01-01"
-
-# GET /accounts/dfcf2ebe-4923-4b49-ac12-7de0734daa4b/statement?fromDate=2018-01-01&toDate=2020-01-01
-#
-# 200 OK
-# {
-#   "status": "success",
-#   "data": {
-#     "fromDate": "2018-01-01",
-#     "toDate": "2020-01-01",
-#     "statementDates": [
-#       {
-#         "date": "2019-07-18",
-#         "endOfDayBalance": 100,
-#         "type": "StatementDate",
-#         "operations": [
-#           {
-#             "amount": 100,
-#             "date": "2019-07-18",
-#             "accountId": "dfcf2ebe-4923-4b49-ac12-7de0734daa4b",
-#             "id": "c8a18269-a212-4b22-8ab6-94e35b13da6c",
-#             "operationType": "credit",
-#             "type": "Operation",
-#             "description": "gift from parents"
-#           }
-#         ]
-#       },
-#       {
-#         "date": "2019-07-21",
-#         "endOfDayBalance": -700.0,
-#         "type": "StatementDate",
-#         "operations": [
-#           {
-#             "amount": 1000,
-#             "date": "2019-07-21",
-#             "accountId": "dfcf2ebe-4923-4b49-ac12-7de0734daa4b",
-#             "id": "4f2f24bd-5ca5-43b1-8249-f84f6c1bde97",
-#             "operationType": "debit",
-#             "type": "Operation",
-#             "description": "airline tickets to New York"
-#           },
-#           {
-#             "amount": 200,
-#             "date": "2019-07-21",
-#             "accountId": "dfcf2ebe-4923-4b49-ac12-7de0734daa4b",
-#             "id": "df08838f-d6a6-46f7-9780-032e4f68ac36",
-#             "operationType": "credit",
-#             "type": "Operation",
-#             "description": "some deposit"
-#           }
-#         ]
-#       }
-#     ],
-#     "type": "Statement"
-#   }
-# }
-```
-
-### GET /accounts/:id/debtPeriods
-
-Returns the all-time periods of debt for the account. Again, it fails with `404` if there there's no account with such ID. 
-
-```
-curl -v http://localhost:3000/accounts/dfcf2ebe-4923-4b49-ac12-7de0734daa4b/debtPeriods
-
-# GET /accounts/dfcf2ebe-4923-4b49-ac12-7de0734daa4b/debtPeriods
-#
-# 200 OK
-# {
-#   "status": "success",
-#   "data": [
-#     {
-#       "fromDate": "2019-07-21",
-#       "toDate": null,
-#       "principal": 700.0,
-#       "type": "DebtPeriod"
-#     }
-#   ]
-# }
-```
-
-## Response envelope
-
-Successful responses have their `status` attribute set to `"success"`, and the requested resource nested inside `data`. Most resources have a `type` declaring what this returned resource is, e.g. `"Account"` or `"DebtPeriod"`. 
-
-Error responses have their `status` attribute set to `"error"`, and a `message` attribute explaining what went wrong.
-
-The API was developed in this way because if we wish at some point to add metadata or other data to the response irrelevant to the resource, it will be trivial. 
