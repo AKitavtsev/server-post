@@ -1,4 +1,5 @@
 #!/bin/bash
+
 bash <(curl -v http://localhost:3000/publish/1.120210901202553ff034f3847c1d22f091dde7cde045264/1)
 bash <(curl -v POST http://localhost:3000/author/1.120210901202553ff034f3847c1d22f091dde7cde045264 -d "{\"author_id\":2, \"description\":\"author2\"}")
 bash <(curl -v POST http://localhost:3000/draft/2.0202111091126065c8b019cf55009a53f6ba5de31eec170 -d "{\"title\":\"John Lennon\", \"category\":6, \"tags\":[4,5],  \"t_content\":\"...Lennon was shot and killed in 1980\", \"mainPhoto\":2, \"otherPhotos\":[1]}")

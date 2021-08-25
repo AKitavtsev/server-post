@@ -386,7 +386,7 @@ newHandle config = do
             "SELECT draft_id, title," ++
             " draft_date :: varchar," ++
             " category_name, category_id," ++
-            " user_id::varchar , user_name, surname', description," ++
+            " user_id::varchar , user_name, surname, description," ++
             " ARRAY (SELECT t_name" ++
             " FROM gettags" ++
             " WHERE d_id = draft_id):: varchar," ++
@@ -446,7 +446,7 @@ newHandle config = do
               Just page -> limit * (read' page - 1)
           q =
             "SELECT comment_date :: varchar," ++
-            " user_id ::varchar, user_name, surname', comment " ++
+            " user_id ::varchar, user_name, surname, comment " ++
             "FROM comment INNER JOIN user_ USING (user_id) " ++
             "WHERE draft_id = " ++
             show id_post ++ " LIMIT " ++ show limit ++ " OFFSET " ++ show offset
