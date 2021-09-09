@@ -6,12 +6,12 @@ module  TokenTest where
 
 import Test.Hspec
 
-import Servises.Impl.MD5.Internal
+import Services.Impl.MD5.Internal
 
 
 tokenTest :: IO ()
 tokenTest = hspec $ do
-    describe "Servises.Impl.MD5.Internal" $ do
+    describe "Services.Impl.MD5.Internal" $ do
       describe "idAdmFromToken" $ do
         it "is admin" $ 
           idAdmFromToken "1.1202104301627401b4056772f899bfcb6a0c827a3ccc222"

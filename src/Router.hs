@@ -18,9 +18,9 @@ import qualified Controllers.Tags
 import qualified Controllers.Token
 import qualified Controllers.Users
 
-import Servises.Db
-import Servises.Logger
-import Servises.Token
+import Services.Db
+import Services.Logger
+import Services.Token
 
 import Data.Pool (Pool)
 import Database.PostgreSQL.Simple.Internal
@@ -32,9 +32,9 @@ import qualified Data.Text as T
 routes ::
      Connection
   -> Pool Connection
-  -> Servises.Logger.Handle
-  -> Servises.Token.Handle
-  -> Servises.Db.Handle
+  -> Services.Logger.Handle
+  -> Services.Token.Handle
+  -> Services.Db.Handle
   -> Request
   -> (Response -> IO b)
   -> IO b

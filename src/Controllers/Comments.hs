@@ -17,15 +17,15 @@ import Network.Wai
 
 import FromRequest
 import Models.Comment
-import Servises.Db
-import Servises.Logger
-import Servises.Token
+import Services.Db
+import Services.Logger
+import Services.Token
 
 routes ::
      Pool Connection
-  -> Servises.Logger.Handle
-  -> Servises.Token.Handle
-  -> Servises.Db.Handle
+  -> Services.Logger.Handle
+  -> Services.Token.Handle
+  -> Services.Db.Handle
   -> Request
   -> (Response -> IO b)
   -> IO b

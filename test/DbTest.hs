@@ -7,7 +7,7 @@ module  DbTest where
 import Network.Wai
 import Test.Hspec
 
-import Servises.Impl.PostgreSQL.Internal
+import Services.Impl.PostgreSQL.Internal
 import Models.Draft (DraftUp (..))
 
 req = defaultRequest 
@@ -34,7 +34,7 @@ draft = DraftUp { id_draft = 1
 
 dbTest :: IO ()
 dbTest = hspec $ do
-    describe "Servises.Impl.PostgreSQL.Internal" $ do
+    describe "Services.Impl.PostgreSQL.Internal" $ do
       describe "fromPhotoId" $ do
         it "link to photo" $ 
           fromPhotoId 1 `shouldBe` "http://localhost:3000/photo/1"

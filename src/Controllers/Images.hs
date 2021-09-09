@@ -5,8 +5,8 @@ module Controllers.Images
   ) where
 
 import FromRequest
-import Servises.Db
-import Servises.Logger
+import Services.Db
+import Services.Logger
 
 import Control.Monad (when)
 import Control.Monad.Trans
@@ -24,8 +24,8 @@ import qualified Data.ByteString.Lazy.Char8 as BL (pack)
 -- http://localhost:3000/image/1
 routes ::
      Pool Connection
-  -> Servises.Logger.Handle
-  -> Servises.Db.Handle
+  -> Services.Logger.Handle
+  -> Services.Db.Handle
   -> Request
   -> (Response -> IO b)
   -> IO b

@@ -1,4 +1,4 @@
-module Servises.Impl.MD5.Internal where
+module Services.Impl.MD5.Internal where
 
 --
 import Data.Char (isDigit)

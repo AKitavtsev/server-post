@@ -10,17 +10,17 @@ import Network.HTTP.Types
 import Network.Wai
 
 import FromRequest
-import Servises.Db
-import Servises.Logger
-import Servises.Token
+import Services.Db
+import Services.Logger
+import Services.Token
 
 -- publication of a draft, like
 -- http://localhost:3000/publish/1.120210901202553ff034f3847c1d22f091dde7cde045264/1
 routes ::
      Pool Connection
-  -> Servises.Logger.Handle
-  -> Servises.Token.Handle
-  -> Servises.Db.Handle
+  -> Services.Logger.Handle
+  -> Services.Token.Handle
+  -> Services.Db.Handle
   -> Request
   -> (Response -> IO b)
   -> IO b

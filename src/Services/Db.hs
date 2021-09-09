@@ -1,9 +1,9 @@
-module Servises.Db
+module Services.Db
   ( Handle(..)
   ) where
 
-import Servises.Config (Config(..))
-import qualified Servises.Logger as Logger
+import Services.Config (Config(..))
+import qualified Services.Logger as Logger
 
 import Models.Author
 import Models.Category

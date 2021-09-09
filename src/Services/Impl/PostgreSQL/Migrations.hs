@@ -1,8 +1,8 @@
-module Servises.Impl.PostgreSQL.Migrations
+module Services.Impl.PostgreSQL.Migrations
   ( runMigrations
   ) where
 
-import Servises.Logger
+import Services.Logger
 
 import Control.Monad (forM_, void)
 import Data.Pool
@@ -14,7 +14,7 @@ import qualified Data.ByteString as BS
 import qualified Data.List as L
 
 runMigrations ::
-     Servises.Logger.Handle
+     Services.Logger.Handle
   -> Connection
   -> Pool Connection
   -> FilePath
@@ -25,7 +25,7 @@ runMigrations hLogger conn pool dir = do
   withResource pool $ \con -> do forM_ fn (executeMigration hLogger con)
   commit conn
 
-executeMigration :: Servises.Logger.Handle -> Connection -> FilePath -> IO ()
+executeMigration :: Services.Logger.Handle -> Connection -> FilePath -> IO ()
 executeMigration hLogger con fileName = do
   content <- BS.readFile fileName
   void $ execute_ con (Query content)

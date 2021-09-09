@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Servises.Impl.PostgreSQL.Internal where
+module Services.Impl.PostgreSQL.Internal where
 
--- import Servises.Impl.PostgreSQL.Pagination
+-- import Services.Impl.PostgreSQL.Pagination
 import Control.Applicative ((<|>))
 import Control.Exception
 import Control.Monad.Trans (liftIO)

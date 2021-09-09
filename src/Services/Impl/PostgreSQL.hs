@@ -1,12 +1,12 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Servises.Impl.PostgreSQL
+module Services.Impl.PostgreSQL
   ( newHandle
   ) where
 
-import qualified Servises.Config as C
-import qualified Servises.Db as SD
+import qualified Services.Config as C
+import qualified Services.Db as SD
 
 import FromRequest
 import Models.Author
@@ -16,8 +16,8 @@ import Models.Draft
 import Models.Post
 import Models.Tag
 import Models.User
-import Servises.Impl.PostgreSQL.Internal
-import Servises.Impl.PostgreSQL.Migrations
+import Services.Impl.PostgreSQL.Internal
+import Services.Impl.PostgreSQL.Migrations
 
 import Control.Monad.Trans (liftIO)
 import Data.Char (toLower)

@@ -5,9 +5,9 @@ module Controllers.Photos where
 import FromRequest
 
 import Models.Draft (Photo(..))
-import Servises.Db
-import Servises.Logger
-import Servises.Token
+import Services.Db
+import Services.Logger
+import Services.Token
 
 import Control.Exception
 import Control.Monad (when)
@@ -25,9 +25,9 @@ import qualified Data.ByteString.Lazy.Char8 as BL
 
 routes ::
      Pool Connection
-  -> Servises.Logger.Handle
-  -> Servises.Token.Handle
-  -> Servises.Db.Handle
+  -> Services.Logger.Handle
+  -> Services.Token.Handle
+  -> Services.Db.Handle
   -> Request
   -> (Response -> IO b)
   -> IO b
