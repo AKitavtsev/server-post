@@ -2,6 +2,7 @@
 .vscode
 .history
 local_server.conf
+server.conf
 gitpush.bat
 *.txt
 

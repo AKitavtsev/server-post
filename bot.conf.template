@@ -1,0 +1,18 @@
+database {
+  name      = ""
+  user      = ""
+  password  = ""
+  limit     = 1
+}
+logger   {
+  level     = "DEBUG"
+}
+# seconds
+token    {
+  lifetime  = 8640000
+}
+pool     {
+  subpools  = 1
+  time      = 40
+  resours   = 10
+}
