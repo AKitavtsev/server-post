@@ -27,19 +27,19 @@ bodyUpdate draft =
   where
     sets = setTitle <> setCategory <> setContent <> setPhoto
     setTitle =
-      case newTitle draft of
+      case new_title draft of
         Nothing -> ("", [])
         Just title -> (" title = ?,", [title])
     setCategory =
-      case newCategory draft of
+      case new_category draft of
         Nothing -> ("", [])
         Just category -> (" category_id = ?,", [show category])
     setContent =
-      case newContent draft of
+      case new_content draft of
         Nothing -> ("", [])
         Just content -> (" t_content = ?,", [T.unpack content])
     setPhoto =
-      case newMainPhoto draft of
+      case new_main_photo draft of
         Nothing -> ("", [])
         Just photo -> (" photo_id = ?,", [show photo])
 

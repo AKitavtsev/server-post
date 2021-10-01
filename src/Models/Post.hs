@@ -19,7 +19,7 @@ import qualified Data.Text as T
 data Categories =
   Categories
     { category :: String
-    , subCategories :: [String]
+    , subсategories :: [String]
     }
   deriving (Show, Generic, FromJSON, ToJSON)
 

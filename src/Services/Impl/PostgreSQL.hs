@@ -280,10 +280,10 @@ newHandle config = do
         pass [(t, c, tc, p)] =
           Just
             (draft
-               { newTitle = newValue (newTitle draft) t
-               , newCategory = newValue (newCategory draft) c
-               , newContent = newValue (newContent draft) tc
-               , newMainPhoto = newValue (newMainPhoto draft) p
+               { new_title = newValue (new_title draft) t
+               , new_category = newValue (new_category draft) c
+               , new_content = newValue (new_content draft) tc
+               , new_main_photo = newValue (new_main_photo draft) p
                })
         pass _ = Nothing
         newValue a na =
@@ -462,7 +462,7 @@ newHandle config = do
             " user_id ::varchar, user_name, surname, comment " ++
             "FROM comment INNER JOIN user_ USING (user_id) " ++
             "WHERE draft_id = ? LIMIT ? OFFSET ?" 
-      putStrLn ( "Query: " ++ q ++ "\n" ++ "paramQuery: " ++ (show ([show id_post, show limit, show offset])))
+      -- putStrLn ( "Query: " ++ q ++ "\n" ++ "paramQuery: " ++ (show ([show id_post, show limit, show offset])))
       res <- fetch pool [show id_post, show limit, show offset] $ fromString  q
       return (map toComment res)
       where

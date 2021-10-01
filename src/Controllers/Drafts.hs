@@ -82,7 +82,7 @@ routes pool hLogger hToken hDb req respond = do
           return (id_, Just (draft {tags = filter (/= 0) t}))
         postTags _ = return (0, Nothing)
         postOtherPhotos (id_, Just draft) = do
-          let listPhotos = otherPhotos draft
+          let listPhotos = other_photos draft
           p <- mapM (insertPhotoDraft hDb pool id_) listPhotos
           when (p /= listPhotos) $
             logWarning hLogger "  Not all photos were found"
@@ -117,26 +117,26 @@ routes pool hLogger hToken hDb req respond = do
               return Nothing
         putTags Nothing = return Nothing
         putTags (Just draft)
-          | isNothing (newTags draft) = return (Just draft)
+          | isNothing (new_tags draft) = return (Just draft)
           | otherwise = do
             deleteByID hDb pool "tag_draft" (id_draft draft)
-            let listTags = fromMaybe [] (newTags draft)
+            let listTags = fromMaybe [] (new_tags draft)
             logDebug hLogger ("  " ++ show listTags)
             t <- mapM (insertTagDraft hDb pool (id_draft draft)) listTags
             when (t /= listTags) $
               logWarning hLogger "  Not all tags were found"
-            return (Just (draft {newTags = Just (filter (/= 0) t)}))
+            return (Just (draft {new_tags = Just (filter (/= 0) t)}))
         putOtherPhotos Nothing = return Nothing
         putOtherPhotos (Just draft)
-          | isNothing (newOtherPhotos draft) = return (Just draft)
+          | isNothing (new_other_photos draft) = return (Just draft)
           | otherwise = do
             deleteByID hDb pool "photo_draft" (id_draft draft)
-            let listPhotos = fromMaybe [] (newOtherPhotos draft)
+            let listPhotos = fromMaybe [] (new_other_photos draft)
             logDebug hLogger ("  " ++ show listPhotos)
             p <- mapM (insertPhotoDraft hDb pool (id_draft draft)) listPhotos
             when (p /= listPhotos) $
               logWarning hLogger "  Not all photos were found"
-            return (Just (draft {newOtherPhotos = Just (filter (/= 0) p)}))
+            return (Just (draft {new_other_photos = Just (filter (/= 0) p)}))
     -- deleting a drft
     delete id_author = do
       let id_ = toId req

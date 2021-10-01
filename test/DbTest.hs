@@ -24,12 +24,12 @@ req = defaultRequest
                         , "1"]
        }
 draft = DraftUp { id_draft = 1
-                , newTitle = Just "it is Title"
-                , newCategory = Just 5
-                , newTags = Just [1, 3, 10]
-                , newContent = Just "it is content"
-                , newMainPhoto = Just 4
-                , newOtherPhotos = Just [1, 3, 10]
+                , new_title = Just "it is Title"
+                , new_category = Just 5
+                , new_tags = Just [1, 3, 10]
+                , new_content = Just "it is content"
+                , new_main_photo = Just 4
+                , new_other_photos = Just [1, 3, 10]
                 }                    
 
 dbTest :: IO ()

@@ -28,20 +28,20 @@ data DraftIn =
     , category :: Integer
     , tags :: [Integer]
     , t_content :: T.Text
-    , mainPhoto :: Integer
-    , otherPhotos :: [Integer]
+    , main_photo :: Integer
+    , other_photos :: [Integer]
     }
   deriving (Show, Generic, FromJSON, ToJSON)
 
 data DraftUp =
   DraftUp
     { id_draft :: Integer
-    , newTitle :: Maybe String
-    , newCategory :: Maybe Integer
-    , newTags :: Maybe [Integer]
-    , newContent :: Maybe T.Text
-    , newMainPhoto :: Maybe Integer
-    , newOtherPhotos :: Maybe [Integer]
+    , new_title :: Maybe String
+    , new_category :: Maybe Integer
+    , new_tags :: Maybe [Integer]
+    , new_content :: Maybe T.Text
+    , new_main_photo :: Maybe Integer
+    , new_other_photos :: Maybe [Integer]
     }
   deriving (Show, Generic, FromJSON, ToJSON)
 
@@ -51,8 +51,8 @@ data DraftGet =
     , c_date :: String
     , category_g :: Integer
     , tags_g :: [Integer]
-    , mainPhoto_g :: String
-    , otherPhotos_g :: [String]
+    , main_photo_g :: String
+    , other_photos_g :: [String]
     , t_content_g :: T.Text
     }
   deriving (Show, Generic, FromJSON, ToJSON)
