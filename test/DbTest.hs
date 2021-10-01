@@ -49,107 +49,114 @@ dbTest = hspec $ do
           read' "123" `shouldBe` 123
         it "is wrong integer " $ 
           read' "12h" `shouldBe` 1
-      describe "partQuery draft" $ do
+      describe "bodyUpdate draft" $ do
         it "Updated all fields" $ 
-           partQuery draft `shouldBe`
-           " title = 'it is Title', category_id =5, t_content ='it is content', photo_id =4"
+           bodyUpdate draft `shouldBe`
+           (" title = ?, category_id = ?, t_content = ?, photo_id = ?", ["it is Title", "5", "it is content", "4"])
         it "Updeted only title " $ 
-           partQuery (DraftUp 1 (Just "it is Title") 
+           bodyUpdate (DraftUp 1 (Just "it is Title") 
                       Nothing Nothing Nothing Nothing Nothing)
-             `shouldBe` " title = 'it is Title'"
+             `shouldBe` (" title = ?", ["it is Title"])
         it "Updated title and photo" $ 
-           partQuery (DraftUp 1 (Just "it is Title")
+           bodyUpdate (DraftUp 1 (Just "it is Title")
                       Nothing Nothing Nothing (Just 4) Nothing)
-             `shouldBe` " title = 'it is Title', photo_id =4"
+             `shouldBe` (" title = ?, photo_id = ?", ["it is Title", "4"])
         it "nothing unupdated" $ 
-           partQuery (DraftUp 1 Nothing
+           bodyUpdate (DraftUp 1 Nothing
                       Nothing Nothing Nothing Nothing Nothing)
-             `shouldBe` ""
+             `shouldBe` ("", [])
       describe "queryWhereTag" $ do
         it "tag=2" $
-          queryWhereTag (req {queryString =[ ("tag",Just "2")]})
-            `shouldBe` 
-             " array_position ( ARRAY (SELECT t_id FROM gettags WHERE d_id = draft_id),2) IS NOT NULL AND"
+          queryWhereTag (req {queryString =[ ("tag",Just "2")]}) `shouldBe` 
+           (" array_position ( ARRAY (SELECT t_id FROM gettags WHERE d_id = draft_id), ?) IS NOT NULL AND", ["2"])
         it "tags_in=[1,2]" $
           queryWhereTag req `shouldBe` 
-           "  ARRAY (SELECT t_id FROM gettags WHERE d_id = draft_id) && ARRAY [1,2] AND"
+           (" ARRAY (SELECT t_id FROM gettags WHERE d_id = draft_id) &&  ARRAY [1,2] AND",[])
         it "tags_all=[1,2]" $
-          queryWhereTag (req {queryString =[("tags_all",Just "[1,2]")]})
-            `shouldBe` "  ARRAY (SELECT t_id FROM gettags WHERE d_id = draft_id) @> ARRAY [1,2] AND"
+          queryWhereTag (req {queryString =[("tags_all",Just "[1,2]")]}) `shouldBe`
+           (" ARRAY (SELECT t_id FROM gettags WHERE d_id = draft_id) @> ARRAY [1,2] AND",[])
         it "no tags" $
           queryWhereTag (req {queryString =[("title",Just "Paul M")]})
-            `shouldBe` ""
+            `shouldBe` ("", [])
       describe "queryWhereTitle" $ do
         it "title" $
           queryWhereTitle req `shouldBe` 
-             " title LIKE '%Paul M%' AND"
+             (" title LIKE ? AND", ["Paul M"])
         it "no title" $
-          queryWhereTitle (req {queryString =[]}) `shouldBe` ""
+          queryWhereTitle (req {queryString =[]}) `shouldBe` ("", [])
       describe "queryWhereText" $ do
         it "text content" $
-          queryWhereText req `shouldBe` " t_content LIKE '%McC%' AND"
+          queryWhereText req `shouldBe` (" t_content LIKE ? AND", ["McC"])
         it "no text content" $
-          queryWhereText (req {queryString =[]}) `shouldBe` ""
+          queryWhereText (req {queryString =[]}) `shouldBe` ("", [])
       describe "queryWhereDate" $ do
         it "created_gt=2021-07-10" $
           queryWhereDate req `shouldBe`
-           " draft_date :: date >'2021-07-10' AND"
+           (" draft_date :: date >? AND", ["2021-07-10"])
         it "created_lt=2021-07-10" $
           queryWhereDate (req {queryString =[("created_lt",Just "2021-07-10")]})
-           `shouldBe` " draft_date :: date <'2021-07-10' AND"
+           `shouldBe` (" draft_date :: date <? AND", ["2021-07-10"])
         it "created_at=2021-07-10" $
           queryWhereDate (req {queryString =[("created_at",Just "2021-07-10")]})
-           `shouldBe` " draft_date :: date ='2021-07-10' AND"
+           `shouldBe` (" draft_date :: date =? AND", ["2021-07-10"])
         it "no date" $
           queryWhereDate (req {queryString =[]})
-           `shouldBe` ""
+           `shouldBe` ("", [])
       describe "queryWhereAuthor" $ do
         it "author" $
           queryWhereAuthor req `shouldBe`
-           " user_name = 'Bred' AND"
+           (" user_name = ? AND", ["Bred"])
         it "no author" $
-          queryWhereAuthor (req {queryString =[]}) `shouldBe` ""
+          queryWhereAuthor (req {queryString =[]}) `shouldBe` ("", [])
       describe "queryWhereCategory" $ do
         it "category" $
           queryWhereCategory req `shouldBe`
-           " category_id = '5' AND"
+           (" category_id = ? AND", ["5"])
         it "no category" $
-          queryWhereCategory (req {queryString =[]}) `shouldBe` ""
+          queryWhereCategory (req {queryString =[]}) `shouldBe` ("", [])
       describe "queryWhereFind" $ do
         it "find" $
            queryWhereFind req `shouldBe`
-           " (array_position ( ARRAY (SELECT t_name FROM gettags WHERE d_id = draft_id), 'Pau') IS NOT NULL OR t_content LIKE '%Pau%' OR title LIKE '%Pau%' OR user_name LIKE '%Pau%' OR category_name LIKE '%Pau%') AND"
+           (
+            " (array_position ( ARRAY (SELECT t_name FROM gettags WHERE d_id = draft_id), ?) IS NOT NULL OR t_content LIKE ? OR title LIKE ? OR user_name LIKE ? OR category_name LIKE ?) AND"
+           , ["Pau","Pau","Pau","Pau","Pau"]
+           )
         it "no find" $
            queryWhereFind (req {queryString =[]}) `shouldBe`
-           ""
+           ("", [])
       describe "queryWhere" $ do
         it "full WHERE" $
            queryWhere req `shouldBe`
-           " WHERE  ARRAY (SELECT t_id FROM gettags WHERE d_id = draft_id) && ARRAY [1,2] AND title LIKE '%Paul M%' AND t_content LIKE '%McC%' AND draft_date :: date >'2021-07-10' AND user_name = 'Bred' AND category_id = '5' AND (array_position ( ARRAY (SELECT t_name FROM gettags WHERE d_id = draft_id), 'Pau') IS NOT NULL OR t_content LIKE '%Pau%' OR title LIKE '%Pau%' OR user_name LIKE '%Pau%' OR category_name LIKE '%Pau%')"
+           (
+            " WHERE ARRAY (SELECT t_id FROM gettags WHERE d_id = draft_id) &&  ARRAY [1,2] AND title LIKE ? AND t_content LIKE ? AND draft_date :: date >? AND user_name = ? AND category_id = ? AND (array_position ( ARRAY (SELECT t_name FROM gettags WHERE d_id = draft_id), ?) IS NOT NULL OR t_content LIKE ? OR title LIKE ? OR user_name LIKE ? OR category_name LIKE ?)"
+            ,["Paul M","McC","2021-07-10","Bred","5","Pau","Pau","Pau","Pau","Pau"]
+           )
         it "no WHERE" $
            queryWhere (req {queryString = []}) `shouldBe`
-           ""
+           ("", [])
       describe "queryOrder" $ do
         it "ORDER BY date" $
             queryOrder (req {queryString = [("order",Just "[date]")]})
-            `shouldBe` " ORDER BY draft_date"
+            `shouldBe` (" ORDER BY draft_date", [])
         it "ORDER BY author" $
             queryOrder (req {queryString = [("order",Just "[author]")]})
-            `shouldBe` " ORDER BY user_name"
+            `shouldBe` (" ORDER BY user_name", [])
         it "ORDER BY category" $
             queryOrder (req {queryString = [("order",Just "[category]")]})
-            `shouldBe` " ORDER BY category_name"
+            `shouldBe` (" ORDER BY category_name", [])
         it "ORDER BY photo" $
             queryOrder (req {queryString = [("order",Just "[photo]")]})
             `shouldBe`
-            " ORDER BY (SELECT count (*) FROM getphotos WHERE d_id = draft_id)"
+            (" ORDER BY (SELECT count (*) FROM getphotos WHERE d_id = draft_id)", [])
         it "full ORDER BY" $
             queryOrder (req {queryString = [
                        ("order",Just "[date, author, category, photo]")]})
             `shouldBe`
-            " ORDER BY draft_date, user_name, category_name, (SELECT count (*) FROM getphotos WHERE d_id = draft_id)"
+            (
+              " ORDER BY draft_date, user_name, category_name, (SELECT count (*) FROM getphotos WHERE d_id = draft_id)"
+            , [])
         it "no ORDER BY" $
-            queryOrder (req {queryString = []}) `shouldBe` ""
+            queryOrder (req {queryString = []}) `shouldBe` ("", [])
 
         
 

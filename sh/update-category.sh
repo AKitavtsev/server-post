@@ -1,2 +1,2 @@
 #!/bin/bash
-bash <(curl -v -X PUT "http://localhost:3000/category/1.120210901202553ff034f3847c1d22f091dde7cde045264/9/?name=Other&id_owner=2")
+bash <(curl -v -X PUT "http://localhost:3000/category/1.12021122211403534ebda4d9b00f8ac99207b459fc4d1f8/9/?name=Other&id_owner=2")

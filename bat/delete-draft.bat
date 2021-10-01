@@ -1,1 +1,1 @@
-curl -v -X DELETE http://localhost:3000/draft/1.120210901202553ff034f3847c1d22f091dde7cde045264/2
+curl -v -X DELETE http://localhost:3000/draft/1.12021122211403534ebda4d9b00f8ac99207b459fc4d1f8/2

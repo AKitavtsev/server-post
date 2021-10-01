@@ -31,9 +31,9 @@ routes pool hLogger hToken hDb req respond = do
     Nothing -> do
       logError hLogger "  Invalid or outdated token"
       respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-    Just (id_user, _) ->
+    Just _ ->
       case toId req of
-        0 -> getPosts id_user
+        0 -> getPosts
         _ -> getComments $ toId req
  -- show posts, like
  -- http://localhost:3000/posts/<token>?<filtering and sorting options> 
@@ -48,8 +48,8 @@ routes pool hLogger hToken hDb req respond = do
  -- or
  -- http://localhost:3000/posts/<token>?page=<номер страницы пагинации>
   where
-    getPosts id_user = do
-      posts <- liftIO $ findAllPosts hDb pool req (limit hDb) id_user
+    getPosts = do
+      posts <- liftIO $ findAllPosts hDb pool req (limit hDb)
       case posts of
         [] -> do
           logInfo hLogger "  Posts not found"

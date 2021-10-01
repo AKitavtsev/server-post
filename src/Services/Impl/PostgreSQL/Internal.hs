@@ -3,10 +3,8 @@
 
 module Services.Impl.PostgreSQL.Internal where
 
--- import Services.Impl.PostgreSQL.Pagination
-import Control.Applicative ((<|>))
+import Control.Applicative
 import Control.Exception
-import Control.Monad.Trans (liftIO)
 import Data.Char (isDigit)
 import Data.Maybe (fromMaybe)
 import Data.Pool (Pool(..), withResource)
@@ -19,61 +17,62 @@ import qualified Data.Text as T (unpack)
 import FromRequest
 import Models.Draft (DraftUp(..))
 
+
 -- Forms part of the querry for UPDATE draft
-partQuery :: DraftUp -> String
-partQuery draft =
-  if sets == ""
-    then ""
-    else init sets
+bodyUpdate :: DraftUp -> (String, [String])
+bodyUpdate draft =
+  case sets of
+   ("", []) -> ("", [])
+   (t, p) -> (init t, p)
   where
-    sets = setTitle ++ setCategory ++ setContent ++ setPhoto
+    sets = setTitle <> setCategory <> setContent <> setPhoto
     setTitle =
       case newTitle draft of
-        Nothing -> ""
-        Just title -> " title = '" ++ title ++ "',"
+        Nothing -> ("", [])
+        Just title -> (" title = ?,", [title])
     setCategory =
       case newCategory draft of
-        Nothing -> ""
-        Just category -> " category_id =" ++ show category ++ ","
+        Nothing -> ("", [])
+        Just category -> (" category_id = ?,", [show category])
     setContent =
       case newContent draft of
-        Nothing -> ""
-        Just content -> " t_content ='" ++ T.unpack content ++ "',"
+        Nothing -> ("", [])
+        Just content -> (" t_content = ?,", [T.unpack content])
     setPhoto =
       case newMainPhoto draft of
-        Nothing -> ""
-        Just photo -> " photo_id =" ++ show photo ++ ","
+        Nothing -> ("", [])
+        Just photo -> (" photo_id = ?,", [show photo])
 
 -- Forms part of the querry for SELECT post
-queryWhereOrder :: Pool Connection -> Request -> Integer -> Integer -> IO String
-queryWhereOrder pool req limit id_user =
-  case toParam req "page" of
-    Nothing -> do
-      newPagination pool "post" id_user (queryWhere req ++ queryOrder req)
-      return (queryWhere req ++ queryOrder req ++ " LIMIT " ++ show limit)
-    Just page -> do
-      q <- continuePagination pool "post" id_user
-      return
-        (q ++
-         "LIMIT " ++ show limit ++ "OFFSET " ++ show (limit * (read' page - 1)))
+queryWhereOrder :: Request -> Integer -> (String, [String])
+queryWhereOrder req limit = 
+  queryWhere req <>
+  queryOrder req <>
+   (" LIMIT ? OFFSET ?", [show limit, show offset]) 
+  where offset =
+            case toParam req "page" of
+              Nothing -> 0
+              Just page -> limit * (read' page - 1)
 
 -- Forms part of the querry for SELECT post WHERE
-queryWhere :: Request -> String
+queryWhere :: Request -> (String, [String])
 queryWhere req =
   case qw of
-    "" -> ""
-    _ -> " WHERE" ++ reverse (drop 4 $ reverse qw)
+    ("", _) -> ("", [])
+    (t, p) -> (" WHERE" ++ reverse (drop 4 $ reverse t), p)
   where
     qw =
-      queryWhereTag req ++
-      queryWhereTitle req ++
-      queryWhereText req ++
-      queryWhereDate req ++
-      queryWhereAuthor req ++ queryWhereCategory req ++ queryWhereFind req
+      queryWhereTag req  <>
+      queryWhereTitle req <>
+      queryWhereText req <>
+      queryWhereDate req <>
+      queryWhereAuthor req <>
+      queryWhereCategory req <>
+      queryWhereFind req
 
 -- part of the querry for SELECT post WHERE tag
-queryWhereTag :: Request -> String
-queryWhereTag req = fromMaybe "" (tag <|> tagsIn <|> tagsAll)
+queryWhereTag :: Request -> (String, [String]) 
+queryWhereTag req = fromMaybe ("", []) (tag <|> tagsIn <|> tagsAll)
   where
     array = " ARRAY (SELECT t_id FROM gettags WHERE d_id = draft_id)"
     tag =
@@ -81,95 +80,91 @@ queryWhereTag req = fromMaybe "" (tag <|> tagsIn <|> tagsAll)
         Nothing -> Nothing
         Just t ->
           Just
-            (" array_position " ++
-             "(" ++ array ++ "," ++ t ++ ") IS NOT NULL AND")
+            ((" array_position " ++
+             "(" ++ array ++ ", ?) IS NOT NULL AND"), [t])
     tagsIn =
       case toParam req "tags_in" of
         Nothing -> Nothing
-        Just t -> Just (" " ++ array ++ " && ARRAY " ++ t ++ " AND")
+        Just t -> Just ((array ++ " &&  ARRAY " ++ t ++ " AND"), []) 
     tagsAll =
       case toParam req "tags_all" of
         Nothing -> Nothing
-        Just t -> Just (" " ++ array ++ " @> ARRAY " ++ t ++ " AND")
+        Just t -> Just ((array ++ " @> ARRAY " ++ t ++ " AND"), [])
 
 -- part of the querry for SELECT post WHERE title
-queryWhereTitle :: Request -> String
+queryWhereTitle :: Request -> (String, [String])
 queryWhereTitle req =
   case toParam req "title" of
-    Nothing -> ""
-    Just t -> " title LIKE '%" ++ t ++ "%' AND"
+    Nothing -> ("", [])
+    Just t -> (" title LIKE ? AND", [t])
 
 -- for text content
-queryWhereText :: Request -> String
+queryWhereText :: Request -> (String, [String])
 queryWhereText req =
   case toParam req "text" of
-    Nothing -> ""
-    Just t -> " t_content LIKE '%" ++ t ++ "%' AND"
+    Nothing -> ("", [])
+    Just t -> (" t_content LIKE ? AND", [t])
 
 -- for date (created)
-queryWhereDate :: Request -> String
-queryWhereDate req = fromMaybe "" (dateAT <|> dateLT <|> dateGT)
+queryWhereDate :: Request -> (String, [String])
+queryWhereDate req = fromMaybe ("", []) (dateAT <|> dateLT <|> dateGT)
   where
     beg = " draft_date :: date "
     dateAT =
       case toParam req "created_at" of
         Nothing -> Nothing
-        Just t -> Just (beg ++ "='" ++ t ++ "' AND")
+        Just t -> Just ((beg ++ "=? AND"), [t])
     dateLT =
       case toParam req "created_lt" of
         Nothing -> Nothing
-        Just t -> Just (beg ++ "<'" ++ t ++ "' AND")
+        Just t -> Just ((beg ++ "<? AND"), [t])
     dateGT =
       case toParam req "created_gt" of
         Nothing -> Nothing
-        Just t -> Just (beg ++ ">'" ++ t ++ "' AND")
+        Just t -> Just ((beg ++ ">? AND"), [t])
 
 -- for author (name)
-queryWhereAuthor :: Request -> String
+queryWhereAuthor :: Request -> (String, [String])
 queryWhereAuthor req =
   case toParam req "name" of
-    Nothing -> ""
-    Just t -> " user_name = '" ++ t ++ "' AND"
+    Nothing -> ("",[])
+    Just t -> (" user_name = ? AND" , [t])
 
 -- for categury_id
-queryWhereCategory :: Request -> String
+queryWhereCategory :: Request -> (String, [String])
 queryWhereCategory req =
   case toParam req "category" of
-    Nothing -> ""
-    Just t -> " category_id = '" ++ t ++ "' AND"
+    Nothing -> ("", [])
+    Just t -> (" category_id = ? AND", [t])
 
 -- for to search by text string
-queryWhereFind :: Request -> String
+queryWhereFind :: Request -> (String, [String])
 queryWhereFind req =
   case toParam req "find" of
-    Nothing -> ""
+    Nothing -> ("", [])
     Just t ->
-      " (array_position " ++
-      "(" ++
-      array ++
-      ", '" ++
-      t ++
-      "') IS NOT NULL OR" ++
-      " t_content LIKE '%" ++
-      t ++
-      "%' OR" ++
-      " title LIKE '%" ++
-      t ++
-      "%' OR" ++
-      " user_name LIKE '%" ++
-      t ++ "%' OR" ++ " category_name LIKE '%" ++ t ++ "%') AND"
+      (
+       " (array_position " ++
+       "(" ++ array ++
+       ", ?) IS NOT NULL OR" ++
+       " t_content LIKE ? OR" ++
+       " title LIKE ? OR" ++
+       " user_name LIKE ? OR" ++ 
+       " category_name LIKE ?) AND"
+      , [t,t,t,t,t]
+      )
   where
     array = " ARRAY (SELECT t_name FROM gettags WHERE d_id = draft_id)"
 
 -- part of the querry for SELECT post ORDER BY
-queryOrder :: Request -> String
+queryOrder :: Request -> (String, [String])
 queryOrder req =
   case toParam req "order" of
-    Nothing -> ""
+    Nothing -> ("", [])
     Just str ->
       if str == ""
-        then ""
-        else init (foldl addBy " ORDER BY" $ toListString str)
+        then ("", [])
+        else ((init (foldl addBy " ORDER BY" $ toListString str)), [])
   where
     addBy acc x =
       case x of
@@ -179,35 +174,6 @@ queryOrder req =
         "photo" ->
           acc ++ " (SELECT count (*) FROM getphotos WHERE d_id = draft_id),"
         _ -> acc
-
-newPagination :: Pool Connection -> String -> Integer -> String -> IO ()
-newPagination pool model user_id halfQuery = do
-  _ <-
-    liftIO $
-    execSqlT
-      pool
-      [show user_id, model]
-      "DELETE FROM pagination WHERE user_id=? AND model = ?"
-  _ <-
-    liftIO $
-    execSqlT
-      pool
-      [show user_id, model, halfQuery]
-      "INSERT INTO pagination (user_id, model, part_query) VALUES(?,?,?)"
-  return ()
-
-continuePagination :: Pool Connection -> String -> Integer -> IO String
-continuePagination pool model user_id = do
-  res <-
-    liftIO $
-    fetch
-      pool
-      [show user_id, model]
-      "SELECT part_query FROM pagination WHERE user_id =? AND model =?"
-  return $ pass res
-  where
-    pass [Only pq] = pq
-    pass _ = ""
 
 fromPhotoId :: Integer -> String
 fromPhotoId i = "http://localhost:3000/photo/" ++ show i
@@ -222,8 +188,11 @@ toListString arraySql =
     , x /= '{' && x /= '}' && x /= '[' && x /= ']'
     ]
 
-toListInteger :: String -> [Integer]
+toListInteger :: String -> [Integer] 
 toListInteger arraySql = read $ init ('[' : tail arraySql) ++ "]"
+
+-- fromListString :: [String] -> String
+-- fromListString listString = init ('{' : tail (show listString) ++ "}")
 
 read' :: String -> Integer
 read' i =
@@ -244,7 +213,8 @@ fetch pool args sql = withResource pool retrieve
       [ Handler (\(ex :: SqlError) -> handleSql ex)
       , Handler (\(ex :: ResultError) -> handleSql ex)
       ]
-    handleSql _ = do
+    handleSql ex = do
+      putStrLn (show ex )
       return []
 
 -- No arguments -- just pure sql

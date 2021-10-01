@@ -44,7 +44,7 @@ routes pool hLogger hToken hDb req respond = do
       idAdm <- liftIO $ findUserByLogin hDb pool login password
       case idAdm of
         Nothing -> do
-          logError hLogger "  Invalid Login/Password"
+          logError hLogger ("  Invalid Login/Password: " ++ login ++ "/" ++ password)
           respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
         Just (id_, adm) -> do
           token_ <- createToken hToken id_ adm

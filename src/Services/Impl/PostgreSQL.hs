@@ -120,7 +120,7 @@ newHandle config = do
     --User---------------------------------------------------------------------
     insertUser pool (UserIn name' surname' _ login' password') c_date' = do
       let q =
-            "INSERT INTO user_ (user_name, surname', login', password', user_date, admin) VALUES(?,?,?,md5( ?) ,?,?) returning user_id"
+            "INSERT INTO user_ (user_name, surname, login, password, user_date, admin) VALUES(?,?,?,md5( ?) ,?,?) returning user_id"
       res <-
         liftIO $
         fetch pool [name', surname', login', password', c_date', "FALSE"] q
@@ -130,7 +130,7 @@ newHandle config = do
         pass _ = 0
     findUserByLogin pool login' password' = do
       let q =
-            "SELECT user_id, admin  FROM user_ WHERE login'=? AND password' = md5( ?)"
+            "SELECT user_id, admin  FROM user_ WHERE login =? AND password = md5( ?)"
       res <- liftIO $ fetch pool [login', password'] q :: IO [(Integer, Bool)]
       return $ pass res
       where
@@ -138,7 +138,7 @@ newHandle config = do
         pass _ = Nothing
     findUserByID pool id_ = do
       let q =
-            "SELECT user_name, surname', login', user_date::varchar, admin  FROM user_ WHERE user_id=?"
+            "SELECT user_name, surname, login, user_date::varchar, admin  FROM user_ WHERE user_id=?"
       res <-
         liftIO $ fetch pool (Only id_) q :: IO [( String
                                               , String
@@ -179,7 +179,7 @@ newHandle config = do
         pass _ = 0
     findAuthorByID pool id_ = do
       let q =
-            "SELECT user_name, surname', description FROM user_ INNER JOIN author USING(user_id) WHERE user_.user_id = ?;"
+            "SELECT user_name, surname, description FROM user_ INNER JOIN author USING(user_id) WHERE user_.user_id = ?;"
       res <- liftIO $ fetch pool (Only id_) q
       return $ pass res
       where
@@ -250,12 +250,12 @@ newHandle config = do
         pass [] = []
         pass xs = map fromOnly xs
     --Draft------------------------------------------------------------------------
-    insertDraft pool (DraftIn t c _ t_c mP _) id_ c_date' = do
+    insertDraft pool (DraftIn t c _ t_c m_p _) id_ c_date' = do
       let q =
             "INSERT INTO draft (title, draft_date, user_id, category_id, t_content, photo_id) VALUES(?,?,?,?,?,?) returning draft_id"
       res <-
         liftIO $
-        fetch pool [t, c_date', show id_, show c, T.unpack t_c, show mP] q
+        fetch pool [t, c_date', show id_, show c, T.unpack t_c, show m_p] q
       return $ pass res
       where
         pass [Only i] = i
@@ -265,15 +265,15 @@ newHandle config = do
       _ <- liftIO $ execSqlT pool [id_, auth] q
       return ()
     updateDraft pool draft auth = do
-      case partQuery draft of
-        "" -> return (Just draft)
-        _ -> do
+      case bodyUpdate draft of
+        ("", _) -> return (Just draft)
+        (textQuery, paramQuery)-> do
           res <-
             liftIO $
-            fetch pool [id_draft draft, auth] $
+            fetch pool (paramQuery <> [show (id_draft draft), show auth]) $
             fromString
-              ("UPDATE draft SET" ++
-               partQuery draft ++
+              ("UPDATE draft SET" <>
+               textQuery <>
                " WHERE draft_id=? AND user_id =? returning title, category_id, t_content, photo_id")
           return $ pass res
       where
@@ -329,17 +329,29 @@ newHandle config = do
                ("http://localhost:3000/photo/" ++ ph)
                (map fromPhotoId (toListInteger phs))
                t_c)
-        pass _ = Nothing
-    publishPost pool draft auth = do
-      let q = "DELETE FROM post WHERE draft_id=? AND user_id =?"
-          q' =
-            "INSERT INTO post (draft_id, title, draft_date, user_id, category_id, photo_id, t_content) SELECT * FROM draft WHERE draft_id=? AND user_id=? returning draft_id"
-      _ <- liftIO $ execSqlT pool [draft, auth] q
-      res <- liftIO $ fetch pool [draft, auth] q'
-      return $ pass res
+        pass _ = Nothing        
+    publishPost pool draft auth = do      
+      let queryFindDraft = "SELECT draft_id, title, draft_date:: varchar, user_id, category_id, photo_id, t_content FROM draft WHERE draft_id=? AND user_id=?"
+      fetch pool [draft, auth] (fromString queryFindDraft) >>= updateOrInsertPost
       where
-        pass [Only id_] = id_
-        pass _ = 0
+        updateOrInsertPost ::
+          [(Integer, String, String, Integer, Integer, Integer, T.Text)] -> IO Integer
+        updateOrInsertPost [(i, t, d, u, c, p, t_c)] = do
+          let queryUpdatePost = "UPDATE post SET title=?, category_id=?, photo_id=?, t_content=? WHERE draft_id=? AND user_id =? returning draft_id"
+              queryInsertPost = "INSERT INTO post (draft_id, title, draft_date, user_id, category_id, photo_id, t_content) VALUES(?,?,?,?,?,?,?) returning draft_id"
+          res <- fetch pool 
+                       [t, show c, show p, T.unpack t_c, show i, show u]
+                       $ fromString queryUpdatePost 
+          case res of
+             [Only idPost] -> return idPost
+             _ -> do
+               res' <- fetch pool 
+                             [show i, t, d, show u, show c, show p, T.unpack t_c]
+                             $ fromString queryInsertPost :: IO [Only Integer]
+               case res' of
+                [Only idPost] -> return idPost
+                _ -> return 0
+        updateOrInsertPost _ = return 0
     --Photo----------------------------------------------------------------------
     insertPhoto pool (Photo im t) = do
       let q =
@@ -370,8 +382,8 @@ newHandle config = do
       _ <- liftIO $ execSqlT pool [id_, auth] q
       return ()
     -- Post------------------------------------------------------------------------
-    findAllPosts pool req limit id_ = do
-      endQuery <- queryWhereOrder pool req limit id_
+    findAllPosts pool req limit = do
+      let endQuery= queryWhereOrder req limit
       let q =
             "WITH " ++
             "gettags (t_id, t_name, d_id)" ++
@@ -398,8 +410,9 @@ newHandle config = do
             "FROM post" ++
             " INNER JOIN user_ USING (user_id)" ++
             " INNER JOIN author USING (user_id)" ++
-            " INNER JOIN category USING (category_id)" ++ endQuery
-      res <- fetchSimple pool $ fromString q
+            " INNER JOIN category USING (category_id)" ++ (fst endQuery)
+      -- putStrLn ( "Query: " ++ q ++ "\n" ++ "paramQuery: " ++ (show (snd endQuery)))
+      res <- fetch pool (snd endQuery) (fromString q)
       mapM toPost res
       where
         toPost (i, t, c_date', c, category_id, user_id, user_name, surname', descr, ts, ph, phs, t_c) = do
@@ -448,9 +461,9 @@ newHandle config = do
             "SELECT comment_date :: varchar," ++
             " user_id ::varchar, user_name, surname, comment " ++
             "FROM comment INNER JOIN user_ USING (user_id) " ++
-            "WHERE draft_id = " ++
-            show id_post ++ " LIMIT " ++ show limit ++ " OFFSET " ++ show offset
-      res <- fetchSimple pool $ fromString q
+            "WHERE draft_id = ? LIMIT ? OFFSET ?" 
+      putStrLn ( "Query: " ++ q ++ "\n" ++ "paramQuery: " ++ (show ([show id_post, show limit, show offset])))
+      res <- fetch pool [show id_post, show limit, show offset] $ fromString  q
       return (map toComment res)
       where
         toComment (comment_data, user_id, user_name, surn, com) =
