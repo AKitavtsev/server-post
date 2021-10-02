@@ -36,7 +36,7 @@ routes pool hLogger hToken hDb req respond = do
         0 -> getPosts
         _ -> getComments $ toId req
  -- show posts, like
- -- http://localhost:3000/posts/<token>?<filtering and sorting options> 
+ -- http://localhost:3000/posts/<token>?<filtering and sorting options, page> 
  -- filtering options:
    -- tag=<Integer> tag_in=<[Integer]>, tag_all=<[Integer]>,
    -- created_gt=yyyy-mm-dd, created_lt= , created_at=,
@@ -45,8 +45,8 @@ routes pool hLogger hToken hDb req respond = do
    -- text=, find=
  -- sorting option:
    -- order=[fild,...], like order=[photo,date,author,category]
- -- or
- -- http://localhost:3000/posts/<token>?page=<номер страницы пагинации>
+ -- page:
+   -- page=
   where
     getPosts = do
       posts <- liftIO $ findAllPosts hDb pool req (limit hDb)
@@ -58,9 +58,7 @@ routes pool hLogger hToken hDb req respond = do
           respond
             (responseLBS status200 [("Content-Type", "text/plain")] $ encode xs)
  -- show comments for post id, like
- -- http://localhost:3000/posts/<token>/<id>
- -- or
- -- http://localhost:3000/posts/<token>/<id>?page=<номер страницы пагинации>
+ -- http://localhost:3000/posts/<token>/<id>[?page=]
     getComments id_post = do
       comments <- liftIO $ findComments hDb pool req (limit hDb) id_post
       case comments of

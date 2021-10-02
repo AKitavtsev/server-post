@@ -12,7 +12,6 @@ module Models.User
 import Data.Aeson
 import GHC.Generics
 
--- represents a user
 data Avatar =
   Avatar
     { image :: String

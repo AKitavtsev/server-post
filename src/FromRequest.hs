@@ -65,3 +65,4 @@ toIdImage req =
 curTimeStr :: String -> IO String
 curTimeStr form =
   Time.formatTime Time.defaultTimeLocale form <$> Time.getCurrentTime
+

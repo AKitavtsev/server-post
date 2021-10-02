@@ -113,12 +113,12 @@ routes pool hLogger hToken hDb req respond = do
         Just (_, True) -> do
           let id_ = toId req
           when (id_ == 0) $ do logError hLogger "  Invalid id_"
-          let nameMb = (toParam req "name_")
+          let nameMb = toParam req "name_"
           unless (isNothing nameMb) $ do
             let name_ = fromMaybe "" nameMb
             updateByID hDb pool "category" id_ name_
             logDebug hLogger ("  Update name_ to " ++ name_)
-          let ownerMb = (toParam req "id_owner")
+          let ownerMb = toParam req "id_owner"
           case ownerMb of
             Nothing ->
               respond

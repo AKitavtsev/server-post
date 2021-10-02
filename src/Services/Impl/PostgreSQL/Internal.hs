@@ -80,16 +80,16 @@ queryWhereTag req = fromMaybe ("", []) (tag <|> tagsIn <|> tagsAll)
         Nothing -> Nothing
         Just t ->
           Just
-            ((" array_position " ++
-             "(" ++ array ++ ", ?) IS NOT NULL AND"), [t])
+            (" array_position " ++
+             "(" ++ array ++ ", ?) IS NOT NULL AND", [t])
     tagsIn =
       case toParam req "tags_in" of
         Nothing -> Nothing
-        Just t -> Just ((array ++ " &&  ARRAY " ++ t ++ " AND"), []) 
+        Just t -> Just (array ++ " &&  ARRAY " ++ t ++ " AND", []) 
     tagsAll =
       case toParam req "tags_all" of
         Nothing -> Nothing
-        Just t -> Just ((array ++ " @> ARRAY " ++ t ++ " AND"), [])
+        Just t -> Just (array ++ " @> ARRAY " ++ t ++ " AND", [])
 
 -- part of the querry for SELECT post WHERE title
 queryWhereTitle :: Request -> (String, [String])
@@ -113,15 +113,15 @@ queryWhereDate req = fromMaybe ("", []) (dateAT <|> dateLT <|> dateGT)
     dateAT =
       case toParam req "created_at" of
         Nothing -> Nothing
-        Just t -> Just ((beg ++ "=? AND"), [t])
+        Just t -> Just (beg ++ "=? AND", [t])
     dateLT =
       case toParam req "created_lt" of
         Nothing -> Nothing
-        Just t -> Just ((beg ++ "<? AND"), [t])
+        Just t -> Just (beg ++ "<? AND", [t])
     dateGT =
       case toParam req "created_gt" of
         Nothing -> Nothing
-        Just t -> Just ((beg ++ ">? AND"), [t])
+        Just t -> Just (beg ++ ">? AND", [t])
 
 -- for author (name)
 queryWhereAuthor :: Request -> (String, [String])
@@ -164,7 +164,7 @@ queryOrder req =
     Just str ->
       if str == ""
         then ("", [])
-        else ((init (foldl addBy " ORDER BY" $ toListString str)), [])
+        else (init (foldl addBy " ORDER BY" $ toListString str), [])
   where
     addBy acc x =
       case x of
@@ -210,43 +210,16 @@ fetch pool args sql = withResource pool retrieve
   where
     retrieve conn =
       query conn sql args `catches`
-      [ Handler (\(ex :: SqlError) -> handleSql ex)
-      , Handler (\(ex :: ResultError) -> handleSql ex)
+      [ Handler (\(ex :: SqlError) -> logExeption ex)
+      , Handler (\(ex :: ResultError) -> logExeption ex)
       ]
-    handleSql ex = do
-      putStrLn (show ex )
+    logExeption ex = do
+      putStrLn (show ex)
       return []
 
--- No arguments -- just pure sql
-fetchSimple :: FromRow r => Pool Connection -> Query -> IO [r]
-fetchSimple pool sql = withResource pool retrieve
-  where
-    retrieve conn =
-      query_ conn sql `catches`
-      [ Handler (\(ex :: SqlError) -> handleSql ex)
-      , Handler (\(ex :: ResultError) -> handleSql ex)
-      ]
-    handleSql _ = do
-      return []
-
+-- Transactions
 -- Update database
 execSqlT :: ToRow q => Pool Connection -> q -> Query -> IO Int64
 execSqlT pool args sql = withResource pool ins
   where
     ins conn = withTransaction conn $ execute conn sql args
---------------------------------------------------------------------------------
--- Update database
--- execSql :: ToRow q => Pool Connection -> q -> Query -> IO Int64
--- execSql pool args sql = withResource pool ins
--- where ins conn = execute conn sql args
--- Utilities for interacting with the DB.
--- Transactions.
---
--- Accepts arguments
--- fetchT :: (FromRow r, ToRow q) => Pool Connection -> q -> Query -> IO [r]
--- fetchT pool args sql = withResource pool retrieve
--- where retrieve conn = withTransaction conn $ query conn sql args
--- No arguments -- just pure sql
--- fetchSimpleT :: FromRow r => Pool Connection -> Query -> IO [r]
--- fetchSimpleT pool sql = withResource pool retrieve
--- where retrieve conn = withTransaction conn $ query_ conn sql

@@ -94,7 +94,6 @@ routes pool hLogger hToken hDb req respond = do
     delete = do
       let id_ = toId req
       when (id_ == 0) $ do logError hLogger "  Invalid id''"
-        -- deleteAuthorByID hDb pool id_
       deleteByID hDb pool "author" id_
       respond (responseLBS status204 [("Content-Type", "text/plain")] "")
     -- author editing (see example)

@@ -410,7 +410,7 @@ newHandle config = do
             "FROM post" ++
             " INNER JOIN user_ USING (user_id)" ++
             " INNER JOIN author USING (user_id)" ++
-            " INNER JOIN category USING (category_id)" ++ (fst endQuery)
+            " INNER JOIN category USING (category_id)" ++ fst endQuery
       -- putStrLn ( "Query: " ++ q ++ "\n" ++ "paramQuery: " ++ (show (snd endQuery)))
       res <- fetch pool (snd endQuery) (fromString q)
       mapM toPost res

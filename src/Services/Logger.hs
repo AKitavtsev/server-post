@@ -15,7 +15,6 @@ data Handle =
     , logPriority :: Priority -> String -> IO ()
     }
 
---
 logDebug, logInfo, logWarning, logError :: Handle -> String -> IO ()
 logDebug = (`logPriority` DEBUG)
 
