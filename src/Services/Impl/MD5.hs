@@ -2,7 +2,7 @@ module Services.Impl.MD5
   ( newHandle
   ) where
 
-import qualified Services.Config as SC
+import qualified Config as SC
 import qualified Services.Token as ST
 
 import Data.Hash.MD5

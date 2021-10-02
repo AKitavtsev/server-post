@@ -2,7 +2,7 @@ module Services.Impl.StdOut
   ( newHandle
   ) where
 
-import qualified Services.Config as SC
+import qualified Config as SC
 import qualified Services.Logger as SL
 
 import Control.Monad (when)

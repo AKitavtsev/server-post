@@ -3,11 +3,10 @@
 module Main where
 
 import Router (routes)
-import Services.Config
+import Config
 import Services.Db (close, newConn)
 import Services.Logger
 
-import qualified Services.Impl.Configurator as SC
 import qualified Services.Impl.MD5 as ST
 import qualified Services.Impl.PostgreSQL as SB
 import qualified Services.Impl.StdOut as SL
@@ -18,8 +17,7 @@ import Network.Wai.Handler.Warp (run)
 
 main :: IO ()
 main = do
-  hConfig <- SC.newHandle
-  conf <- getConfig hConfig
+  conf <- getConfig
   hDb <- SB.newHandle conf
   conn <- newConn hDb conf
   pool <-

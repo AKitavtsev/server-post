@@ -5,7 +5,7 @@ module Services.Impl.PostgreSQL
   ( newHandle
   ) where
 
-import qualified Services.Config as C
+import qualified Config as C
 import qualified Services.Db as SD
 
 import FromRequest

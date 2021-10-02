@@ -6,7 +6,7 @@ module Services.Logger
   , logError
   ) where
 
-import Services.Config (Config(..))
+import Config (Config(..))
 import Services.Types (Priority(..))
 
 data Handle =

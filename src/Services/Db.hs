@@ -2,7 +2,7 @@ module Services.Db
   ( Handle(..)
   ) where
 
-import Services.Config (Config(..))
+import Config (Config(..))
 import qualified Services.Logger as Logger
 
 import Models.Author

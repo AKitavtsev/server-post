@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a1ad959a7af2531c50f42a9b47228cb914e0acc18a459c17aae68f7a1cdc59e0
+-- hash: 8c268ef9f952b35d0b883c822cc10bd3096211d8636a498228d2166aa24cc3ca
 
 name:           server-post
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+      Config
       Controllers.Authors
       Controllers.Categories
       Controllers.Comments
@@ -47,9 +48,7 @@ library
       Models.Tag
       Models.User
       Router
-      Services.Config
       Services.Db
-      Services.Impl.Configurator
       Services.Impl.MD5
       Services.Impl.MD5.Internal
       Services.Impl.PostgreSQL
