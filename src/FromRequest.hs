@@ -62,7 +62,7 @@ toIdImage req =
         then read x
         else 0
 
-curTimeStr :: String -> IO String
-curTimeStr form =
-  Time.formatTime Time.defaultTimeLocale form <$> Time.getCurrentTime
+curTimeStr :: IO String
+curTimeStr =
+  Time.formatTime Time.defaultTimeLocale "%Y-%m-%d %H:%M:%S" <$> Time.getCurrentTime
 
