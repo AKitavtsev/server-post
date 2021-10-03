@@ -11,7 +11,6 @@ import Services.Token
 
 import Control.Exception
 import Control.Monad (when)
-import Control.Monad.Trans
 import Data.Aeson
 import Data.List (dropWhile)
 import Data.Pool (Pool)
@@ -45,7 +44,7 @@ routes pool hLogger hToken hDb req respond = do
     get = do
       let id_ = toIdImage req
       when (id_ == 0) $ do logError hLogger "  Invalid id_"
-      imageMb <- liftIO $ findPhotoByID hDb pool id_
+      imageMb <- findPhotoByID hDb pool id_
       case imageMb of
         Nothing -> do
           logError hLogger "  Photo not found"

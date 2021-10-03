@@ -9,7 +9,6 @@ import Services.Db
 import Services.Logger
 
 import Control.Monad (when)
-import Control.Monad.Trans
 import Data.Pool (Pool)
 import Database.PostgreSQL.Simple.Internal
 
@@ -32,7 +31,7 @@ routes ::
 routes pool hLogger hDb req respond = do
   let id_ = toIdImage req
   when (id_ == 0) $ logError hLogger "  Invalid id_"
-  imageMb <- liftIO $ findImageByID hDb pool id_
+  imageMb <- findImageByID hDb pool id_
   case imageMb of
     Nothing -> do
       logError hLogger "  Image not found"

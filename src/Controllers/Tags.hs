@@ -4,7 +4,6 @@ module Controllers.Tags
   ( routes
   ) where
 
-import Control.Monad.Trans
 import Data.Aeson (eitherDecode, encode)
 
 import qualified Data.ByteString.Char8 as BC
@@ -74,7 +73,7 @@ routes pool hLogger hToken hDb req respond = do
     get = do
       let id_ = toId req
       when (id_ == 0) $ do logError hLogger "  Invalid id_"
-      tagMb <- liftIO $ findTagByID hDb pool id_
+      tagMb <- findTagByID hDb pool id_
       case tagMb of
         Nothing -> do
           logError hLogger "  Tag not exist"
