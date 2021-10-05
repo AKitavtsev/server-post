@@ -22,6 +22,7 @@ import Models.Author
 import Services.Db
 import Services.Logger
 import Services.Token
+import Utils
 
 routes ::
      Pool Connection
@@ -34,13 +35,11 @@ routes ::
 routes pool hLogger hToken hDb req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
-    Nothing -> do
-      logError hLogger "  Invalid or outdated token"
-      respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-    Just (_, False) -> do
-      logError hLogger "  Administrator authority required"
-      respond
-        (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")
+    Nothing -> respondWith (logError hLogger "  Invalid or outdated token")
+                             respond status400 (""::String)
+    Just (_, False) -> 
+      respondWith (logError hLogger "  Administrator authority required")
+                    respond status404 (""::String)
     Just (_, True) -> do
       logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
       case toMethod req of
@@ -86,11 +85,7 @@ routes pool hLogger hToken hDb req respond = do
                notFound404
                [("Content-Type", "text/plain")]
                "author not exist")
-        Just author -> do
-          respond
-            (responseLBS status200 [("Content-Type", "text/plain")] $
-             encode author)
-    -- delete author (see example)
+        Just author -> respondWith (pure ()) respond status200 author
     delete = do
       let id_ = toId req
       when (id_ == 0) $ do logError hLogger "  Invalid id''"
