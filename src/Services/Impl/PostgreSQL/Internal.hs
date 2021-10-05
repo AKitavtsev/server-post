@@ -210,10 +210,10 @@ fetch pool args sql = withResource pool retrieve
   where
     retrieve conn =
       query conn sql args `catches`
-      [ Handler (\(ex :: SqlError) -> logExeption ex)
-      , Handler (\(ex :: ResultError) -> logExeption ex)
+      [ Handler (\(ex :: SqlError) -> logExсeption ex)
+      , Handler (\(ex :: ResultError) -> logExсeption ex)
       ]
-    logExeption ex = do
+    logExсeption ex = do
       putStrLn (show ex)
       return []
 

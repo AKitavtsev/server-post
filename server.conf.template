@@ -1,17 +1,18 @@
 database {
-  name      = "posts"
-  user      = "postgres"
-  password  = "KIT@3095"
+  name      = ""
+  user      = ""
+  password  = ""
   limit     = 1
 }
 logger   {
   level     = "DEBUG"
 }
+# seconds
 token    {
-  lifetime  = 86400
+  lifetime  = 8640000
 }
 pool     {
   subpools  = 1
   time      = 40
-  resours   = 10
+  max_db_resours = 10
 }

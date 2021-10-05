@@ -16,7 +16,7 @@ data Config =
       , lifetime :: !Integer
       , subpools :: !Int
       , time :: !Integer
-      , resours :: !Int
+      , max_db_resours :: !Int
       }
   deriving (Show)
   
@@ -37,5 +37,5 @@ getConfig = do
   lifetime' <- C.lookupDefault 86400 conf (T.pack "token.lifetime") :: IO Integer
   subpools' <- C.lookupDefault 1 conf (T.pack "poll.subpools") :: IO Int
   time' <- C.lookupDefault 40 conf (T.pack "poll.time") :: IO Integer
-  resours' <- C.lookupDefault 10 conf (T.pack "poll.resours") :: IO Int
+  resours' <- C.lookupDefault 10 conf (T.pack "poll.max_db_resours") :: IO Int
   return (Config name' user' password' limit' level' lifetime' subpools' time' resours')

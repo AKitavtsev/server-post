@@ -462,7 +462,6 @@ newHandle config = do
             " user_id ::varchar, user_name, surname, comment " ++
             "FROM comment INNER JOIN user_ USING (user_id) " ++
             "WHERE draft_id = ? LIMIT ? OFFSET ?" 
-      -- putStrLn ( "Query: " ++ q ++ "\n" ++ "paramQuery: " ++ (show ([show id_post, show limit, show offset])))
       res <- fetch pool [show id_post, show limit, show offset] $ fromString  q
       return (map toComment res)
       where

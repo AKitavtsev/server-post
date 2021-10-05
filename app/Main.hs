@@ -26,7 +26,7 @@ main = do
       (close hDb)
       (subpools conf)
       (fromInteger (time conf) :: NominalDiffTime)
-      (resours conf)
+      (max_db_resours conf)
   hLogger <- SL.newHandle conf
   hToken <- ST.newHandle conf
   logInfo hLogger "  Listen port 3000"
