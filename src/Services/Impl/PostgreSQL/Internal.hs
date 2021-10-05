@@ -15,11 +15,11 @@ import Network.Wai (Request(..))
 import qualified Data.Text as T (unpack)
 
 import FromRequest
-import Models.Draft (DraftUp(..))
+import Models.Draft (ForUpdateDraft(..))
 
 
 -- Forms part of the querry for UPDATE draft
-bodyUpdate :: DraftUp -> (String, [String])
+bodyUpdate :: ForUpdateDraft -> (String, [String])
 bodyUpdate draft =
   case sets of
    ("", []) -> ("", [])

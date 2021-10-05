@@ -48,7 +48,7 @@ routes pool hLogger hToken hDb req respond = do
     post id_author = do
       body <- strictRequestBody req
       logDebug hLogger ("  Body = " ++ BL.unpack body)
-      case eitherDecode body :: Either String CommentIn of
+      case eitherDecode body :: Either String ForCreateComment of
         Right correctlyParsedBody -> do
           c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
           id_ <- insertComment hDb pool correctlyParsedBody id_author c_date
@@ -60,7 +60,7 @@ routes pool hLogger hToken hDb req respond = do
             _ ->
               respond
                 (responseLBS status201 [("Content-Type", "text/plain")] $
-                 encode (CommentID id_))
+                 encode (IdComment id_))
         Left e -> do
           logError hLogger ("  Invalid request body  - " ++ e)
           respond (responseLBS status400 [("Content-Type", "text/plain")] "")

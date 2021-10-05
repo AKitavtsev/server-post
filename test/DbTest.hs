@@ -8,7 +8,7 @@ import Network.Wai
 import Test.Hspec
 
 import Services.Impl.PostgreSQL.Internal
-import Models.Draft (DraftUp (..))
+import Models.Draft (ForUpdateDraft (..))
 
 req = defaultRequest 
        { requestMethod = "GET"
@@ -23,7 +23,7 @@ req = defaultRequest
                         ,"1.120210901202553ff034f3847c1d22f091dde7cde045264"
                         , "1"]
        }
-draft = DraftUp { id_draft = 1
+draft = ForUpdateDraft { id_draft = 1
                 , newTitle = Just "it is Title"
                 , newCategory = Just 5
                 , newTags = Just [1, 3, 10]
@@ -54,15 +54,15 @@ dbTest = hspec $ do
            bodyUpdate draft `shouldBe`
            (" title = ?, category_id = ?, t_content = ?, photo_id = ?", ["it is Title", "5", "it is content", "4"])
         it "Updeted only title " $ 
-           bodyUpdate (DraftUp 1 (Just "it is Title") 
+           bodyUpdate (ForUpdateDraft 1 (Just "it is Title") 
                       Nothing Nothing Nothing Nothing Nothing)
              `shouldBe` (" title = ?", ["it is Title"])
         it "Updated title and photo" $ 
-           bodyUpdate (DraftUp 1 (Just "it is Title")
+           bodyUpdate (ForUpdateDraft 1 (Just "it is Title")
                       Nothing Nothing Nothing (Just 4) Nothing)
              `shouldBe` (" title = ?, photo_id = ?", ["it is Title", "4"])
         it "nothing unupdated" $ 
-           bodyUpdate (DraftUp 1 Nothing
+           bodyUpdate (ForUpdateDraft 1 Nothing
                       Nothing Nothing Nothing Nothing Nothing)
              `shouldBe` ("", [])
       describe "queryWhereTag" $ do

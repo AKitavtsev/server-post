@@ -118,7 +118,7 @@ newHandle config = do
           _ -> return (0 :: Int64)
       return ()
     --User---------------------------------------------------------------------
-    insertUser pool (UserIn name' surname' _ login' password') c_date' = do
+    insertUser pool (ForCreateUser name' surname' _ login' password') c_date' = do
       let q =
             "INSERT INTO user_ (user_name, surname, login, password, user_date, admin) VALUES(?,?,?,md5( ?) ,?,?) returning user_id"
       res <-
@@ -149,9 +149,9 @@ newHandle config = do
       where
         pass [(n, sn, l, dat, adm)] =
           Just
-            (UserOut n sn ("http://localhost:3000/image/" ++ show id_) l dat adm)
+            (ForShowUser n sn ("http://localhost:3000/image/" ++ show id_) l dat adm)
         pass _ = Nothing
-    insertImage pool (UserIn _ _ avatar' _ _) id_ = do
+    insertImage pool (ForCreateUser _ _ avatar' _ _) id_ = do
       case avatar' of
         Just (Avatar im t) -> do
           let q =
@@ -169,7 +169,7 @@ newHandle config = do
         pass [(img, t)] = Just (img, t)
         pass _ = Nothing
     --Author------------------------------------------
-    insertAuthor pool (Author id_ descr) = do
+    insertAuthor pool (ForCreateAuthor id_ descr) = do
       let q =
             "INSERT INTO author  (user_id, description) VALUES(?,?) returning user_id"
       res <- liftIO $ fetch pool [show id_, T.unpack descr] q
@@ -185,7 +185,7 @@ newHandle config = do
       where
         pass [(name', surname', descr)] =
           Just
-            (AuthorOut
+            (AuthorsDetails
                name'
                surname'
                descr
@@ -250,7 +250,7 @@ newHandle config = do
         pass [] = []
         pass xs = map fromOnly xs
     --Draft------------------------------------------------------------------------
-    insertDraft pool (DraftIn t c _ t_c m_p _) id_ c_date' = do
+    insertDraft pool (ForCreateDraft t c _ t_c m_p _) id_ c_date' = do
       let q =
             "INSERT INTO draft (title, draft_date, user_id, category_id, t_content, photo_id) VALUES(?,?,?,?,?,?) returning draft_id"
       res <-
@@ -321,7 +321,7 @@ newHandle config = do
       where
         pass [(t, c_date', id_cat, ts, ph, phs, t_c)] =
           Just
-            (DraftGet
+            (ForShowDraf
                t
                c_date'
                id_cat
@@ -369,7 +369,7 @@ newHandle config = do
         pass [(img, t)] = Just (img, t)
         pass _ = Nothing
     --Comment----------------------------------------------------------------------
-    insertComment pool (CommentIn p_id c) auth_id c_date' = do
+    insertComment pool (ForCreateComment p_id c) auth_id c_date' = do
       let q =
             "INSERT INTO comment (comment_date, draft_id, comment, user_id) VALUES(?,?,?,?) returning comment_id"
       res <- liftIO $ fetch pool [c_date', show p_id, c, show auth_id] q
@@ -423,7 +423,7 @@ newHandle config = do
                i
                t
                c_date'
-               (AuthorOut
+               (AuthorsDetails
                   user_name
                   surname'
                   descr

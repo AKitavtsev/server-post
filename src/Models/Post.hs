@@ -9,7 +9,7 @@ module Models.Post
   , User(..)
   ) where
 
-import Models.Author (AuthorOut(..))
+import Models.Author (AuthorsDetails(..))
 
 import Data.Aeson
 import GHC.Generics
@@ -28,7 +28,7 @@ data Post =
     { id :: Integer
     , title :: String
     , c_date :: String
-    , author :: AuthorOut
+    , author :: AuthorsDetails
     , categories :: Categories
     , tags :: [String]
     , photo :: String

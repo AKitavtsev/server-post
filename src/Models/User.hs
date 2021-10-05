@@ -4,9 +4,9 @@
 
 module Models.User
   ( Avatar(..)
-  , UserIn(..)
-  , UserOut(..)
-  , UserID(..)
+  , ForCreateUser(..)
+  , ForShowUser(..)
+  , TokenForUser(..)
   ) where
 
 import Data.Aeson
@@ -20,8 +20,8 @@ data Avatar =
     }
   deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
-data UserIn =
-  UserIn
+data ForCreateUser =
+  ForCreateUser
     { name :: String
     , surname :: String
     , avatar :: Maybe Avatar
@@ -30,8 +30,8 @@ data UserIn =
     }
   deriving (Show, Generic, FromJSON, ToJSON)
 
-data UserOut =
-  UserOut
+data ForShowUser =
+  ForShowUser
     { name_ :: String
     , surname_ :: String
     , avatar_ :: String
@@ -41,8 +41,8 @@ data UserOut =
     }
   deriving (Show, Generic, FromJSON, ToJSON)
 
-data UserID =
-  UserID
+data TokenForUser =
+  TokenForUser
     { id :: Integer
     , token :: String
     }

@@ -61,7 +61,7 @@ routes pool hLogger hToken hDb req respond = do
              encode draft)
       where
         getDraft body = do
-          case eitherDecode body :: Either String DraftIn of
+          case eitherDecode body :: Either String ForCreateDraft of
             Right draft -> return (Just draft)
             Left e -> do
               logError hLogger ("  Invalid request body  - " ++ e)
@@ -86,7 +86,7 @@ routes pool hLogger hToken hDb req respond = do
           p <- mapM (insertPhotoDraft hDb pool id_) listPhotos
           when (p /= listPhotos) $
             logWarning hLogger "  Not all photos were found"
-          return (Just (DraftPost id_ (tags draft) (filter (/= 0) p)))
+          return (Just (FoundTagsAndPhotosForDraft id_ (tags draft) (filter (/= 0) p)))
         postOtherPhotos _ = return Nothing
     -- draft editing (see example)
     put id_author = do
@@ -102,7 +102,7 @@ routes pool hLogger hToken hDb req respond = do
              encode draft)
       where
         getDraft body = do
-          case eitherDecode body :: Either String DraftUp of
+          case eitherDecode body :: Either String ForUpdateDraft of
             Right draft -> return (Just draft)
             Left e -> do
               logError hLogger ("  Invalid request body  - " ++ e)
