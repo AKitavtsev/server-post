@@ -37,5 +37,5 @@ getConfig = do
   lifetime' <- C.lookupDefault 86400 conf (T.pack "token.lifetime") :: IO Integer
   subpools' <- C.lookupDefault 1 conf (T.pack "poll.subpools") :: IO Int
   time' <- C.lookupDefault 40 conf (T.pack "poll.time") :: IO Integer
-  resours' <- C.lookupDefault 10 conf (T.pack "poll.max_db_resours") :: IO Int
-  return (Config name' user' password' limit' level' lifetime' subpools' time' resours')
+  resources' <- C.lookupDefault 10 conf (T.pack "poll.max_db_resours") :: IO Int
+  return (Config name' user' password' limit' level' lifetime' subpools' time' resources')

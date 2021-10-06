@@ -14,5 +14,5 @@ token    {
 pool     {
   subpools  = 1
   time      = 40
-  max_db_resours = 10
+  max_db_resources = 10
 }
