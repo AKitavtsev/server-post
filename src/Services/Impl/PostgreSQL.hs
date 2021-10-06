@@ -17,7 +17,6 @@ import Models.Post
 import Models.Tag
 import Models.User
 import Services.Impl.PostgreSQL.Internal
-import Services.Impl.PostgreSQL.Migrations
 
 import Control.Monad.Trans (liftIO)
 import Data.Char (toLower)
@@ -35,7 +34,6 @@ newHandle config = do
       { SD.limit = C.limit config
       , SD.close = close
       , SD.newConn = newConn
-      , SD.runMigrations = runMigrations
       , SD.deleteByID = deleteByID
       , SD.updateByID = updateByID
       , SD.insertUser = insertUser

@@ -5,6 +5,7 @@ module Main where
 import Router (routes)
 import Services.Config
 import Services.Db (close, newConn)
+import Services.Impl.PostgreSQL.Migrations
 import Services.Logger
 
 import qualified Services.Impl.Configurator as SC
@@ -14,10 +15,12 @@ import qualified Services.Impl.StdOut as SL
 
 import Data.Pool (createPool)
 import Data.Time.Clock
+import Control.Monad (when)
 import Network.Wai.Handler.Warp (run)
+import System.Environment (getArgs)
 
 main :: IO ()
-main = do
+main = do 
   hConfig <- SC.newHandle
   conf <- getConfig hConfig
   hDb <- SB.newHandle conf
@@ -30,6 +33,9 @@ main = do
       (fromInteger (time conf) :: NominalDiffTime)
       (resours conf)
   hLogger <- SL.newHandle conf
-  hToken <- ST.newHandle conf
+  hToken <- ST.newHandle conf    
+  args <- getArgs
+  when (args == ["migration"]) $ 
+    runMigrations hLogger conn pool "sql"
   logInfo hLogger "  Listen port 3000"
-  run 3000 (routes conn pool hLogger hToken hDb)
+  run 3000 (routes pool hLogger hToken hDb)

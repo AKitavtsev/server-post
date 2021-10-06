@@ -30,15 +30,14 @@ import Network.Wai
 import qualified Data.Text as T
 
 routes ::
-     Connection
-  -> Pool Connection
+     Pool Connection
   -> Services.Logger.Handle
   -> Services.Token.Handle
   -> Services.Db.Handle
   -> Request
   -> (Response -> IO b)
   -> IO b
-routes conn pool hLogger hToken hDb req respond = do
+routes pool hLogger hToken hDb req respond = do
   logInfo hLogger ("  Path = " ++ T.unpack (toPath req))
   case toPath req of
     "user" -> Controllers.Users.routes pool hLogger hToken hDb req respond
@@ -53,9 +52,6 @@ routes conn pool hLogger hToken hDb req respond = do
     "publish" -> Controllers.Publish.routes pool hLogger hToken hDb req respond
     "comment" -> Controllers.Comments.routes pool hLogger hToken hDb req respond
     "posts" -> Controllers.Posts.routes pool hLogger hToken hDb req respond
-    "migration" -> do
-      runMigrations hDb hLogger conn pool "sql"
-      respond $ responseLBS status200 [("Content-Type", "text/plain")] ""
     _ -> do
       logError hLogger "  Path not found"
       respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
