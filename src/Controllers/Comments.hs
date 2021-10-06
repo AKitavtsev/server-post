@@ -48,7 +48,7 @@ routes pool hLogger hToken hDb req respond = do
     post id_author = do
       body <- strictRequestBody req
       logDebug hLogger ("  Body = " ++ BL.unpack body)
-      case eitherDecode body :: Either String ForCreateComment of
+      case eitherDecode body :: Either String RawComment of
         Right correctlyParsedBody -> do
           c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
           id_ <- insertComment hDb pool correctlyParsedBody id_author c_date

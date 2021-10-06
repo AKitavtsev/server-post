@@ -44,7 +44,7 @@ routes pool hLogger hToken hDb req respond = do
     post = do
       body <- strictRequestBody req
       logDebug hLogger ("  Body = " ++ BL.unpack body)
-      case eitherDecode body :: Either String ForCreateUser of
+      case eitherDecode body :: Either String RawUser of
         Left e -> do
           logError hLogger ("  Invalid request body - " ++ e)
           respond

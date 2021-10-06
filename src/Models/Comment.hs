@@ -4,15 +4,15 @@
 
 
 module Models.Comment
-  ( ForCreateComment(..)
+  ( RawComment(..)
   , IdComment(..)
   ) where
 
 import Data.Aeson
 import GHC.Generics
 
-data ForCreateComment =
-  ForCreateComment
+data RawComment =
+  RawComment
     { post_id :: Integer
     , comment :: String
     }

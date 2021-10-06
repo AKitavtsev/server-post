@@ -4,10 +4,10 @@
 
 module Models.Draft
   ( Photo(..)
-  , ForCreateDraft(..)
+  , RawDraft(..)
   , FoundTagsAndPhotosForDraft(..)
   , ForUpdateDraft(..)
-  , ForShowDraf(..)
+  , ForShowDraft(..)
   ) where
 
 import Data.Aeson
@@ -22,8 +22,8 @@ data Photo =
     }
   deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
-data ForCreateDraft =
-  ForCreateDraft
+data RawDraft =
+  RawDraft
     { title :: String
     , category :: Integer
     , tags :: [Integer]
@@ -45,8 +45,8 @@ data ForUpdateDraft =
     }
   deriving (Show, Generic, FromJSON, ToJSON)
 
-data ForShowDraf =
-  ForShowDraf
+data ForShowDraft =
+  ForShowDraft
     { title_g :: String
     , c_date :: String
     , category_g :: Integer

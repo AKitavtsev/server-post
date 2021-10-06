@@ -3,7 +3,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module Models.Author
-  ( ForCreateAuthor(..)
+  ( RawAuthor(..)
   , AuthorsDetails(..)
   ) where
 
@@ -11,8 +11,8 @@ import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.Text as T
 import GHC.Generics
 
-data ForCreateAuthor =
-  ForCreateAuthor
+data RawAuthor =
+  RawAuthor
     { author_id :: Integer
     , description :: T.Text
     }

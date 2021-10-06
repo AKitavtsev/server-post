@@ -61,7 +61,7 @@ routes pool hLogger hToken hDb req respond = do
              encode draft)
       where
         getDraft body = do
-          case eitherDecode body :: Either String ForCreateDraft of
+          case eitherDecode body :: Either String RawDraft of
             Right draft -> return (Just draft)
             Left e -> do
               logError hLogger ("  Invalid request body  - " ++ e)

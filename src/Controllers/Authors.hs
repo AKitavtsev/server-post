@@ -56,7 +56,7 @@ routes pool hLogger hToken hDb req respond = do
     post = do
       body <- strictRequestBody req
       logDebug hLogger ("  Body = " ++ BL.unpack body)
-      case eitherDecode body :: Either String ForCreateAuthor of
+      case eitherDecode body :: Either String RawAuthor of
         Left e -> do
           logError hLogger ("  Invalid request body  - " ++ e)
           respond (responseLBS status400 [("Content-Type", "text/plain")] "")
@@ -110,4 +110,4 @@ routes pool hLogger hToken hDb req respond = do
           updateByID hDb pool "author" id_ descr
           respond
             (responseLBS status200 [("Content-Type", "text/plain")] $
-             encode (ForCreateAuthor id_ $ T.pack descr))
+             encode (RawAuthor id_ $ T.pack descr))

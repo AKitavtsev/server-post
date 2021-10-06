@@ -4,7 +4,7 @@
 
 module Models.User
   ( Avatar(..)
-  , ForCreateUser(..)
+  , RawUser(..)
   , ForShowUser(..)
   , TokenForUser(..)
   ) where
@@ -20,8 +20,8 @@ data Avatar =
     }
   deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
-data ForCreateUser =
-  ForCreateUser
+data RawUser =
+  RawUser
     { name :: String
     , surname :: String
     , avatar :: Maybe Avatar
