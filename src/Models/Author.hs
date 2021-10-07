@@ -3,23 +3,23 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module Models.Author
-  ( Author(..)
-  , AuthorOut(..)
+  ( RawAuthor(..)
+  , AuthorsDetails(..)
   ) where
 
 import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.Text as T
 import GHC.Generics
 
-data Author =
-  Author
+data RawAuthor =
+  RawAuthor
     { author_id :: Integer
     , description :: T.Text
     }
   deriving (Show, Generic, FromJSON, ToJSON)
 
-data AuthorOut =
-  AuthorOut
+data AuthorsDetails =
+  AuthorsDetails
     { name :: String
     , surname :: String
     , description :: T.Text

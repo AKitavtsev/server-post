@@ -43,7 +43,7 @@ routes pool hLogger hToken hDb req respond = do
     post = do
       body <- strictRequestBody req
       logDebug hLogger ("  Body = " ++ BL.unpack body)
-      case eitherDecode body :: Either String UserIn of
+      case eitherDecode body :: Either String RawUser of
         Left e -> do
           logError hLogger ("  Invalid request body - " ++ e)
           respond
@@ -65,7 +65,7 @@ routes pool hLogger hToken hDb req respond = do
               token_ <- createToken hToken id_ False
               respond
                 (responseLBS created201 [("Content-Type", "text/plain")] $
-                 encode (UserID id_ token_))
+                 encode (TokenForUser id_ token_))
     -- show user, like
     -- http://localhost:3000/user/1.120210901202553ff034f3847c1d22f091dde7cde045264
     get = do

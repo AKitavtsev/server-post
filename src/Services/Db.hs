@@ -25,14 +25,14 @@ data Handle =
     , runMigrations :: Logger.Handle -> Connection -> Pool Connection -> FilePath -> IO ()
     , deleteByID :: Pool Connection -> String -> Integer -> IO ()
     , updateByID :: Pool Connection -> String -> Integer -> String -> IO ()
-    , insertUser :: Pool Connection -> UserIn -> String -> IO Integer
+    , insertUser :: Pool Connection -> RawUser -> String -> IO Integer
     , findUserByLogin :: Pool Connection -> String -> String -> IO (Maybe ( Integer
                                                                           , Bool))
-    , findUserByID :: Pool Connection -> Integer -> IO (Maybe UserOut)
-    , insertImage :: Pool Connection -> UserIn -> Integer -> IO Integer
+    , findUserByID :: Pool Connection -> Integer -> IO (Maybe ForShowUser)
+    , insertImage :: Pool Connection -> RawUser -> Integer -> IO Integer
     , findImageByID :: Pool Connection -> Integer -> IO (Maybe (String, String))
-    , insertAuthor :: Pool Connection -> Author -> IO Integer
-    , findAuthorByID :: Pool Connection -> Integer -> IO (Maybe AuthorOut)
+    , insertAuthor :: Pool Connection -> RawAuthor -> IO Integer
+    , findAuthorByID :: Pool Connection -> Integer -> IO (Maybe AuthorsDetails)
     , insertCategory :: Pool Connection -> Category -> IO Integer
     , findCategoryByID :: Pool Connection -> Integer -> IO (Maybe Category)
     , updateOwnerCategory :: Pool Connection -> Integer -> String -> IO Integer
@@ -41,14 +41,14 @@ data Handle =
     , insertPhotoDraft :: Pool Connection -> Integer -> Integer -> IO Integer
     , findTagByID :: Pool Connection -> Integer -> IO (Maybe Tag)
     , findTags :: Pool Connection -> Integer -> Integer -> IO [String]
-    , insertDraft :: Pool Connection -> DraftIn -> Integer -> String -> IO Integer
+    , insertDraft :: Pool Connection -> RawDraft -> Integer -> String -> IO Integer
     , deleteDraft :: Pool Connection -> Integer -> Integer -> IO ()
-    , updateDraft :: Pool Connection -> DraftUp -> Integer -> IO (Maybe DraftUp)
+    , updateDraft :: Pool Connection -> ForUpdateDraft -> Integer -> IO (Maybe ForUpdateDraft)
     , insertPhoto :: Pool Connection -> Photo -> IO Integer
     , findPhotoByID :: Pool Connection -> Integer -> IO (Maybe (String, String))
-    , findDraftByID :: Pool Connection -> Integer -> IO (Maybe DraftGet)
+    , findDraftByID :: Pool Connection -> Integer -> IO (Maybe ForShowDraft)
     , publishPost :: Pool Connection -> Integer -> Integer -> IO Integer
-    , insertComment :: Pool Connection -> CommentIn -> Integer -> String -> IO Integer
+    , insertComment :: Pool Connection -> RawComment -> Integer -> String -> IO Integer
     , deleteComment :: Pool Connection -> Integer -> Integer -> IO ()
     , findAllPosts :: Pool Connection -> Request -> Integer -> IO [Post]
     , findComments :: Pool Connection -> Request -> Integer -> Integer -> IO [Comment]

@@ -4,22 +4,22 @@
 
 
 module Models.Comment
-  ( CommentIn(..)
-  , CommentID(..)
+  ( RawComment(..)
+  , IdComment(..)
   ) where
 
 import Data.Aeson
 import GHC.Generics
 
-data CommentIn =
-  CommentIn
+data RawComment =
+  RawComment
     { post_id :: Integer
     , comment :: String
     }
   deriving (Show, Generic, FromJSON, ToJSON)
 
-newtype CommentID =
-  CommentID
+newtype IdComment =
+  IdComment
     { id :: Integer
     }
   deriving (Show, Generic, FromJSON, ToJSON)
