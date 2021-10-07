@@ -10,6 +10,7 @@ import FromRequest
 import Services.Db
 import Services.Logger
 import Services.Token
+import Utils
 
 import Control.Monad.Trans
 import Data.Aeson
@@ -37,17 +38,13 @@ routes ::
   -> IO b
 routes pool hLogger hToken hDb req respond = do
   case (,) <$> toParam req "login" <*> toParam req "password" of
-    Nothing -> do
-      logError hLogger "  Required Parameters \"Login \" and \"Password\""
-      respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+    Nothing -> respondWithError hLogger respond status400
+                 "  Required Parameters \"Login \" and \"Password\""
     Just (login, password) -> do
       idAdm <- liftIO $ findUserByLogin hDb pool login password
       case idAdm of
-        Nothing -> do
-          logError hLogger ("  Invalid Login/Password: " ++ login ++ "/" ++ password)
-          respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
+        Nothing -> respondWithError hLogger respond status404
+                     ("  Invalid Login/Password: " ++ login ++ "/" ++ password)
         Just (id_, adm) -> do
           token_ <- createToken hToken id_ adm
-          respond
-            (responseLBS created201 [("Content-Type", "text/plain")] $
-             encode (Token token_))
+          respondWithSuccess respond status201 (Token token_)

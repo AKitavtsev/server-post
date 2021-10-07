@@ -35,10 +35,9 @@ routes ::
 routes pool hLogger hToken hDb req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
-    Nothing -> 
-      respondWithError hLogger respond status400  "  Invalid or outdated token"
+    Nothing -> respondWithError hLogger respond status400 "  Invalid or outdated token"
     Just (_, False) -> 
-      respondWithError hLogger respond status400  "  Administrator authority required"
+      respondWithError hLogger respond status400 "  Administrator authority required"
     Just (_, True) -> do
       logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
       case toMethod req of
@@ -46,7 +45,7 @@ routes pool hLogger hToken hDb req respond = do
         "GET" -> get
         "DELETE" -> delete
         "PUT" -> put
-        _ -> respondWithError hLogger respond status404  "  Invalid method"
+        _ -> respondWithError hLogger respond status404 "  Invalid method"
     -- author creation (see example)
   where
     post = do
@@ -54,13 +53,13 @@ routes pool hLogger hToken hDb req respond = do
       logDebug hLogger ("  Body = " ++ BL.unpack body)
       case eitherDecode body :: Either String Author of
         Left e -> 
-          respondWithError hLogger respond status400  ("  invalid request body  - " ++ e)
+          respondWithError hLogger respond status400 ("  invalid request body  - " ++ e)
         Right correctlyParsedBody -> do
           id_ <- insertAuthor hDb pool correctlyParsedBody
           case id_ of
             0 -> 
               respondWithError hLogger respond status500 
-                "  There is no user with this ID, or the user is already the author"
+                "  There is no user with this Id, or the user is already the author"
             _ -> respondWithSuccess respond status201 ("" :: String)
     -- show author, like
     -- http://localhost:3000/author/<token>/<id''>
@@ -73,14 +72,14 @@ routes pool hLogger hToken hDb req respond = do
         Just author -> respondWithSuccess respond status200 author
     delete = do
       let id_ = toId req
-      when (id_ == 0) $ do logError hLogger "  Invalid id''"
+      when (id_ == 0) $ do logError hLogger "  Invalid id"
       deleteByID hDb pool "author" id_
       respondWithSuccess respond status204 ("" :: String)
     -- author editing (see example)
     put = do
       let id_ = toId req
           descrMb = toParam req "description"
-      when (id_ == 0) $ do logError hLogger "  Invalid id''"
+      when (id_ == 0) $ do logError hLogger "  Invalid id"
       case descrMb of
         Nothing -> respondWithError hLogger respond status400 
                      "  The \"description\" parameter is required"

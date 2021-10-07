@@ -5,7 +5,7 @@ module Controllers.Comments
   ) where
 
 import Control.Monad.Trans
-import Data.Aeson (eitherDecode, encode)
+import Data.Aeson (eitherDecode)
 import Data.Pool (Pool)
 import Database.PostgreSQL.Simple.Internal
 
@@ -20,6 +20,7 @@ import Models.Comment
 import Services.Db
 import Services.Logger
 import Services.Token
+import Utils
 
 routes ::
      Pool Connection
@@ -32,17 +33,13 @@ routes ::
 routes pool hLogger hToken hDb req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
-    Nothing -> do
-      logError hLogger "  Invalid or outdated token"
-      respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+    Nothing -> respondWithError hLogger respond status400 "  Invalid or outdated token"
     Just (id_author, adm) -> do
       logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
       case toMethod req of
         "POST" -> post id_author
         "DELETE" -> delete id_author adm
-        _ -> do
-          logError hLogger "  Invalid method"
-          respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
+        _ -> respondWithError hLogger respond status404 "  Invalid method"
     -- comment creation (see example)
   where
     post id_author = do
@@ -53,26 +50,17 @@ routes pool hLogger hToken hDb req respond = do
           c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
           id_ <- insertComment hDb pool correctlyParsedBody id_author c_date
           case id_ of
-            0 -> do
-              logError hLogger "  post not found"
-              respond
-                (responseLBS status400 [("Content-Type", "text/plain")] "")
-            _ ->
-              respond
-                (responseLBS status201 [("Content-Type", "text/plain")] $
-                 encode (CommentID id_))
-        Left e -> do
-          logError hLogger ("  Invalid request body  - " ++ e)
-          respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+            0 -> respondWithError hLogger respond status404 "  post not found"
+            _ -> respondWithSuccess respond status201 (CommentID id_)
+        Left e -> respondWithError hLogger respond status400 
+                    ("  invalid request body  - " ++ e)
     -- deleting a comment
     delete id_author adm = do
       let id_ = toId req
       case id_ of
-        0 -> do
-          logError hLogger "  Invalid id_"
-          respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+        0 -> respondWithError hLogger respond status400 "  Invalid id_"
         _ -> do
           case adm of
             True -> deleteByID hDb pool "comment" id_
             False -> deleteComment hDb pool id_ id_author
-          respond (responseLBS status204 [("Content-Type", "text/plain")] "")
+          respondWithSuccess respond status204 ("" :: String)

@@ -21,6 +21,7 @@ import Models.Draft
 import Services.Db
 import Services.Logger
 import Services.Token
+import Utils
 
 routes ::
      Pool Connection
@@ -33,9 +34,7 @@ routes ::
 routes pool hLogger hToken hDb req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
-    Nothing -> do
-      logError hLogger "  Invalid or outdated token"
-      respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+    Nothing -> respondWithError hLogger respond status400 "  Invalid or outdated token"
     Just (id_author, _) -> do
       logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
       case toMethod req of
@@ -43,9 +42,7 @@ routes pool hLogger hToken hDb req respond = do
         "GET" -> get
         "PUT" -> put id_author
         "DELETE" -> delete id_author
-        _ -> do
-          logError hLogger "  Invalid method"
-          respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
+        _ -> respondWithError hLogger respond status404 "  Invalid method"
     -- draft creation (see example)
   where
     post id_author = do
@@ -53,12 +50,8 @@ routes pool hLogger hToken hDb req respond = do
         strictRequestBody req >>= getDraft >>= postDraft id_author >>= postTags >>=
         postOtherPhotos
       case res of
-        Nothing ->
-          respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-        Just draft ->
-          respond
-            (responseLBS status200 [("Content-Type", "text/plain")] $
-             encode draft)
+        Nothing -> respondWithError hLogger respond status400 ""
+        Just draft -> respondWithSuccess respond status204 draft
       where
         getDraft body = do
           case eitherDecode body :: Either String DraftIn of
@@ -150,10 +143,5 @@ routes pool hLogger hToken hDb req respond = do
       when (id_ == 0) $ do logError hLogger "  Invalid id_"
       draftMb <- liftIO $ findDraftByID hDb pool id_
       case draftMb of
-        Nothing -> do
-          logError hLogger "  Draft not exist"
-          respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
-        Just draft ->
-          respond
-            (responseLBS status200 [("Content-Type", "text/plain")] $
-             encode draft)
+        Nothing -> respondWithError hLogger respond status404 "  Draft not exist"
+        Just draft -> respondWithSuccess respond status200 draft

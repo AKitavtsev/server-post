@@ -5,10 +5,10 @@ module Controllers.Users
   ) where
 
 import Control.Monad.Trans
-import Data.Aeson (eitherDecode, encode)
+import Data.Aeson (eitherDecode)
 
 import qualified Data.ByteString.Char8 as BC (unpack)
-import qualified Data.ByteString.Lazy.Char8 as BL (pack, unpack)
+import qualified Data.ByteString.Lazy.Char8 as BL (unpack)
 
 import Control.Monad (when)
 import Data.Pool (Pool)
@@ -21,6 +21,7 @@ import Models.User
 import Services.Db
 import Services.Logger
 import Services.Token
+import Utils
 
 routes ::
      Pool Connection
@@ -36,27 +37,20 @@ routes pool hLogger hToken hDb req respond = do
     "POST" -> post
     "GET" -> get
     "DELETE" -> delete
-    _ -> do
-      logError hLogger "  Invalid method"
-      respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
+    _ -> respondWithError hLogger respond status404 "  Invalid method"
     -- user creation (see example)
   where
     post = do
       body <- strictRequestBody req
       logDebug hLogger ("  Body = " ++ BL.unpack body)
       case eitherDecode body :: Either String UserIn of
-        Left e -> do
-          logError hLogger ("  Invalid request body - " ++ e)
-          respond
-            (responseLBS status400 [("Content-Type", "text/plain")] $ BL.pack e)
+        Left e -> respondWithError hLogger respond status400
+                    ("  invalid request body  - " ++ e)
         Right correctlyParsedBody -> do
           c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
           id_ <- insertUser hDb pool correctlyParsedBody c_date
           case id_ of
-            0 -> do
-              logError hLogger "  Login already exist"
-              respond
-                (responseLBS status400 [("Content-Type", "text/plain")] "")
+            0 -> respondWithError hLogger respond status400 "  Login already exist"
             _ -> do
               idim <- insertImage hDb pool correctlyParsedBody id_
               when (idim == 0) $ do
@@ -64,11 +58,9 @@ routes pool hLogger hToken hDb req respond = do
                   hLogger
                   "  Invalid image type specified (only png, jpg, gif or bmp is allowed)"
               token_ <- createToken hToken id_ False
-              respond
-                (responseLBS created201 [("Content-Type", "text/plain")] $
-                 encode (UserID id_ token_))
-    -- show user, like
-    -- http://localhost:3000/user/1.120210901202553ff034f3847c1d22f091dde7cde045264
+              respondWithSuccess respond status201 (UserID id_ token_)
+-- show user, like
+-- http://localhost:3000/user/1.120210901202553ff034f3847c1d22f091dde7cde045264
     get = do
       vt <- validToken hToken (toToken req)
       case vt of
@@ -76,35 +68,17 @@ routes pool hLogger hToken hDb req respond = do
           when (id_ == 0) $ do logError hLogger "  Invalid id_"
           userMb <- liftIO $ findUserByID hDb pool id_
           case userMb of
-            Nothing -> do
-              logError hLogger "  User not exist"
-              respond
-                (responseLBS
-                   notFound404
-                   [("Content-Type", "text/plain")]
-                   "user not exist")
-            Just user -> do
-              respond
-                (responseLBS status200 [("Content-Type", "text/plain")] $
-                 encode user)
-        Nothing -> do
-          logError hLogger "  Invalid or outdated token"
-                -- delete user (see example)
-          respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+            Nothing -> respondWithError hLogger respond status400 "  User not exist"
+            Just user -> respondWithSuccess respond status200 user
+        Nothing -> respondWithError hLogger respond status400 "  Invalid or outdated token"
+-- delete user (see example)
     delete = do
       let id_ = toId req
       vt <- validToken hToken (toToken req)
       case vt of
-        Nothing -> do
-          logError hLogger "  Invalid or outdated token"
-          respond (responseLBS status400 [("Content-Type", "text/plain")] "bad")
-        Just (_, True)
-                -- deleteUserByID hDb pool id_
-         -> do
+        Nothing -> respondWithError hLogger respond status400 "  Invalid or outdated token"
+        Just (_, True) -> do
           deleteByID hDb pool "user" id_
-          respond
-            (responseLBS status204 [("Content-Type", "text/plain")] "delete")
-        Just (_, False) -> do
-          logError hLogger "  Administrator authority required"
-          respond
-            (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")
+          respondWithSuccess respond status204 ("" :: String)
+        Just (_, False) -> respondWithError hLogger respond status400
+                             "  Administrator authority required"
