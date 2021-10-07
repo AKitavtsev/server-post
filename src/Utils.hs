@@ -9,12 +9,12 @@ import Network.Wai
 
 import Services.Logger
 
-respondWithSuccus :: ToJSON a =>
+respondWithSuccess :: ToJSON a =>
      (Response -> IO b)
   -> Status
   -> a
   -> IO b  
-respondWithSuccus respond status context =
+respondWithSuccess respond status context =
   respond (responseLBS status [("Content-Type", "text/plain")] $ encode context)
   
 respondWithError :: 

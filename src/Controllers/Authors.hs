@@ -61,7 +61,7 @@ routes pool hLogger hToken hDb req respond = do
             0 -> 
               respondWithError hLogger respond status500 
                 "  There is no user with this ID, or the user is already the author"
-            _ -> respondWithSuccus respond status201 ("" :: String)
+            _ -> respondWithSuccess respond status201 ("" :: String)
     -- show author, like
     -- http://localhost:3000/author/<token>/<id''>
     get = do
@@ -70,12 +70,12 @@ routes pool hLogger hToken hDb req respond = do
       authorMb <- liftIO $ findAuthorByID hDb pool id_
       case authorMb of
         Nothing -> respondWithError hLogger respond status404 "  Author not exist" 
-        Just author -> respondWithSuccus respond status200 author
+        Just author -> respondWithSuccess respond status200 author
     delete = do
       let id_ = toId req
       when (id_ == 0) $ do logError hLogger "  Invalid id''"
       deleteByID hDb pool "author" id_
-      respondWithSuccus respond status204 ("" :: String)
+      respondWithSuccess respond status204 ("" :: String)
     -- author editing (see example)
     put = do
       let id_ = toId req
@@ -86,4 +86,4 @@ routes pool hLogger hToken hDb req respond = do
                      "  The \"description\" parameter is required"
         Just descr -> do
           updateByID hDb pool "author" id_ descr
-          respondWithSuccus respond status200 (Author id_ $ T.pack descr)
+          respondWithSuccess respond status200 (Author id_ $ T.pack descr)
