@@ -68,7 +68,7 @@ routes pool hLogger hToken hDb req respond = do
               return Nothing
         postDraft _ Nothing = return (0, Nothing)
         postDraft id_author_ (Just draft) = do
-          c_d <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
+          c_d <- liftIO curTimeStr 
           id_ <- insertDraft hDb pool draft id_author_ c_d
           case id_ of
             0 -> do

@@ -50,7 +50,7 @@ routes pool hLogger hToken hDb req respond = do
           respond
             (responseLBS status400 [("Content-Type", "text/plain")] $ BL.pack e)
         Right correctlyParsedBody -> do
-          c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
+          c_date <- liftIO curTimeStr
           id_ <- insertUser hDb pool correctlyParsedBody c_date
           case id_ of
             0 -> do

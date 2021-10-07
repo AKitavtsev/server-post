@@ -50,7 +50,7 @@ routes pool hLogger hToken hDb req respond = do
       logDebug hLogger ("  Body = " ++ BL.unpack body)
       case eitherDecode body :: Either String CommentIn of
         Right correctlyParsedBody -> do
-          c_date <- liftIO $ curTimeStr "%Y-%m-%d %H:%M:%S"
+          c_date <- liftIO curTimeStr 
           id_ <- insertComment hDb pool correctlyParsedBody id_author c_date
           case id_ of
             0 -> do
