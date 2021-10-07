@@ -4,7 +4,6 @@ module Controllers.Authors
   ( routes
   ) where
 
-import Control.Monad.Trans
 import Data.Aeson (eitherDecode, encode)
 import Data.Pool (Pool)
 import Database.PostgreSQL.Simple.Internal
@@ -77,7 +76,7 @@ routes pool hLogger hToken hDb req respond = do
     get = do
       let id_ = toId req
       when (id_ == 0) $ do logError hLogger "  Invalid id''"
-      authorMb <- liftIO $ findAuthorByID hDb pool id_
+      authorMb <- findAuthorByID hDb pool id_
       case authorMb of
         Nothing -> do
           logError hLogger "  Author not exist"

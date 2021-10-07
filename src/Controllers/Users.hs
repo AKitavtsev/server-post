@@ -4,7 +4,6 @@ module Controllers.Users
   ( routes
   ) where
 
-import Control.Monad.Trans
 import Data.Aeson (eitherDecode, encode)
 
 import qualified Data.ByteString.Char8 as BC (unpack)
@@ -50,7 +49,7 @@ routes pool hLogger hToken hDb req respond = do
           respond
             (responseLBS status400 [("Content-Type", "text/plain")] $ BL.pack e)
         Right correctlyParsedBody -> do
-          c_date <- liftIO curTimeStr
+          c_date <- curTimeStr
           id_ <- insertUser hDb pool correctlyParsedBody c_date
           case id_ of
             0 -> do
@@ -74,7 +73,7 @@ routes pool hLogger hToken hDb req respond = do
       case vt of
         Just (id_, _) -> do
           when (id_ == 0) $ do logError hLogger "  Invalid id_"
-          userMb <- liftIO $ findUserByID hDb pool id_
+          userMb <- findUserByID hDb pool id_
           case userMb of
             Nothing -> do
               logError hLogger "  User not exist"

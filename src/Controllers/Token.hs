@@ -11,7 +11,6 @@ import Services.Db
 import Services.Logger
 import Services.Token
 
-import Control.Monad.Trans
 import Data.Aeson
 import Data.Pool (Pool)
 import Database.PostgreSQL.Simple.Internal
@@ -41,7 +40,7 @@ routes pool hLogger hToken hDb req respond = do
       logError hLogger "  Required Parameters \"Login \" and \"Password\""
       respond (responseLBS status400 [("Content-Type", "text/plain")] "")
     Just (login, password) -> do
-      idAdm <- liftIO $ findUserByLogin hDb pool login password
+      idAdm <- findUserByLogin hDb pool login password
       case idAdm of
         Nothing -> do
           logError hLogger ("  Invalid Login/Password: " ++ login ++ "/" ++ password)

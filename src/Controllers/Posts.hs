@@ -9,7 +9,6 @@ import Services.Db
 import Services.Logger
 import Services.Token
 
-import Control.Monad.Trans
 import Data.Aeson
 import Data.Pool (Pool)
 import Database.PostgreSQL.Simple.Internal
@@ -49,7 +48,7 @@ routes pool hLogger hToken hDb req respond = do
    -- page=
   where
     getPosts = do
-      posts <- liftIO $ findAllPosts hDb pool req (limit hDb)
+      posts <- findAllPosts hDb pool req (limit hDb)
       case posts of
         [] -> do
           logInfo hLogger "  Posts not found"
@@ -60,7 +59,7 @@ routes pool hLogger hToken hDb req respond = do
  -- show comments for post id, like
  -- http://localhost:3000/posts/<token>/<id>[?page=]
     getComments id_post = do
-      comments <- liftIO $ findComments hDb pool req (limit hDb) id_post
+      comments <- findComments hDb pool req (limit hDb) id_post
       case comments of
         [] -> do
           logInfo hLogger "  Commets for this post not found"

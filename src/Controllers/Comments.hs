@@ -4,7 +4,6 @@ module Controllers.Comments
   ( routes
   ) where
 
-import Control.Monad.Trans
 import Data.Aeson (eitherDecode, encode)
 import Data.Pool (Pool)
 import Database.PostgreSQL.Simple.Internal
@@ -50,7 +49,7 @@ routes pool hLogger hToken hDb req respond = do
       logDebug hLogger ("  Body = " ++ BL.unpack body)
       case eitherDecode body :: Either String CommentIn of
         Right correctlyParsedBody -> do
-          c_date <- liftIO curTimeStr 
+          c_date <- curTimeStr
           id_ <- insertComment hDb pool correctlyParsedBody id_author c_date
           case id_ of
             0 -> do

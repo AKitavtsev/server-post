@@ -5,7 +5,6 @@ module Controllers.Categories
   ) where
 
 import Control.Monad (unless, when)
-import Control.Monad.Trans
 import Data.Aeson (eitherDecode, encode)
 import Data.Maybe (fromMaybe, isNothing)
 import Data.Pool (Pool)
@@ -79,7 +78,7 @@ routes pool hLogger hToken hDb req respond = do
     get = do
       let id_ = toId req
       when (id_ == 0) $ do logError hLogger "  Invalid id_"
-      categoryMb <- liftIO $ findCategoryByID hDb pool id_
+      categoryMb <- findCategoryByID hDb pool id_
       case categoryMb of
         Nothing -> do
           logError hLogger "  Category not exist"

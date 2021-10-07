@@ -5,7 +5,6 @@ module Controllers.Drafts
   ) where
 
 import Control.Monad (when)
-import Control.Monad.Trans (liftIO)
 import Data.Aeson (eitherDecode, encode)
 import Data.Maybe (fromMaybe, isNothing)
 import Data.Pool (Pool)
@@ -68,7 +67,7 @@ routes pool hLogger hToken hDb req respond = do
               return Nothing
         postDraft _ Nothing = return (0, Nothing)
         postDraft id_author_ (Just draft) = do
-          c_d <- liftIO curTimeStr 
+          c_d <- curTimeStr
           id_ <- insertDraft hDb pool draft id_author_ c_d
           case id_ of
             0 -> do
@@ -148,7 +147,7 @@ routes pool hLogger hToken hDb req respond = do
     get = do
       let id_ = toId req
       when (id_ == 0) $ do logError hLogger "  Invalid id_"
-      draftMb <- liftIO $ findDraftByID hDb pool id_
+      draftMb <- findDraftByID hDb pool id_
       case draftMb of
         Nothing -> do
           logError hLogger "  Draft not exist"
