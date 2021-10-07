@@ -440,7 +440,7 @@ newHandle config = do
       let offset =
             case toParam req "page" of
               Nothing -> 0
-              Just page -> limit * (read' page - 1)
+              Just page -> limit * ((numberPage page) - 1)
           q =
             "SELECT comment_date :: varchar," ++
             " user_id ::varchar, user_name, surname, comment " ++

@@ -5,12 +5,13 @@ module Services.Impl.PostgreSQL.Internal where
 
 import Control.Applicative
 import Control.Exception
-import Data.Char (isDigit)
+-- import Data.Char (isDigit)
 import Data.Maybe (fromMaybe)
 import Data.Pool (Pool(..), withResource)
 import Database.PostgreSQL.Simple
 import GHC.Int (Int64(..))
 import Network.Wai (Request(..))
+import Text.Read (readMaybe)
 
 import qualified Data.Text as T (unpack)
 
@@ -52,7 +53,7 @@ queryWhereOrder req limit =
   where offset =
             case toParam req "page" of
               Nothing -> 0
-              Just page -> limit * (read' page - 1)
+              Just page -> limit * ((numberPage page)  - 1)
 
 -- Forms part of the querry for SELECT post WHERE
 queryWhere :: Request -> (String, [String])
@@ -194,11 +195,8 @@ toListInteger arraySql = read $ init ('[' : tail arraySql) ++ "]"
 -- fromListString :: [String] -> String
 -- fromListString listString = init ('{' : tail (show listString) ++ "}")
 
-read' :: String -> Integer
-read' i =
-  if all isDigit i
-    then read i :: Integer
-    else 1
+numberPage :: String -> Integer
+numberPage i = fromMaybe 1 (readMaybe i)
 
 --------------------------------------------------------------------------------
 -- Utilities for interacting with the DB.
