@@ -8,8 +8,8 @@ import FromRequest
 import Services.Db
 import Services.Logger
 import Services.Token
+import Utils
 
-import Data.Aeson
 import Data.Pool (Pool)
 import Database.PostgreSQL.Simple.Internal
 import Network.HTTP.Types.Status
@@ -27,9 +27,7 @@ routes pool hLogger hToken hDb req respond = do
   let token = toToken req
   vt <- validToken hToken token
   case vt of
-    Nothing -> do
-      logError hLogger "  Invalid or outdated token"
-      respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+    Nothing -> respondWithError hLogger respond status400 "  Invalid or outdated token"
     Just _ ->
       case toId req of
         0 -> getPosts
@@ -50,20 +48,12 @@ routes pool hLogger hToken hDb req respond = do
     getPosts = do
       posts <- findAllPosts hDb pool req (limit hDb)
       case posts of
-        [] -> do
-          logInfo hLogger "  Posts not found"
-          respond (responseLBS status404 [("Content-Type", "text/plain")] "")
-        xs -> do
-          respond
-            (responseLBS status200 [("Content-Type", "text/plain")] $ encode xs)
+        [] -> respondWithError hLogger respond status404 "  Posts not found"
+        xs -> respondWithSuccess respond status200 xs
  -- show comments for post id, like
  -- http://localhost:3000/posts/<token>/<id>[?page=]
     getComments id_post = do
       comments <- findComments hDb pool req (limit hDb) id_post
       case comments of
-        [] -> do
-          logInfo hLogger "  Commets for this post not found"
-          respond (responseLBS status404 [("Content-Type", "text/plain")] "")
-        xs -> do
-          respond
-            (responseLBS status200 [("Content-Type", "text/plain")] $ encode xs)
+        [] -> respondWithError hLogger respond status404 "  Commets for this post not found"
+        xs -> respondWithSuccess respond status200 xs

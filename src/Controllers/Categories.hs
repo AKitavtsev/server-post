@@ -5,7 +5,7 @@ module Controllers.Categories
   ) where
 
 import Control.Monad (unless, when)
-import Data.Aeson (eitherDecode, encode)
+import Data.Aeson (eitherDecode)
 import Data.Maybe (fromMaybe, isNothing)
 import Data.Pool (Pool)
 import Database.PostgreSQL.Simple.Internal
@@ -20,6 +20,7 @@ import Models.Category
 import Services.Db
 import Services.Logger
 import Services.Token
+import Utils
 
 routes ::
      Pool Connection
@@ -32,9 +33,7 @@ routes ::
 routes pool hLogger hToken hDb req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
-    Nothing -> do
-      logError hLogger "  Invalid or outdated token"
-      respond (responseLBS status400 [("Content-Type", "text/plain")] "")
+    Nothing -> respondWithError hLogger respond status400 "  Invalid or outdated token"
     _ -> do
       logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
       case toMethod req of
@@ -42,9 +41,7 @@ routes pool hLogger hToken hDb req respond = do
         "GET" -> get
         "DELETE" -> delete vt
         "PUT" -> put vt
-        _ -> do
-          logError hLogger "  Invalid method"
-          respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
+        _ -> respondWithError hLogger respond status404 "  Invalid method"
     -- caterories creation (see example)
   where
     post vt = do
@@ -53,65 +50,42 @@ routes pool hLogger hToken hDb req respond = do
           body <- strictRequestBody req
           logDebug hLogger ("  Body = " ++ BL.unpack body)
           case eitherDecode body :: Either String Category of
-            Left e -> do
-              logError hLogger ("  Invalid request body  - " ++ e)
-              respond
-                (responseLBS status400 [("Content-Type", "text/plain")] "")
+            Left e -> respondWithError hLogger respond status400 
+                        ("  Invalid method request body  - " ++ e)
             Right correctlyParsedBody -> do
               id_ <- insertCategory hDb pool correctlyParsedBody
               case id_ of
-                0 -> do
-                  logError hLogger "  category - owner not found"
-                  respond
-                    (responseLBS status500 [("Content-Type", "text/plain")] "")
-                _ ->
-                  respond
-                    (responseLBS created201 [("Content-Type", "text/plain")] "")
-        Just (_, False) -> do
-          logError hLogger "  Administrator authority required"
-          respond
-            (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")
-        Nothing ->
-          respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
+                0 -> respondWithError hLogger respond status500 "  category - owner not found"
+                _ -> respondWithSuccess respond status201 ("" :: String)
+        Just (_, False) -> respondWithError hLogger respond status404
+                             "  Administrator authority required"
+        Nothing -> respondWithError hLogger respond status400 "  Invalid or outdated token"
     -- show category, like
     -- http://localhost:3000/category/1.120210901202553ff034f3847c1d22f091dde7cde045264/1
     get = do
       let id_ = toId req
-      when (id_ == 0) $ do logError hLogger "  Invalid id_"
+      when (id_ == 0) $ do logError hLogger "  Invalid id"
       categoryMb <- findCategoryByID hDb pool id_
       case categoryMb of
-        Nothing -> do
-          logError hLogger "  Category not exist"
-          respond (responseLBS notFound404 [("Content-Type", "text/plain")] "")
-        Just category
-                -- ac <- allCategories [id_] [id_]
-                -- logDebug hLogger (show ac)
-         -> do
-          respond
-            (responseLBS status200 [("Content-Type", "text/plain")] $
-             encode category)
+        Nothing -> respondWithError hLogger respond status400 "  Category not exist"
+        Just category -> respondWithSuccess respond status201 category
     -- deleting a caterory  (see example)
     delete vt = do
       case vt of
         Just (_, True) -> do
           let id_ = toId req
-          when (id_ == 0) $ do logError hLogger "  Invalid id_"
+          when (id_ == 0) $ do logError hLogger "  Invalid id"
           deleteByID hDb pool "category" id_
-          respond
-            (responseLBS status204 [("Content-Type", "text/plain")] "delete")
-        Just (_, False) -> do
-          logError hLogger "  Administrator authority required"
-          respond
-            (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")
-        Nothing ->
-          respond
-            (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")
+          respondWithSuccess respond status201 ("" :: String)
+        Just (_, False) -> respondWithError hLogger respond status400
+                             "  Administrator authority required"
+        Nothing -> respondWithError hLogger respond status404 "  no admin"
     -- category editing
     put vt = do
       case vt of
         Just (_, True) -> do
           let id_ = toId req
-          when (id_ == 0) $ do logError hLogger "  Invalid id_"
+          when (id_ == 0) $ do logError hLogger "  Invalid id"
           let nameMb = toParam req "name_"
           unless (isNothing nameMb) $ do
             let name_ = fromMaybe "" nameMb
@@ -119,24 +93,14 @@ routes pool hLogger hToken hDb req respond = do
             logDebug hLogger ("  Update name_ to " ++ name_)
           let ownerMb = toParam req "id_owner"
           case ownerMb of
-            Nothing ->
-              respond
-                (responseLBS status200 [("Content-Type", "text/plain")] "")
+            Nothing -> respondWithSuccess respond status200 ("" :: String)
             Just owner -> do
               id' <- updateOwnerCategory hDb pool id_ owner
               logDebug hLogger ("  Update id_owner to " ++ owner)
               case id' of
-                0 -> do
-                  logError hLogger "  category - owner not found"
-                  respond
-                    (responseLBS status500 [("Content-Type", "text/plain")] "")
-                _ ->
-                  respond
-                    (responseLBS status200 [("Content-Type", "text/plain")] "")
-        Just (_, False) -> do
-          logError hLogger "  Administrator authority required"
-          respond
-            (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")
-        Nothing ->
-          respond
-            (responseLBS notFound404 [("Content-Type", "text/plain")] "no admin")
+                0 -> respondWithError hLogger respond status500 
+                       "  category - owner not found"
+                _ -> respondWithSuccess respond status200 ("" :: String)
+        Just (_, False) -> respondWithError hLogger respond status404 
+                     "  Administrator authority required"
+        Nothing -> respondWithError hLogger respond status404 "  no admin"
