@@ -191,9 +191,6 @@ toListString arraySql =
 toListInteger :: String -> [Integer] 
 toListInteger arraySql = read $ init ('[' : tail arraySql) ++ "]"
 
--- fromListString :: [String] -> String
--- fromListString listString = init ('{' : tail (show listString) ++ "}")
-
 read' :: String -> Integer
 read' i =
   if all isDigit i
