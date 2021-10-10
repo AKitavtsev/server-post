@@ -44,11 +44,6 @@ dbTest = hspec $ do
       describe "toListInteger" $ do
         it "list of Integer" $ 
           toListInteger "{1, 2, 3}" `shouldBe` [1, 2, 3]
-      describe "read'" $ do
-        it "is integer" $ 
-          read' "123" `shouldBe` 123
-        it "is wrong integer " $ 
-          read' "12h" `shouldBe` 1
       describe "bodyUpdate draft" $ do
         it "Updated all fields" $ 
            bodyUpdate draft `shouldBe`
