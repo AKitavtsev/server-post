@@ -46,7 +46,7 @@ routes pool hLogger hToken hDb req respond = do
   where
     post id_author = do
       res <-
-        strictRequestBody req >>= getDraft >>= postDraft id_author >>= postTags >>=
+        strictRequestBody req >>= getDraft >>= postDraft >>= postTags >>=
         postOtherPhotos
       case res of
         Nothing -> respondWithError hLogger respond status400 ""
@@ -58,10 +58,10 @@ routes pool hLogger hToken hDb req respond = do
             Left e -> do
               logError hLogger ("  Invalid request body  - " ++ e)
               return Nothing
-        postDraft _ Nothing = return (0, Nothing)
-        postDraft id_author_ (Just draft) = do
+        postDraft Nothing = return (0, Nothing)
+        postDraft  (Just draft) = do
           c_d <- curTimeStr
-          id_ <- insertDraft hDb pool draft id_author_ c_d
+          id_ <- insertDraft hDb pool draft id_author c_d
           case id_ of
             0 -> do
               logError hLogger "  Category not found"
@@ -83,7 +83,7 @@ routes pool hLogger hToken hDb req respond = do
     -- draft editing (see example)
     put id_author = do
       res <-
-        strictRequestBody req >>= getDraft >>= putDraft id_author >>= putTags >>=
+        strictRequestBody req >>= getDraft >>= putDraft >>= putTags >>=
         putOtherPhotos
       case res of
         Nothing ->
@@ -99,9 +99,9 @@ routes pool hLogger hToken hDb req respond = do
             Left e -> do
               logError hLogger ("  Invalid request body  - " ++ e)
               return Nothing
-        putDraft _ Nothing = return Nothing
-        putDraft id_author' (Just draft) = do
-          res <- updateDraft hDb pool draft id_author'
+        putDraft Nothing = return Nothing
+        putDraft (Just draft) = do
+          res <- updateDraft hDb pool draft id_author
           case res of
             Just draft_ -> return (Just draft_)
             Nothing -> do
@@ -129,7 +129,7 @@ routes pool hLogger hToken hDb req respond = do
             when (p /= listPhotos) $
               logWarning hLogger "  Not all photos were found"
             return (Just (draft {new_other_photos = Just (filter (/= 0) p)}))
-    -- deleting a drft
+    -- deleting a draft
     delete id_author = do
       let id_ = toId req
       when (id_ == 0) $ do logError hLogger "  Invalid id_"
