@@ -3,7 +3,6 @@ module Services.Db
   ) where
 
 import Services.Config (Config(..))
--- import qualified Services.Logger as Logger
 
 import Models.Author
 import Models.Category
