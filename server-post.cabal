@@ -3,8 +3,6 @@ cabal-version: 1.12
 -- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: cb1a8524dd7f5acd814a6f6b21e06de05a460f10f7d106d272f5fe7e37d86e45
 
 name:           server-post
 version:        0.1.0.0
@@ -52,8 +50,15 @@ library
       Services.Impl.MD5
       Services.Impl.MD5.Internal
       Services.Impl.PostgreSQL
+      Services.Impl.PostgreSQL.Author
+      Services.Impl.PostgreSQL.Category
+      Services.Impl.PostgreSQL.Comment
+      Services.Impl.PostgreSQL.Draft
       Services.Impl.PostgreSQL.Internal
       Services.Impl.PostgreSQL.Migrations
+      Services.Impl.PostgreSQL.Post
+      Services.Impl.PostgreSQL.Tag
+      Services.Impl.PostgreSQL.User
       Services.Impl.StdOut
       Services.Logger
       Services.Token
