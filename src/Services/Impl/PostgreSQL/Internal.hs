@@ -5,7 +5,6 @@ module Services.Impl.PostgreSQL.Internal where
 
 import Control.Applicative
 import Control.Exception
--- import Data.Char (isDigit)
 import Data.Maybe (fromMaybe)
 import Data.Pool (Pool(..), withResource)
 import Database.PostgreSQL.Simple
