@@ -20,11 +20,14 @@ That's it! And then when you want to run the service at a port 3000:
 ```
 stack exec server-post-exe
 ```
-
+You can migrate DB and start the program:
+```
+stack test
+```
 
 You can run the tests with:
 ```
-stack test
+stack exec -- server-post-exe migration
 ```
 
 ## Project structure
@@ -43,7 +46,7 @@ stack test
       - `Impl/` - service implementations
 - `test/` - our specs, for testing some internal functions. 
 - `sql/` - sql database migration queries. Database is built and minimal initial seeding is ensured
-- `bat/`- batch files for easy testing of the application. Contains requests to the server passed by the `curl` utility for all endpoints of entities (for Windows). In addition, `migration.bat` is a request for migration, a `test.bat` is a series of requests to fill the database for testing filtering and sorting of posts, `where-order.bat` - examples of tests for filtering and sorting of posts, `token.bat` - to refresh the token.
+- `bat/`- batch files for easy testing of the application. Contains requests to the server passed by the `curl` utility for all endpoints of entities (for Windows). In addition, a `test.bat` is a series of requests to fill the database for testing filtering and sorting of posts, `where-order.bat` - examples of tests for filtering and sorting of posts, `token.bat` - to refresh the token.
 - `sh/`- shell script files for easy testing of the application. Contains requests to the server passed by the `curl` utility for all endpoints of entities (for Linux).
 - `image/` - folder from which you can upload photos to the database.
 

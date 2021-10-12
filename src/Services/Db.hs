@@ -3,7 +3,6 @@ module Services.Db
   ) where
 
 import Config (Config(..))
-import qualified Services.Logger as Logger
 
 import Models.Author
 import Models.Category
@@ -22,7 +21,6 @@ data Handle =
     { limit :: Integer
     , close :: Connection -> IO ()
     , newConn :: Config -> IO Connection
-    , runMigrations :: Logger.Handle -> Connection -> Pool Connection -> FilePath -> IO ()
     , deleteByID :: Pool Connection -> String -> Integer -> IO ()
     , updateByID :: Pool Connection -> String -> Integer -> String -> IO ()
     , insertUser :: Pool Connection -> RawUser -> String -> IO Integer
