@@ -5,8 +5,6 @@ module Controllers.Authors
   ) where
 
 import Data.Aeson (eitherDecode)
-import Data.Pool (Pool)
-import Database.PostgreSQL.Simple.Internal
 
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as BL
@@ -24,14 +22,13 @@ import Services.Token
 import Utils
 
 routes ::
-     Pool Connection
-  -> Services.Logger.Handle
+     Services.Logger.Handle
   -> Services.Token.Handle
   -> Services.Db.Handle
   -> Request
   -> (Response -> IO b)
   -> IO b
-routes pool hLogger hToken hDb req respond = do
+routes hLogger hToken hDb req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
     Nothing -> respondWithError hLogger respond status400 "  Invalid or outdated token"
@@ -54,7 +51,7 @@ routes pool hLogger hToken hDb req respond = do
         Left e -> 
           respondWithError hLogger respond status400 ("  invalid request body  - " ++ e)
         Right correctlyParsedBody -> do
-          id_ <- insertAuthor hDb pool correctlyParsedBody
+          id_ <- insertAuthor hDb correctlyParsedBody
           case id_ of
             0 -> 
               respondWithError hLogger respond status500 
@@ -65,14 +62,14 @@ routes pool hLogger hToken hDb req respond = do
     get = do
       let id_ = toId req
       when (id_ == 0) $ do logError hLogger "  Invalid id''"
-      authorMb <- findAuthorByID hDb pool id_
+      authorMb <- findAuthorByID hDb id_
       case authorMb of
         Nothing -> respondWithError hLogger respond status404 "  RawAuthor not exist" 
         Just author -> respondWithSuccess respond status200 author
     delete = do
       let id_ = toId req
       when (id_ == 0) $ do logError hLogger "  Invalid id"
-      deleteByID hDb pool "author" id_
+      deleteByID hDb "author" id_
       respondWithSuccess respond status204 ("" :: String)
     -- author editing (see example)
     put = do
@@ -83,5 +80,5 @@ routes pool hLogger hToken hDb req respond = do
         Nothing -> respondWithError hLogger respond status400 
                      "  The \"description\" parameter is required"
         Just descr -> do
-          updateByID hDb pool "author" id_ descr
+          updateByID hDb "author" id_ descr
           respondWithSuccess respond status200 (RawAuthor id_ $ T.pack descr)

@@ -5,8 +5,6 @@ module Controllers.Comments
   ) where
 
 import Data.Aeson (eitherDecode)
-import Data.Pool (Pool)
-import Database.PostgreSQL.Simple.Internal
 
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as BL
@@ -22,14 +20,13 @@ import Services.Token
 import Utils
 
 routes ::
-     Pool Connection
-  -> Services.Logger.Handle
+     Services.Logger.Handle
   -> Services.Token.Handle
   -> Services.Db.Handle
   -> Request
   -> (Response -> IO b)
   -> IO b
-routes pool hLogger hToken hDb req respond = do
+routes hLogger hToken hDb req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
     Nothing -> respondWithError hLogger respond status400 "  Invalid or outdated token"
@@ -47,7 +44,7 @@ routes pool hLogger hToken hDb req respond = do
       case eitherDecode body :: Either String RawComment of
         Right correctlyParsedBody -> do
           c_date <- curTimeStr
-          id_ <- insertComment hDb pool correctlyParsedBody id_author c_date
+          id_ <- insertComment hDb correctlyParsedBody id_author c_date
           case id_ of
             0 -> respondWithError hLogger respond status404 "  post not found"
             _ -> respondWithSuccess respond status201 (IdComment id_)
@@ -59,6 +56,6 @@ routes pool hLogger hToken hDb req respond = do
       case id_ of
         0 -> respondWithError hLogger respond status400 "  Invalid id_"
         _ -> do
-          (if adm then deleteByID hDb pool "comment" id_
-           else deleteComment hDb pool id_ id_author)      
+          (if adm then deleteByID hDb "comment" id_
+           else deleteComment hDb id_ id_author)      
           respondWithSuccess respond status204 ("" :: String)

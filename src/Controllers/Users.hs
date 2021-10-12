@@ -10,8 +10,6 @@ import qualified Data.ByteString.Char8 as BC (unpack)
 import qualified Data.ByteString.Lazy.Char8 as BL (unpack)
 
 import Control.Monad (when)
-import Data.Pool (Pool)
-import Database.PostgreSQL.Simple.Internal
 import Network.HTTP.Types
 import Network.Wai
 
@@ -23,14 +21,13 @@ import Services.Token
 import Utils
 
 routes ::
-     Pool Connection
-  -> Services.Logger.Handle
+     Services.Logger.Handle
   -> Services.Token.Handle
   -> Services.Db.Handle
   -> Request
   -> (Response -> IO b)
   -> IO b
-routes pool hLogger hToken hDb req respond = do
+routes  hLogger hToken hDb req respond = do
   logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
   case toMethod req of
     "POST" -> post
@@ -47,11 +44,11 @@ routes pool hLogger hToken hDb req respond = do
                     ("  invalid request body  - " ++ e)
         Right correctlyParsedBody -> do
           c_date <- curTimeStr
-          id_ <- insertUser hDb pool correctlyParsedBody c_date
+          id_ <- insertUser hDb  correctlyParsedBody c_date
           case id_ of
             0 -> respondWithError hLogger respond status400 "  Login already exist"
             _ -> do
-              idim <- insertImage hDb pool correctlyParsedBody id_
+              idim <- insertImage hDb  correctlyParsedBody id_
               when (idim == 0) $ do
                 logWarning
                   hLogger
@@ -65,7 +62,7 @@ routes pool hLogger hToken hDb req respond = do
       case vt of
         Just (id_, _) -> do
           when (id_ == 0) $ do logError hLogger "  Invalid id_"
-          userMb <- findUserByID hDb pool id_
+          userMb <- findUserByID hDb  id_
           case userMb of
             Nothing -> respondWithError hLogger respond status400 "  User not exist"
             Just user -> respondWithSuccess respond status200 user
@@ -77,7 +74,7 @@ routes pool hLogger hToken hDb req respond = do
       case vt of
         Nothing -> respondWithError hLogger respond status400 "  Invalid or outdated token"
         Just (_, True) -> do
-          deleteByID hDb pool "user" id_
+          deleteByID hDb  "user" id_
           respondWithSuccess respond status204 ("" :: String)
         Just (_, False) -> respondWithError hLogger respond status400
                              "  Administrator authority required"

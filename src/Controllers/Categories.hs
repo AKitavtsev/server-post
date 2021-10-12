@@ -7,8 +7,6 @@ module Controllers.Categories
 import Control.Monad (unless, when)
 import Data.Aeson (eitherDecode)
 import Data.Maybe (fromMaybe, isNothing)
-import Data.Pool (Pool)
-import Database.PostgreSQL.Simple.Internal
 import Network.HTTP.Types
 import Network.Wai
 
@@ -23,14 +21,13 @@ import Services.Token
 import Utils
 
 routes ::
-     Pool Connection
-  -> Services.Logger.Handle
+     Services.Logger.Handle
   -> Services.Token.Handle
   -> Services.Db.Handle
   -> Request
   -> (Response -> IO b)
   -> IO b
-routes pool hLogger hToken hDb req respond = do
+routes hLogger hToken hDb req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
     Nothing -> respondWithError hLogger respond status400 "  Invalid or outdated token"
@@ -53,7 +50,7 @@ routes pool hLogger hToken hDb req respond = do
             Left e -> respondWithError hLogger respond status400 
                         ("  Invalid method request body  - " ++ e)
             Right correctlyParsedBody -> do
-              id_ <- insertCategory hDb pool correctlyParsedBody
+              id_ <- insertCategory hDb correctlyParsedBody
               case id_ of
                 0 -> respondWithError hLogger respond status500 "  category - owner not found"
                 _ -> respondWithSuccess respond status201 ("" :: String)
@@ -65,7 +62,7 @@ routes pool hLogger hToken hDb req respond = do
     get = do
       let id_ = toId req
       when (id_ == 0) $ do logError hLogger "  Invalid id"
-      categoryMb <- findCategoryByID hDb pool id_
+      categoryMb <- findCategoryByID hDb id_
       case categoryMb of
         Nothing -> respondWithError hLogger respond status400 "  Category not exist"
         Just category -> respondWithSuccess respond status201 category
@@ -75,7 +72,7 @@ routes pool hLogger hToken hDb req respond = do
         Just (_, True) -> do
           let id_ = toId req
           when (id_ == 0) $ do logError hLogger "  Invalid id"
-          deleteByID hDb pool "category" id_
+          deleteByID hDb "category" id_
           respondWithSuccess respond status201 ("" :: String)
         Just (_, False) -> respondWithError hLogger respond status400
                              "  Administrator authority required"
@@ -89,13 +86,13 @@ routes pool hLogger hToken hDb req respond = do
           let nameMb = toParam req "name_"
           unless (isNothing nameMb) $ do
             let name_ = fromMaybe "" nameMb
-            updateByID hDb pool "category" id_ name_
+            updateByID hDb "category" id_ name_
             logDebug hLogger ("  Update name_ to " ++ name_)
           let ownerMb = toParam req "id_owner"
           case ownerMb of
             Nothing -> respondWithSuccess respond status200 ("" :: String)
             Just owner -> do
-              id' <- updateOwnerCategory hDb pool id_ owner
+              id' <- updateOwnerCategory hDb id_ owner
               logDebug hLogger ("  Update id_owner to " ++ owner)
               case id' of
                 0 -> respondWithError hLogger respond status500 
