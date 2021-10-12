@@ -14,8 +14,6 @@ import Control.Exception
 import Control.Monad (when)
 import Data.Aeson
 import Data.List (dropWhile)
-import Data.Pool (Pool)
-import Database.PostgreSQL.Simple.Internal
 import Network.HTTP.Types
 import Network.Wai
 
@@ -24,14 +22,13 @@ import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as BL
 
 routes ::
-     Pool Connection
-  -> Services.Logger.Handle
+     Services.Logger.Handle
   -> Services.Token.Handle
   -> Services.Db.Handle
   -> Request
   -> (Response -> IO b)
   -> IO b
-routes pool hLogger hToken hDb req respond = do
+routes  hLogger hToken hDb req respond = do
   case toMethod req of
     "POST" -> post
     "GET" -> get
@@ -43,7 +40,7 @@ routes pool hLogger hToken hDb req respond = do
     get = do
       let id_ = toIdImage req
       when (id_ == 0) $ do logError hLogger "  Invalid id_"
-      imageMb <- findPhotoByID hDb pool id_
+      imageMb <- findPhotoByID hDb  id_
       case imageMb of
         Nothing -> respondWithError hLogger respond status400 "  Photo not found"
         Just imageAndType -> respondWithImage respond imageAndType
@@ -101,7 +98,7 @@ routes pool hLogger hToken hDb req respond = do
       if (photo == "") || (typ_ == "")
         then return 0
         else do
-          id_ <- insertPhoto hDb pool (Photo photo typ_)
+          id_ <- insertPhoto hDb  (Photo photo typ_)
           when (id_ == 0) $
             logError
               hLogger
