@@ -7,8 +7,9 @@ import qualified Data.ByteString.Char8 as BC
 import qualified Data.Text as T
 import qualified Data.Time as Time
 
-import Data.Char (isDigit)
+import Data.Maybe (fromMaybe)
 import Network.Wai
+import Text.Read (readMaybe)
 
 toParam :: Request -> BC.ByteString -> Maybe String
 toParam req name =
@@ -43,24 +44,14 @@ toToken req =
 toId :: Request -> Integer
 toId req =
   case pathInfo req of
-    (_:_:z:_) -> read_ $ T.unpack z
+    (_:_:z:_) -> fromMaybe 0 (readMaybe $ T.unpack z)
     _ -> 0
-  where
-    read_ x =
-      if x /= [] && all isDigit x
-        then read x
-        else 0
 
 toIdImage :: Request -> Integer
 toIdImage req =
   case pathInfo req of
-    (_:y:_) -> read_ $ T.unpack y
+    (_:y:_) -> fromMaybe 0 (readMaybe $ T.unpack y)
     _ -> 0
-  where
-    read_ x =
-      if (x /= []) && all isDigit x
-        then read x
-        else 0
 
 curTimeStr :: IO String
 curTimeStr =
