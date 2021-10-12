@@ -37,12 +37,12 @@ newHandle config = do
               sample = content ++ md5s (Str content)
               res =
                 (token == sample) &&
-                (tt > Time.formatTime Time.defaultTimeLocale "%Y%m%d%H%M%S" utc)
-          case res of
-            False -> return Nothing
-            True -> do
-              let admin = adm == "1"
-              return (Just (read id_ :: Integer, admin))
+                (tt > Time.formatTime Time.defaultTimeLocale "%Y%m%d%H%M%S" utc)          
+          (if res then
+             (do let admin = adm == "1"
+                 return (Just (read id_ :: Integer, admin)))
+           else
+                 return Nothing)
 
 expirationTime :: SC.Config -> IO String
 expirationTime config = do

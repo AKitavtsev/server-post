@@ -52,7 +52,7 @@ queryWhereOrder req limit =
   where offset =
             case toParam req "page" of
               Nothing -> 0
-              Just page -> limit * ((numberPage page)  - 1)
+              Just page -> limit * (numberPage page  - 1)
 
 -- Forms part of the querry for SELECT post WHERE
 queryWhere :: Request -> (String, [String])
@@ -211,7 +211,7 @@ fetch pool args sql = withResource pool retrieve
       , Handler (\(ex :: ResultError) -> logExсeption ex)
       ]
     logExсeption ex = do
-      putStrLn (show ex)
+      print ex
       return []
 
 -- Transactions

@@ -59,7 +59,6 @@ routes pool hLogger hToken hDb req respond = do
       case id_ of
         0 -> respondWithError hLogger respond status400 "  Invalid id_"
         _ -> do
-          case adm of
-            True -> deleteByID hDb pool "comment" id_
-            False -> deleteComment hDb pool id_ id_author
+          (if adm then deleteByID hDb pool "comment" id_
+           else deleteComment hDb pool id_ id_author)      
           respondWithSuccess respond status204 ("" :: String)
