@@ -36,7 +36,7 @@ dbTest :: IO ()
 dbTest = hspec $ do
     describe "Services.Impl.PostgreSQL.Internal" $ do
       describe "fromPhotoId" $ do
-        it "link to photo by ID" $ 
+        it "Get a link to a photo by its ID" $ 
           fromPhotoId 1 `shouldBe` "http://localhost:3000/photo/1"
       describe "toListString" $ do
         it "convert \"{aaa, bb, c}\" to [String]" $ 
@@ -44,7 +44,7 @@ dbTest = hspec $ do
       describe "toListInteger" $ do
         it "convert \"{1, 2, 3}\" to [Integer]" $ 
           toListInteger "{1, 2, 3}" `shouldBe` [1, 2, 3]
-      describe "bodyUpdate draft" $ do
+      describe "bodyUpdate draft - Get a part of the query and a list of parameters to update the draft" $ do
         it "Updated all fields" $ 
            bodyUpdate draft `shouldBe`
            (" title = ?, category_id = ?, t_content = ?, photo_id = ?", ["it is Title", "5", "it is content", "4"])
@@ -60,7 +60,7 @@ dbTest = hspec $ do
            bodyUpdate (ForUpdateDraft 1 Nothing
                       Nothing Nothing Nothing Nothing Nothing)
              `shouldBe` ("", [])
-      describe "queryWhereTag" $ do
+      describe "queryWhereTag - Get a part of the query and a list of parameters to filtred posts by id of tags" $ do
         it "tag=2" $
           queryWhereTag (req {queryString =[ ("tag",Just "2")]}) `shouldBe` 
            (" array_position ( ARRAY (SELECT t_id FROM gettags WHERE d_id = draft_id), ?) IS NOT NULL AND", ["2"])
@@ -73,18 +73,18 @@ dbTest = hspec $ do
         it "no tags" $
           queryWhereTag (req {queryString =[("title",Just "Paul M")]})
             `shouldBe` ("", [])
-      describe "queryWhereTitle" $ do
+      describe "queryWhereTitle - Get a part of the query and a list of parameters to filtred posts by title" $ do
         it "title" $
           queryWhereTitle req `shouldBe` 
              (" title LIKE ? AND", ["Paul M"])
         it "no title" $
           queryWhereTitle (req {queryString =[]}) `shouldBe` ("", [])
-      describe "queryWhereText" $ do
+      describe "queryWhereText - Get a part of the query and a list of parameters to filtred posts by text content" $ do
         it "text content" $
           queryWhereText req `shouldBe` (" t_content LIKE ? AND", ["McC"])
         it "no text content" $
           queryWhereText (req {queryString =[]}) `shouldBe` ("", [])
-      describe "queryWhereDate" $ do
+      describe "queryWhereDate - Get a part of the query and a list of parameters to filtred posts by date of creation" $ do
         it "created_gt=2021-07-10" $
           queryWhereDate req `shouldBe`
            (" draft_date :: date >? AND", ["2021-07-10"])
@@ -97,19 +97,19 @@ dbTest = hspec $ do
         it "no date" $
           queryWhereDate (req {queryString =[]})
            `shouldBe` ("", [])
-      describe "queryWhereAuthor" $ do
+      describe "queryWhereAuthor - Get a part of the query and a list of parameters to filtred posts by name of author" $ do
         it "author" $
           queryWhereAuthor req `shouldBe`
            (" user_name = ? AND", ["Bred"])
         it "no author" $
           queryWhereAuthor (req {queryString =[]}) `shouldBe` ("", [])
-      describe "queryWhereCategory" $ do
+      describe "queryWhereCategory - Get a part of the query and a list of parameters to filtred posts by id of category" $ do
         it "category" $
           queryWhereCategory req `shouldBe`
            (" category_id = ? AND", ["5"])
         it "no category" $
           queryWhereCategory (req {queryString =[]}) `shouldBe` ("", [])
-      describe "queryWhereFind" $ do
+      describe "queryWhereFind - Get a part of the query and a list of parameters to filtred posts by occurrence of a string in tags, title,  author name or text content" $ do
         it "find" $
            queryWhereFind req `shouldBe`
            (
@@ -119,7 +119,7 @@ dbTest = hspec $ do
         it "no find" $
            queryWhereFind (req {queryString =[]}) `shouldBe`
            ("", [])
-      describe "queryWhere" $ do
+      describe "queryWhere - Get a part of the query and a list of parameters to filter posts in all possible ways " $ do
         it "full WHERE" $
            queryWhere req `shouldBe`
            (
@@ -129,7 +129,7 @@ dbTest = hspec $ do
         it "no WHERE" $
            queryWhere (req {queryString = []}) `shouldBe`
            ("", [])
-      describe "queryOrder" $ do
+      describe "queryOrder - Get a part of the query and a list of parameters to sorting of posts" $ do
         it "ORDER BY date" $
             queryOrder (req {queryString = [("order",Just "[date]")]})
             `shouldBe` (" ORDER BY draft_date", [])
@@ -143,7 +143,7 @@ dbTest = hspec $ do
             queryOrder (req {queryString = [("order",Just "[photo]")]})
             `shouldBe`
             (" ORDER BY (SELECT count (*) FROM getphotos WHERE d_id = draft_id)", [])
-        it "full ORDER BY" $
+        it "sort by all fields" $
             queryOrder (req {queryString = [
                        ("order",Just "[date, author, category, photo]")]})
             `shouldBe`
