@@ -22,12 +22,12 @@ stack exec server-post-exe
 ```
 You can migrate DB and start the program:
 ```
-stack test
+stack exec -- server-post-exe migration
 ```
 
 You can run the tests with:
 ```
-stack exec -- server-post-exe migration
+stack test
 ```
 
 ## Project structure
@@ -81,9 +81,6 @@ This same endpoint allows you to get all the comments for a particular post. To 
 Pagination of posts and comments is supported. To do this, you must specify the number of the page of interest as the only parameter.
 File 'where-order' (bat or sh) contains examples of using the endpoint for filtering and ordering posts.
 
-### Endpoint 'migration'
-
-Initializing the database.
 
 
 
