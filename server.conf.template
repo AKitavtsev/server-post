@@ -16,3 +16,7 @@ pool     {
   time      = 40
   max_db_resources = 10
 }
+host_port {
+  host = "http://localhost"
+  port = 3000
+}

@@ -35,5 +35,5 @@ main = do
   args <- getArgs
   when (args == ["migration"]) $ 
     runMigrations hLogger conn pool "sql"
-  logInfo hLogger "  Listen port 3000"
-  run 3000 (routes pool hLogger hToken hDb)
+  logInfo hLogger ("  Listen port " ++ show (port conf))
+  run (port conf) (routes pool hLogger hToken hDb)

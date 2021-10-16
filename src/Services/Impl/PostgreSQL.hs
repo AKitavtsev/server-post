@@ -35,7 +35,7 @@ newHandle config = do
       , SD.insertImage = insertImage
       , SD.findImageByID = findImageByID
       , SD.insertAuthor = insertAuthor
-      , SD.findAuthorByID = findAuthorByID
+      , SD.findAuthorByID = findAuthorByID hostPort
       , SD.insertCategory = insertCategory
       , SD.findCategoryByID = findCategoryByID
       , SD.updateOwnerCategory = updateOwnerCategory
@@ -99,3 +99,9 @@ newHandle config = do
               "UPDATE category SET category_name=? WHERE category_id=?"
           _ -> return (0 :: Int64)
       return ()
+ 
+    hostPort = C.host config ++ ":" ++ show (C.port config)
+ 
+    -- hostPortPath :: Show a => a -> String
+    -- hostPort path = C.host config ++ ":" ++ show (C.port config) ++ "/" ++ show path
+
