@@ -14,8 +14,6 @@ import Models.Author (AuthorsDetails(..))
 import Data.Aeson
 import GHC.Generics
 
-import qualified Data.Text as T
-
 data Categories =
   Categories
     { category :: String
@@ -33,7 +31,7 @@ data Post =
     , tags :: [String]
     , photo :: String
     , photos :: [String]
-    , text_content :: T.Text
+    , text_content :: String
     }
   deriving (Show, Generic, FromJSON, ToJSON)
 

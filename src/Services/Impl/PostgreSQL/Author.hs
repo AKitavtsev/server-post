@@ -9,14 +9,12 @@ import Services.Impl.PostgreSQL.Internal
 import Data.Pool
 import Database.PostgreSQL.Simple
 
-import qualified Data.Text as T
-
 
 insertAuthor :: Pool Connection -> RawAuthor -> IO Integer
 insertAuthor pool (RawAuthor id_ descr) = do
       let q =
             "INSERT INTO author  (user_id, description) VALUES(?,?) returning user_id"
-      res <- fetch pool [show id_, T.unpack descr] q
+      res <- fetch pool [show id_, descr] q
       return $ pass res
       where
         pass [Only i] = i

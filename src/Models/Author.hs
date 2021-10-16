@@ -8,13 +8,12 @@ module Models.Author
   ) where
 
 import Data.Aeson (FromJSON, ToJSON)
-import qualified Data.Text as T
 import GHC.Generics
 
 data RawAuthor =
   RawAuthor
     { author_id :: Integer
-    , description :: T.Text
+    , description :: String
     }
   deriving (Show, Generic, FromJSON, ToJSON)
 
@@ -22,7 +21,7 @@ data AuthorsDetails =
   AuthorsDetails
     { name :: String
     , surname :: String
-    , description :: T.Text
+    , description :: String
     , avatar :: String
     }
   deriving (Show, Generic, FromJSON, ToJSON)

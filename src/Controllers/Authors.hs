@@ -10,7 +10,6 @@ import Database.PostgreSQL.Simple.Internal
 
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as BL
-import qualified Data.Text as T
 
 import Control.Monad (when)
 import Network.HTTP.Types
@@ -84,4 +83,4 @@ routes pool hLogger hToken hDb req respond = do
                      "  The \"description\" parameter is required"
         Just descr -> do
           updateByID hDb pool "author" id_ descr
-          respondWithSuccess respond status200 (RawAuthor id_ $ T.pack descr)
+          respondWithSuccess respond status200 (RawAuthor id_ descr)

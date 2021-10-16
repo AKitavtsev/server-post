@@ -9,7 +9,6 @@ import FromRequest
 import Network.Wai
 import Test.Hspec
 
-import qualified Data.Text as T
          
 req = defaultRequest 
        { requestMethod = "GET"

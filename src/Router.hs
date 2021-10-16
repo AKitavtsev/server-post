@@ -27,7 +27,6 @@ import Database.PostgreSQL.Simple.Internal
 import Network.HTTP.Types
 import Network.Wai
 
-import qualified Data.Text as T
 
 routes ::
      Pool Connection
@@ -38,7 +37,7 @@ routes ::
   -> (Response -> IO b)
   -> IO b
 routes pool hLogger hToken hDb req respond = do
-  logInfo hLogger ("  Path = " ++ T.unpack (toPath req))
+  logInfo hLogger ("  Path = " ++ toPath req)
   case toPath req of
     "user" -> Controllers.Users.routes pool hLogger hToken hDb req respond
     "token" -> Controllers.Token.routes pool hLogger hToken hDb req respond

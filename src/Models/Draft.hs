@@ -13,7 +13,6 @@ module Models.Draft
 import Data.Aeson
 import GHC.Generics
 
-import qualified Data.Text as T
 
 data Photo =
   Photo
@@ -27,7 +26,7 @@ data RawDraft =
     { title :: String
     , category :: Integer
     , tags :: [Integer]
-    , t_content :: T.Text
+    , t_content :: String
     , main_photo :: Integer
     , other_photos :: [Integer]
     }
@@ -39,7 +38,7 @@ data ForUpdateDraft =
     , new_title :: Maybe String
     , new_category :: Maybe Integer
     , new_tags :: Maybe [Integer]
-    , new_content :: Maybe T.Text
+    , new_content :: Maybe String
     , new_main_photo :: Maybe Integer
     , new_other_photos :: Maybe [Integer]
     }
@@ -53,7 +52,7 @@ data ForShowDraft =
     , tags_g :: [Integer]
     , main_photo_g :: String
     , other_photos_g :: [String]
-    , t_content_g :: T.Text
+    , t_content_g :: String
     }
   deriving (Show, Generic, FromJSON, ToJSON)
 
