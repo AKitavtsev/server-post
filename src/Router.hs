@@ -21,6 +21,7 @@ import qualified Controllers.Users
 import Services.Db
 import Services.Logger
 import Services.Token
+import Utils
 
 import Data.Pool (Pool)
 import Database.PostgreSQL.Simple.Internal
@@ -52,6 +53,4 @@ routes pool hLogger hToken hDb req respond = do
     "publish" -> Controllers.Publish.routes pool hLogger hToken hDb req respond
     "comment" -> Controllers.Comments.routes pool hLogger hToken hDb req respond
     "posts" -> Controllers.Posts.routes pool hLogger hToken hDb req respond
-    _ -> do
-      logError hLogger "  Path not found"
-      respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
+    _ -> respondWithError hLogger respond status404 "  Path not found"
