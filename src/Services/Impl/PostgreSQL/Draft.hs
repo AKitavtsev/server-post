@@ -24,8 +24,8 @@ insertDraft pool (RawDraft t c _ t_c m_p _) id_ c_date' = do
         pass [Only i] = i
         pass _ = 0
 
-findDraftByID :: Pool Connection -> Integer -> IO (Maybe ForShowDraft)
-findDraftByID pool id_d = do
+findDraftByID :: String -> Pool Connection -> Integer -> IO (Maybe ForShowDraft)
+findDraftByID hostPort pool id_d = do
       let q =
             "SELECT title, draft_date :: varchar, category_id, ARRAY (SELECT tag_id FROM tag_draft WHERE draft.draft_id=tag_draft.draft_id) :: varchar, photo_id  :: varchar, ARRAY (SELECT photo_id FROM photo_draft WHERE draft.draft_id=photo_draft.draft_id):: varchar, t_content FROM draft WHERE draft.draft_id = ?"
       res <-
@@ -45,8 +45,8 @@ findDraftByID pool id_d = do
                c_date'
                id_cat
                (toListInteger ts)
-               ("http://localhost:3000/photo/" ++ ph)
-               (map fromPhotoId (toListInteger phs))
+               (hostPort ++ "/photo/" ++ ph)
+               (map (fromPhotoId hostPort) (toListInteger phs))
                t_c)
         pass _ = Nothing
         

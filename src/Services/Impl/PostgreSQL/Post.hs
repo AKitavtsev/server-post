@@ -14,8 +14,8 @@ import Database.PostgreSQL.Simple
 import Network.Wai (Request(..))
 
 
-findAllPosts :: Pool Connection -> Request -> Integer -> IO [Post]
-findAllPosts pool req limit = do
+findAllPosts :: String -> Pool Connection -> Request -> Integer -> IO [Post]
+findAllPosts hostPort pool req limit = do
       let endQuery = queryWhereOrder req limit
       let q =
             "WITH " ++
@@ -60,11 +60,11 @@ findAllPosts pool req limit = do
                   user_name
                   surname'
                   descr
-                  ("http://localhost:3000/image/" ++ user_id))
+                  (hostPort ++ "/image/" ++ user_id))
                (Categories c subcatName)
                (toListString ts)
-               ("http://localhost:3000/photo/" ++ ph)
-               (map fromPhotoId (toListInteger phs))
+               (hostPort ++ "/photo/" ++ ph)
+               (map (fromPhotoId hostPort) (toListInteger phs))
                t_c)
         allCategories :: [Integer] -> [Integer] -> IO [Integer]
         allCategories [] tg = return tg
@@ -86,8 +86,8 @@ findAllPosts pool req limit = do
             pass _ = ""
         getNameSC = findNameSC pool
 
-findComments :: Pool Connection -> Request -> Integer -> Integer -> IO [Comment]        
-findComments pool req limit id_post = do
+findComments :: String -> Pool Connection -> Request -> Integer -> Integer -> IO [Comment]        
+findComments hostPort pool req limit id_post = do
       let offset =
             case toParam req "page" of
               Nothing -> 0
@@ -103,5 +103,5 @@ findComments pool req limit id_post = do
         toComment (comment_data, user_id, user_name, surn, com) =
           Comment
             comment_data
-            (User user_name surn ("http://localhost:3000/image/" ++ user_id))
+            (User user_name surn (hostPort ++ "/image/" ++ user_id))
             com

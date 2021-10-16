@@ -31,7 +31,7 @@ newHandle config = do
       , SD.updateByID = updateByID
       , SD.insertUser = insertUser
       , SD.findUserByLogin = findUserByLogin
-      , SD.findUserByID = findUserByID
+      , SD.findUserByID = findUserByID hostPort
       , SD.insertImage = insertImage
       , SD.findImageByID = findImageByID
       , SD.insertAuthor = insertAuthor
@@ -49,12 +49,12 @@ newHandle config = do
       , SD.insertPhoto = insertPhoto
       , SD.findTagByID = findTagByID
       , SD.findPhotoByID = findPhotoByID
-      , SD.findDraftByID = findDraftByID
+      , SD.findDraftByID = findDraftByID hostPort
       , SD.publishPost = publishPost
       , SD.insertComment = insertComment
       , SD.deleteComment = deleteComment
-      , SD.findAllPosts = findAllPosts
-      , SD.findComments = findComments
+      , SD.findAllPosts = findAllPosts hostPort
+      , SD.findComments = findComments hostPort
       }
   where
     newConn conf =

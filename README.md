@@ -16,7 +16,7 @@ stack setup
 stack build 
 ```
 Rename (or copy) file `bot.conf.template` to `bot.conf`. You can also create a file `local_bot.conf`, if it is present, the configuration parameters will be determined in accordance with it, otherwise, by `bot.conf`.
-That's it! And then when you want to run the service at a port 3000:
+That's it! And then when you want to run the service:
 ```
 stack exec server-post-exe
 ```
