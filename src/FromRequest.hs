@@ -12,10 +12,7 @@ import Network.Wai
 import Text.Read (readMaybe)
 
 toParam :: Request -> BC.ByteString -> Maybe String
-toParam req name =
-  case parBS of
-    Nothing -> Nothing
-    Just par -> Just (BC.unpack par)
+toParam req name = Just BC.unpack <*> parBS
   where
     parBS =
       foldl
