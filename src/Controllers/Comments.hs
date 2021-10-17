@@ -46,8 +46,8 @@ routes pool hLogger hToken hDb req respond = do
       logDebug hLogger ("  Body = " ++ BL.unpack body)
       case eitherDecode body :: Either String RawComment of
         Right correctlyParsedBody -> do
-          c_date <- curTimeStr
-          id_ <- insertComment hDb pool correctlyParsedBody id_author c_date
+          creation_date <- curTimeStr
+          id_ <- insertComment hDb pool correctlyParsedBody id_author creation_date
           case id_ of
             0 -> respondWithError hLogger respond status404 "  post not found"
             _ -> respondWithSuccess respond status201 (IdComment id_)

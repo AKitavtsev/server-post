@@ -55,7 +55,7 @@ routes pool hLogger hToken hDb req respond = do
             Right correctlyParsedBody -> do
               id_ <- insertCategory hDb pool correctlyParsedBody
               case id_ of
-                0 -> respondWithError hLogger respond status500 "  category - owner not found"
+                0 -> respondWithError hLogger respond status500 "  category - parent not found"
                 _ -> respondWithSuccess respond status201 ("" :: String)
         Just (_, False) -> respondWithError hLogger respond status404
                              "  Administrator authority required"
@@ -91,15 +91,15 @@ routes pool hLogger hToken hDb req respond = do
             let name_ = fromMaybe "" nameMb
             updateByID hDb pool "category" id_ name_
             logDebug hLogger ("  Update name_ to " ++ name_)
-          let ownerMb = toParam req "id_owner"
-          case ownerMb of
+          let parentMb = toParam req "id_parent"
+          case parentMb of
             Nothing -> respondWithSuccess respond status200 ("" :: String)
-            Just owner -> do
-              id' <- updateOwnerCategory hDb pool id_ owner
-              logDebug hLogger ("  Update id_owner to " ++ owner)
+            Just parent -> do
+              id' <- updateOwnerCategory hDb pool id_ parent
+              logDebug hLogger ("  Update id_parent to " ++ parent)
               case id' of
                 0 -> respondWithError hLogger respond status500 
-                       "  category - owner not found"
+                       "  category - parent not found"
                 _ -> respondWithSuccess respond status200 ("" :: String)
         Just (_, False) -> respondWithError hLogger respond status404 
                      "  Administrator authority required"

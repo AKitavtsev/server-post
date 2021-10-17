@@ -48,14 +48,14 @@ findAllPosts pool req limit = do
       res <- fetch pool (snd endQuery) (fromString q)
       mapM toPost res
       where
-        toPost (i, t, c_date', c, category_id, user_id, user_name, surname', descr, ts, ph, phs, t_c) = do
+        toPost (i, t, creation_date', c, category_id, user_id, user_name, surname', descr, ts, ph, phs, t_c) = do
           subcat <- allCategories [category_id] []
           subcatName <- mapM getNameSC subcat
           return
             (Post
                i
                t
-               c_date'
+               creation_date'
                (AuthorsDetails
                   user_name
                   surname'

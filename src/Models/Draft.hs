@@ -27,7 +27,7 @@ data RawDraft =
     { title :: String
     , category :: Integer
     , tags :: [Integer]
-    , t_content :: T.Text
+    , text_content :: T.Text
     , main_photo :: Integer
     , other_photos :: [Integer]
     }
@@ -48,12 +48,12 @@ data ForUpdateDraft =
 data ForShowDraft =
   ForShowDraft
     { title_g :: String
-    , c_date :: String
+    , creation_date :: String
     , category_g :: Integer
     , tags_g :: [Integer]
     , main_photo_g :: String
     , other_photos_g :: [String]
-    , t_content_g :: T.Text
+    , text_content_g :: T.Text
     }
   deriving (Show, Generic, FromJSON, ToJSON)
 

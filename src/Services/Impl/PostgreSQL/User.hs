@@ -10,10 +10,10 @@ import Database.PostgreSQL.Simple
 import Data.Pool
 
 insertUser :: Pool Connection -> RawUser -> String -> IO Integer
-insertUser pool (RawUser name' surname' _ login' password') c_date' = do
+insertUser pool (RawUser name' surname' _ login' password') creation_date' = do
       let q =
             "INSERT INTO user_ (user_name, surname, login, password, user_date, admin) VALUES(?,?,?,md5( ?) ,?,?) returning user_id"
-      res <- fetch pool [name', surname', login', password', c_date', "FALSE"] q
+      res <- fetch pool [name', surname', login', password', creation_date', "FALSE"] q
       return $ pass res
       where
         pass [Only id_] = id_
