@@ -102,6 +102,3 @@ newHandle config = do
  
     hostPort = C.host config ++ ":" ++ show (C.port config)
  
-    -- hostPortPath :: Show a => a -> String
-    -- hostPort path = C.host config ++ ":" ++ show (C.port config) ++ "/" ++ show path
-
