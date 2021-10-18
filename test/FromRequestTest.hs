@@ -32,7 +32,7 @@ fromRequestTest :: IO ()
 fromRequestTest = hspec $ do
     describe "FromRequestTest" $ do
       describe "toMethod" $ do
-        it "method" $ 
+        it "is method" $ 
           toMethod req `shouldBe` "GET"
       describe "toParam" $ do
         it "is parameter" $
