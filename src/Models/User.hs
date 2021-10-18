@@ -35,7 +35,7 @@ data ForShowUser =
     , surname_ :: String
     , avatar_ :: String
     , login_ :: String
-    , c_data :: String
+    , creation_date :: String
     , admin :: Bool
     }
   deriving (Show, Generic, FromJSON, ToJSON)

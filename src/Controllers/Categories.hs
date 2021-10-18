@@ -62,7 +62,7 @@ routes hLogger hToken hDb req respond = do
                     hLogger
                     respond
                     status500
-                    "  category - owner not found"
+                    "  category - parent not found"
                 _ -> respondWithSuccess respond status201 ("" :: String)
         Just (_, False) ->
           respondWithError
@@ -112,20 +112,23 @@ routes hLogger hToken hDb req respond = do
             let name_ = fromMaybe "" nameMb
             updateByID hDb "category" id_ name_
             logDebug hLogger ("  Update name_ to " ++ name_)
-          let ownerMb = toParam req "id_owner"
-          case ownerMb of
+          let parentMb = toParam req "id_parent"
+          case parentMb of
             Nothing -> respondWithSuccess respond status200 ("" :: String)
-            Just owner -> do
-              id' <- updateOwnerCategory hDb id_ owner
-              logDebug hLogger ("  Update id_owner to " ++ owner)
+            Just parent -> do
+              id' <- updateOwnerCategory hDb id_ parent
+              logDebug hLogger ("  Update id_parent to " ++ parent)
               case id' of
-                0 ->
+                0 -> 
                   respondWithError
-                    hLogger
+                    hLogger respond
+                    status500 
+                    "  category - parent not found"
+                _ -> 
+                  respondWithSuccess
                     respond
-                    status500
-                    "  category - owner not found"
-                _ -> respondWithSuccess respond status200 ("" :: String)
+                    status200
+                    ("" :: String)
         Just (_, False) ->
           respondWithError
             hLogger

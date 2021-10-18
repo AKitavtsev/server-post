@@ -12,6 +12,6 @@ import GHC.Generics
 data Category =
   Category
     { name :: String
-    , id_owner :: Maybe Integer
+    , id_parent :: Maybe Integer
     }
   deriving (Show, Generic, FromJSON, ToJSON)

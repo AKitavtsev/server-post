@@ -25,7 +25,7 @@ data Post =
   Post
     { id :: Integer
     , title :: String
-    , c_date :: String
+    , creation_date :: String
     , author :: AuthorsDetails
     , categories :: Categories
     , tags :: [String]
@@ -37,7 +37,7 @@ data Post =
 
 data Comment =
   Comment
-    { c_data :: String
+    { creation_date :: String
     , author :: User
     , comment :: String
     }

@@ -13,10 +13,10 @@ import Database.PostgreSQL.Simple
 
 
 insertDraft :: Pool Connection -> RawDraft -> Integer -> String -> IO Integer
-insertDraft pool (RawDraft t c _ t_c m_p _) id_ c_date' = do
+insertDraft pool (RawDraft t c _ t_c m_p _) id_ creation_date' = do
       let q =
             "INSERT INTO draft (title, draft_date, user_id, category_id, t_content, photo_id) VALUES(?,?,?,?,?,?) returning draft_id"
-      res <- fetch pool [t, c_date', show id_, show c, t_c, show m_p] q
+      res <- fetch pool [t, creation_date', show id_, show c, t_c, show m_p] q
       return $ pass res
       where
         pass [Only i] = i
@@ -36,11 +36,11 @@ findDraftByID hostPort pool id_d = do
                                    , String)]
       return $ pass res
       where
-        pass [(t, c_date', id_cat, ts, ph, phs, t_c)] =
+        pass [(t, creation_date', id_cat, ts, ph, phs, t_c)] =
           Just
             (ForShowDraft
                t
-               c_date'
+               creation_date'
                id_cat
                (toListInteger ts)
                (hostPort ++ "/photo/" ++ ph)

@@ -11,10 +11,10 @@ import Database.PostgreSQL.Simple
 
 
 insertComment :: Pool Connection -> RawComment -> Integer -> String -> IO Integer
-insertComment pool (RawComment p_id c) auth_id c_date' = do
+insertComment pool (RawComment p_id c) auth_id creation_date' = do
       let q =
             "INSERT INTO comment (comment_date, draft_id, comment, user_id) VALUES(?,?,?,?) returning comment_id"
-      res <- fetch pool [c_date', show p_id, c, show auth_id] q
+      res <- fetch pool [creation_date', show p_id, c, show auth_id] q
       return $ pass res
       where
         pass [Only id_] = id_
