@@ -6,8 +6,10 @@ import qualified Config as SC
 import qualified Services.Token as ST
 
 import Data.Hash.MD5
+import Data.Maybe (fromMaybe)
 import Data.Time.Clock
 import Services.Impl.MD5.Internal
+import Text.Read (readMaybe)
 
 import qualified Data.Time as Time
 
@@ -40,7 +42,7 @@ newHandle config = do
                 (tt > Time.formatTime Time.defaultTimeLocale "%Y%m%d%H%M%S" utc)          
           (if res then
              (do let admin = adm == "1"
-                 return (Just (read id_ :: Integer, admin)))
+                 return  (Just (fromMaybe 0 $ readMaybe id_ :: Integer, admin)))
            else
                  return Nothing)
 

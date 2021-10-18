@@ -189,10 +189,7 @@ toListString arraySql =
     ]
 
 toListInteger :: String -> [Integer] 
-toListInteger arraySql = read $ init ('[' : tail arraySql) ++ "]"
-
--- fromListString :: [String] -> String
--- fromListString listString = init ('{' : tail (show listString) ++ "}")
+toListInteger arraySql = fromMaybe [] (readMaybe $ init ('[' : tail arraySql) ++ "]")
 
 numberPage :: String -> Integer
 numberPage i = fromMaybe 1 (readMaybe i)
