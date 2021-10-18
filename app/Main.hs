@@ -2,8 +2,8 @@
 
 module Main where
 
-import Router (routes)
 import Config
+import Router (routes)
 import Services.Impl.PostgreSQL.CreatePool
 import Services.Impl.PostgreSQL.Migrations
 import Services.Logger
@@ -21,11 +21,10 @@ main = do
   conf <- getConfig
   conn <- newConn conf
   pool <- createPoolPostgreSQL conf
-  hDb  <- SB.newHandle conf pool
+  hDb <- SB.newHandle conf pool
   hLogger <- SL.newHandle conf
   hToken <- ST.newHandle conf
   args <- getArgs
-  when (args == ["migration"]) $ 
-    runMigrations hLogger conn pool "sql"
+  when (args == ["migration"]) $ runMigrations hLogger conn pool "sql"
   logInfo hLogger "  Listen port 3000"
   run 3000 (routes hLogger hToken hDb)

@@ -29,7 +29,8 @@ routes ::
 routes hLogger hToken hDb req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
-    Nothing -> respondWithError hLogger respond status400 "  Invalid or outdated token"
+    Nothing ->
+      respondWithError hLogger respond status400 "  Invalid or outdated token"
     Just (id_author, adm) -> do
       logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
       case toMethod req of
@@ -48,14 +49,19 @@ routes hLogger hToken hDb req respond = do
           case id_ of
             0 -> respondWithError hLogger respond status404 "  post not found"
             _ -> respondWithSuccess respond status201 (IdComment id_)
-        Left e -> respondWithError hLogger respond status400 
-                    ("  invalid request body  - " ++ e)
+        Left e ->
+          respondWithError
+            hLogger
+            respond
+            status400
+            ("  invalid request body  - " ++ e)
     -- deleting a comment
     delete id_author adm = do
       let id_ = toId req
       case id_ of
         0 -> respondWithError hLogger respond status400 "  Invalid id_"
         _ -> do
-          (if adm then deleteByID hDb "comment" id_
-           else deleteComment hDb id_ id_author)      
+          (if adm
+             then deleteByID hDb "comment" id_
+             else deleteComment hDb id_ id_author)
           respondWithSuccess respond status204 ("" :: String)

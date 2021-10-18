@@ -8,18 +8,18 @@ module Services.Impl.PostgreSQL
 import qualified Services.Db as SD
 
 import Config
-import Services.Impl.PostgreSQL.Internal
-import Services.Impl.PostgreSQL.User
 import Services.Impl.PostgreSQL.Author
 import Services.Impl.PostgreSQL.Category
 import Services.Impl.PostgreSQL.Comment
 import Services.Impl.PostgreSQL.Draft
+import Services.Impl.PostgreSQL.Internal
 import Services.Impl.PostgreSQL.Post
 import Services.Impl.PostgreSQL.Tag
+import Services.Impl.PostgreSQL.User
 
+import Data.Pool
 import Database.PostgreSQL.Simple
 import GHC.Int (Int64(..))
-import Data.Pool
 
 newHandle :: Config -> Pool Connection -> IO SD.Handle
 newHandle config pool = do

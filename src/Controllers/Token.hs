@@ -32,15 +32,23 @@ routes ::
   -> Request
   -> (Response -> IO b)
   -> IO b
-routes  hLogger hToken hDb req respond = do
+routes hLogger hToken hDb req respond = do
   case (,) <$> toParam req "login" <*> toParam req "password" of
-    Nothing -> respondWithError hLogger respond status400
-                 "  Required Parameters \"Login \" and \"Password\""
+    Nothing ->
+      respondWithError
+        hLogger
+        respond
+        status400
+        "  Required Parameters \"Login \" and \"Password\""
     Just (login, password) -> do
-      idAdm <- findUserByLogin hDb  login password
+      idAdm <- findUserByLogin hDb login password
       case idAdm of
-        Nothing -> respondWithError hLogger respond status404
-                     ("  Invalid Login/Password: " ++ login ++ "/" ++ password)
+        Nothing ->
+          respondWithError
+            hLogger
+            respond
+            status404
+            ("  Invalid Login/Password: " ++ login ++ "/" ++ password)
         Just (id_, adm) -> do
           token_ <- createToken hToken id_ adm
           respondWithSuccess respond status201 (Token token_)

@@ -29,4 +29,3 @@ routes hLogger hDb req respond = do
   case imageMb of
     Nothing -> respondWithError hLogger respond status404 "  Image not found"
     Just imageAndType -> respondWithImage respond imageAndType
-    

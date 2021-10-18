@@ -27,10 +27,11 @@ routes ::
   -> Request
   -> (Response -> IO b)
   -> IO b
-routes  hLogger hToken hDb req respond = do
+routes hLogger hToken hDb req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
-    Nothing -> respondWithError hLogger respond status400 "  Invalid or outdated token"
+    Nothing ->
+      respondWithError hLogger respond status400 "  Invalid or outdated token"
     Just (id_author, _) -> do
       logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
       case toMethod req of
@@ -56,9 +57,9 @@ routes  hLogger hToken hDb req respond = do
               logError hLogger ("  Invalid request body  - " ++ e)
               return Nothing
         postDraft Nothing = return (0, Nothing)
-        postDraft  (Just draft) = do
+        postDraft (Just draft) = do
           c_d <- curTimeStr
-          id_ <- insertDraft hDb  draft id_author c_d
+          id_ <- insertDraft hDb draft id_author c_d
           case id_ of
             0 -> do
               logError hLogger "  Category not found"
@@ -66,16 +67,18 @@ routes  hLogger hToken hDb req respond = do
             _ -> return (id_, Just draft)
         postTags (id_, Just draft) = do
           let listTags = tags draft
-          t <- mapM (insertTagDraft hDb  id_) listTags
+          t <- mapM (insertTagDraft hDb id_) listTags
           when (t /= listTags) $ logWarning hLogger "  Not all tags were found"
           return (id_, Just (draft {tags = filter (/= 0) t}))
         postTags _ = return (0, Nothing)
         postOtherPhotos (id_, Just draft) = do
           let listPhotos = other_photos draft
-          p <- mapM (insertPhotoDraft hDb  id_) listPhotos
+          p <- mapM (insertPhotoDraft hDb id_) listPhotos
           when (p /= listPhotos) $
             logWarning hLogger "  Not all photos were found"
-          return (Just (FoundTagsAndPhotosForDraft id_ (tags draft) (filter (/= 0) p)))
+          return
+            (Just
+               (FoundTagsAndPhotosForDraft id_ (tags draft) (filter (/= 0) p)))
         postOtherPhotos _ = return Nothing
     -- draft editing (see example)
     put id_author = do
@@ -98,7 +101,7 @@ routes  hLogger hToken hDb req respond = do
               return Nothing
         putDraft Nothing = return Nothing
         putDraft (Just draft) = do
-          res <- updateDraft hDb  draft id_author
+          res <- updateDraft hDb draft id_author
           case res of
             Just draft_ -> return (Just draft_)
             Nothing -> do
@@ -108,10 +111,10 @@ routes  hLogger hToken hDb req respond = do
         putTags (Just draft)
           | isNothing (new_tags draft) = return (Just draft)
           | otherwise = do
-            deleteByID hDb  "tag_draft" (id_draft draft)
+            deleteByID hDb "tag_draft" (id_draft draft)
             let listTags = fromMaybe [] (new_tags draft)
             logDebug hLogger ("  " ++ show listTags)
-            t <- mapM (insertTagDraft hDb  (id_draft draft)) listTags
+            t <- mapM (insertTagDraft hDb (id_draft draft)) listTags
             when (t /= listTags) $
               logWarning hLogger "  Not all tags were found"
             return (Just (draft {new_tags = Just (filter (/= 0) t)}))
@@ -119,10 +122,10 @@ routes  hLogger hToken hDb req respond = do
         putOtherPhotos (Just draft)
           | isNothing (new_other_photos draft) = return (Just draft)
           | otherwise = do
-            deleteByID hDb  "photo_draft" (id_draft draft)
+            deleteByID hDb "photo_draft" (id_draft draft)
             let listPhotos = fromMaybe [] (new_other_photos draft)
             logDebug hLogger ("  " ++ show listPhotos)
-            p <- mapM (insertPhotoDraft hDb  (id_draft draft)) listPhotos
+            p <- mapM (insertPhotoDraft hDb (id_draft draft)) listPhotos
             when (p /= listPhotos) $
               logWarning hLogger "  Not all photos were found"
             return (Just (draft {new_other_photos = Just (filter (/= 0) p)}))
@@ -130,14 +133,15 @@ routes  hLogger hToken hDb req respond = do
     delete id_author = do
       let id_ = toId req
       when (id_ == 0) $ do logError hLogger "  Invalid id_"
-      deleteDraft hDb  id_ id_author
+      deleteDraft hDb id_ id_author
       respond (responseLBS status204 [("Content-Type", "text/plain")] "")
     -- show draft, like
     -- http://localhost:3000/draft/1.120210901202553ff034f3847c1d22f091dde7cde045264/1
     get = do
       let id_ = toId req
       when (id_ == 0) $ do logError hLogger "  Invalid id_"
-      draftMb <- findDraftByID hDb  id_
+      draftMb <- findDraftByID hDb id_
       case draftMb of
-        Nothing -> respondWithError hLogger respond status404 "  Draft not exist"
+        Nothing ->
+          respondWithError hLogger respond status404 "  Draft not exist"
         Just draft -> respondWithSuccess respond status200 draft

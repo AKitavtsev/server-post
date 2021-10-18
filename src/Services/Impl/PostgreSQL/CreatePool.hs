@@ -1,10 +1,8 @@
-
-module Services.Impl.PostgreSQL.CreatePool
-  where
+module Services.Impl.PostgreSQL.CreatePool where
 
 import Data.Pool
-import Database.PostgreSQL.Simple
 import Data.Time.Clock
+import Database.PostgreSQL.Simple
 
 import Config
 
@@ -18,7 +16,7 @@ newConn conf =
       }
 
 createPoolPostgreSQL :: Config -> IO (Pool Connection)
-createPoolPostgreSQL conf = 
+createPoolPostgreSQL conf =
   createPool
     (newConn conf)
     close

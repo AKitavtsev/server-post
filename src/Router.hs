@@ -38,15 +38,15 @@ routes ::
 routes hLogger hToken hDb req respond = do
   logInfo hLogger ("  Path = " ++ T.unpack (toPath req))
   case toPath req of
-    "author"   -> Controllers.Authors.routes hLogger hToken hDb req respond
+    "author" -> Controllers.Authors.routes hLogger hToken hDb req respond
     "category" -> Controllers.Categories.routes hLogger hToken hDb req respond
-    "comment"  -> Controllers.Comments.routes hLogger hToken hDb req respond
-    "draft"    -> Controllers.Drafts.routes hLogger hToken hDb req respond
-    "image"    -> Controllers.Images.routes hLogger hDb req respond
-    "photo"    -> Controllers.Photos.routes hLogger hToken hDb req respond
-    "posts"    -> Controllers.Posts.routes hLogger hToken hDb req respond
-    "publish"  -> Controllers.Publish.routes hLogger hToken hDb req respond
-    "tag"      -> Controllers.Tags.routes hLogger hToken hDb req respond
-    "token"    -> Controllers.Token.routes hLogger hToken hDb req respond
-    "user"     -> Controllers.Users.routes hLogger hToken hDb req respond
-    _          -> respondWithError hLogger respond status404 "  Path not found"
+    "comment" -> Controllers.Comments.routes hLogger hToken hDb req respond
+    "draft" -> Controllers.Drafts.routes hLogger hToken hDb req respond
+    "image" -> Controllers.Images.routes hLogger hDb req respond
+    "photo" -> Controllers.Photos.routes hLogger hToken hDb req respond
+    "posts" -> Controllers.Posts.routes hLogger hToken hDb req respond
+    "publish" -> Controllers.Publish.routes hLogger hToken hDb req respond
+    "tag" -> Controllers.Tags.routes hLogger hToken hDb req respond
+    "token" -> Controllers.Token.routes hLogger hToken hDb req respond
+    "user" -> Controllers.Users.routes hLogger hToken hDb req respond
+    _ -> respondWithError hLogger respond status404 "  Path not found"
