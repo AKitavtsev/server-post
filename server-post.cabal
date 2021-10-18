@@ -53,6 +53,7 @@ library
       Services.Impl.PostgreSQL.Author
       Services.Impl.PostgreSQL.Category
       Services.Impl.PostgreSQL.Comment
+      Services.Impl.PostgreSQL.CreatePool
       Services.Impl.PostgreSQL.Draft
       Services.Impl.PostgreSQL.Internal
       Services.Impl.PostgreSQL.Migrations

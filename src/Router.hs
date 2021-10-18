@@ -21,37 +21,32 @@ import qualified Controllers.Users
 import Services.Db
 import Services.Logger
 import Services.Token
+import Utils
 
-import Data.Pool (Pool)
-import Database.PostgreSQL.Simple.Internal
 import Network.HTTP.Types
 import Network.Wai
 
 import qualified Data.Text as T
 
 routes ::
-     Pool Connection
-  -> Services.Logger.Handle
+     Services.Logger.Handle
   -> Services.Token.Handle
   -> Services.Db.Handle
   -> Request
   -> (Response -> IO b)
   -> IO b
-routes pool hLogger hToken hDb req respond = do
+routes hLogger hToken hDb req respond = do
   logInfo hLogger ("  Path = " ++ T.unpack (toPath req))
   case toPath req of
-    "user" -> Controllers.Users.routes pool hLogger hToken hDb req respond
-    "token" -> Controllers.Token.routes pool hLogger hToken hDb req respond
-    "image" -> Controllers.Images.routes pool hLogger hDb req respond
-    "author" -> Controllers.Authors.routes pool hLogger hToken hDb req respond
-    "category" ->
-      Controllers.Categories.routes pool hLogger hToken hDb req respond
-    "tag" -> Controllers.Tags.routes pool hLogger hToken hDb req respond
-    "draft" -> Controllers.Drafts.routes pool hLogger hToken hDb req respond
-    "photo" -> Controllers.Photos.routes pool hLogger hToken hDb req respond
-    "publish" -> Controllers.Publish.routes pool hLogger hToken hDb req respond
-    "comment" -> Controllers.Comments.routes pool hLogger hToken hDb req respond
-    "posts" -> Controllers.Posts.routes pool hLogger hToken hDb req respond
-    _ -> do
-      logError hLogger "  Path not found"
-      respond $ responseLBS status404 [("Content-Type", "text/plain")] ""
+    "author" -> Controllers.Authors.routes hLogger hToken hDb req respond
+    "category" -> Controllers.Categories.routes hLogger hToken hDb req respond
+    "comment" -> Controllers.Comments.routes hLogger hToken hDb req respond
+    "draft" -> Controllers.Drafts.routes hLogger hToken hDb req respond
+    "image" -> Controllers.Images.routes hLogger hDb req respond
+    "photo" -> Controllers.Photos.routes hLogger hToken hDb req respond
+    "posts" -> Controllers.Posts.routes hLogger hToken hDb req respond
+    "publish" -> Controllers.Publish.routes hLogger hToken hDb req respond
+    "tag" -> Controllers.Tags.routes hLogger hToken hDb req respond
+    "token" -> Controllers.Token.routes hLogger hToken hDb req respond
+    "user" -> Controllers.Users.routes hLogger hToken hDb req respond
+    _ -> respondWithError hLogger respond status404 "  Path not found"
