@@ -13,8 +13,6 @@ import Services.Token
 import Utils
 
 import Data.Aeson
-import Data.Pool (Pool)
-import Database.PostgreSQL.Simple.Internal
 import GHC.Generics
 import Network.HTTP.Types
 import Network.Wai
@@ -28,22 +26,29 @@ newtype Token =
 -- getting a token like
 --  http://localhost:3000/token/?login=login&password=password
 routes ::
-     Pool Connection
-  -> Services.Logger.Handle
+     Services.Logger.Handle
   -> Services.Token.Handle
   -> Services.Db.Handle
   -> Request
   -> (Response -> IO b)
   -> IO b
-routes pool hLogger hToken hDb req respond = do
+routes hLogger hToken hDb req respond = do
   case (,) <$> toParam req "login" <*> toParam req "password" of
-    Nothing -> respondWithError hLogger respond status400
-                 "  Required Parameters \"Login \" and \"Password\""
+    Nothing ->
+      respondWithError
+        hLogger
+        respond
+        status400
+        "  Required Parameters \"Login \" and \"Password\""
     Just (login, password) -> do
-      idAdm <- findUserByLogin hDb pool login password
+      idAdm <- findUserByLogin hDb login password
       case idAdm of
-        Nothing -> respondWithError hLogger respond status404
-                     ("  Invalid Login/Password: " ++ login ++ "/" ++ password)
+        Nothing ->
+          respondWithError
+            hLogger
+            respond
+            status404
+            ("  Invalid Login/Password: " ++ login ++ "/" ++ password)
         Just (id_, adm) -> do
           token_ <- createToken hToken id_ adm
           respondWithSuccess respond status201 (Token token_)

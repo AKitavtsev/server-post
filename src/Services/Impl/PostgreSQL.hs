@@ -5,66 +5,58 @@ module Services.Impl.PostgreSQL
   ( newHandle
   ) where
 
-import qualified Config as C
 import qualified Services.Db as SD
 
-import Services.Impl.PostgreSQL.Internal
-import Services.Impl.PostgreSQL.User
+import Config
 import Services.Impl.PostgreSQL.Author
 import Services.Impl.PostgreSQL.Category
 import Services.Impl.PostgreSQL.Comment
 import Services.Impl.PostgreSQL.Draft
+import Services.Impl.PostgreSQL.Internal
 import Services.Impl.PostgreSQL.Post
 import Services.Impl.PostgreSQL.Tag
+import Services.Impl.PostgreSQL.User
 
+import Data.Pool
 import Database.PostgreSQL.Simple
 import GHC.Int (Int64(..))
 
-newHandle :: C.Config -> IO SD.Handle
-newHandle config = do
+newHandle :: Config -> Pool Connection -> IO SD.Handle
+newHandle config pool = do
   return $
     SD.Handle
-      { SD.limit = C.limit config
-      , SD.close = close
-      , SD.newConn = newConn
+      { SD.limit = limit config
       , SD.deleteByID = deleteByID
       , SD.updateByID = updateByID
-      , SD.insertUser = insertUser
-      , SD.findUserByLogin = findUserByLogin
-      , SD.findUserByID = findUserByID
-      , SD.insertImage = insertImage
-      , SD.findImageByID = findImageByID
-      , SD.insertAuthor = insertAuthor
-      , SD.findAuthorByID = findAuthorByID
-      , SD.insertCategory = insertCategory
-      , SD.findCategoryByID = findCategoryByID
-      , SD.updateOwnerCategory = updateOwnerCategory
-      , SD.insertTag = insertTag
-      , SD.insertTagDraft = insertTagDraft
-      , SD.insertPhotoDraft = insertPhotoDraft
-      , SD.findTags = findTags
-      , SD.insertDraft = insertDraft
-      , SD.deleteDraft = deleteDraft
-      , SD.updateDraft = updateDraft
-      , SD.insertPhoto = insertPhoto
-      , SD.findTagByID = findTagByID
-      , SD.findPhotoByID = findPhotoByID
-      , SD.findDraftByID = findDraftByID
-      , SD.publishPost = publishPost
-      , SD.insertComment = insertComment
-      , SD.deleteComment = deleteComment
-      , SD.findAllPosts = findAllPosts
-      , SD.findComments = findComments
+      , SD.insertUser = insertUser pool
+      , SD.findUserByLogin = findUserByLogin pool
+      , SD.findUserByID = findUserByID pool
+      , SD.insertImage = insertImage pool
+      , SD.findImageByID = findImageByID pool
+      , SD.insertAuthor = insertAuthor pool
+      , SD.findAuthorByID = findAuthorByID pool
+      , SD.insertCategory = insertCategory pool
+      , SD.findCategoryByID = findCategoryByID pool
+      , SD.updateOwnerCategory = updateOwnerCategory pool
+      , SD.insertTag = insertTag pool
+      , SD.insertTagDraft = insertTagDraft pool
+      , SD.insertPhotoDraft = insertPhotoDraft pool
+      , SD.findTags = findTags pool
+      , SD.insertDraft = insertDraft pool
+      , SD.deleteDraft = deleteDraft pool
+      , SD.updateDraft = updateDraft pool
+      , SD.insertPhoto = insertPhoto pool
+      , SD.findTagByID = findTagByID pool
+      , SD.findPhotoByID = findPhotoByID pool
+      , SD.findDraftByID = findDraftByID pool
+      , SD.publishPost = publishPost pool
+      , SD.insertComment = insertComment pool
+      , SD.deleteComment = deleteComment pool
+      , SD.findAllPosts = findAllPosts pool
+      , SD.findComments = findComments pool
       }
   where
-    newConn conf =
-      connect
-        defaultConnectInfo
-          { connectUser = C.user conf
-          , connectPassword = C.password conf
-          , connectDatabase = C.name conf
-          }
-    deleteByID pool model id_ = do
+    deleteByID model id_ = do
       _ <-
         case model of
           "user" -> execSqlT pool [id_] "DELETE FROM user_ WHERE user_id=?"
@@ -79,7 +71,7 @@ newHandle config = do
             execSqlT pool [id_] "DELETE FROM  photo_draft WHERE draft_id=?"
           _ -> return (0 :: Int64)
       return ()
-    updateByID pool model id_ value = do
+    updateByID model id_ value = do
       _ <-
         case model of
           "author" ->
