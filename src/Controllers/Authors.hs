@@ -8,7 +8,6 @@ import Data.Aeson (eitherDecode)
 
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as BL
-import qualified Data.Text as T
 
 import Control.Monad (when)
 import Network.HTTP.Types
@@ -98,4 +97,4 @@ routes hLogger hToken hDb req respond = do
             "  The \"description\" parameter is required"
         Just descr -> do
           updateByID hDb "author" id_ descr
-          respondWithSuccess respond status200 (RawAuthor id_ $ T.pack descr)
+          respondWithSuccess respond status200 (RawAuthor id_ descr)

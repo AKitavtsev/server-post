@@ -12,8 +12,6 @@ import GHC.Int (Int64(..))
 import Network.Wai (Request(..))
 import Text.Read (readMaybe)
 
-import qualified Data.Text as T (unpack)
-
 import FromRequest
 import Models.Draft (ForUpdateDraft(..))
 
@@ -37,7 +35,7 @@ bodyUpdate draft =
     setContent =
       case new_content draft of
         Nothing -> ("", [])
-        Just content -> (" t_content = ?,", [T.unpack content])
+        Just content -> (" t_content = ?,", [content])
     setPhoto =
       case new_main_photo draft of
         Nothing -> ("", [])

@@ -11,14 +11,12 @@ import Data.String (fromString)
 import Data.Pool
 import Database.PostgreSQL.Simple
 
-import qualified Data.Text as T
-
 
 insertDraft :: Pool Connection -> RawDraft -> Integer -> String -> IO Integer
 insertDraft pool (RawDraft t c _ t_c m_p _) id_ c_date' = do
       let q =
             "INSERT INTO draft (title, draft_date, user_id, category_id, t_content, photo_id) VALUES(?,?,?,?,?,?) returning draft_id"
-      res <- fetch pool [t, c_date', show id_, show c, T.unpack t_c, show m_p] q
+      res <- fetch pool [t, c_date', show id_, show c, t_c, show m_p] q
       return $ pass res
       where
         pass [Only i] = i
@@ -35,7 +33,7 @@ findDraftByID hostPort pool id_d = do
                                    , String
                                    , String
                                    , String
-                                   , T.Text)]
+                                   , String)]
       return $ pass res
       where
         pass [(t, c_date', id_cat, ts, ph, phs, t_c)] =
@@ -130,7 +128,7 @@ publishPost pool draft auth = do
         updateOrInsertPost
       where
         updateOrInsertPost ::
-             [(Integer, String, String, Integer, Integer, Integer, T.Text)]
+             [(Integer, String, String, Integer, Integer, Integer, String)]
           -> IO Integer
         updateOrInsertPost [(i, t, d, u, c, p, t_c)] = do
           let queryUpdatePost =
@@ -138,13 +136,13 @@ publishPost pool draft auth = do
               queryInsertPost =
                 "INSERT INTO post (draft_id, title, draft_date, user_id, category_id, photo_id, t_content) VALUES(?,?,?,?,?,?,?) returning draft_id"
           res <-
-            fetch pool [t, show c, show p, T.unpack t_c, show i, show u] $
+            fetch pool [t, show c, show p, t_c, show i, show u] $
             fromString queryUpdatePost
           case res of
             [Only idPost] -> return idPost
             _ -> do
               res' <-
-                fetch pool [show i, t, d, show u, show c, show p, T.unpack t_c] $
+                fetch pool [show i, t, d, show u, show c, show p, t_c] $
                 fromString queryInsertPost :: IO [Only Integer]
               case res' of
                 [Only idPost] -> return idPost

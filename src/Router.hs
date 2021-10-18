@@ -26,7 +26,6 @@ import Utils
 import Network.HTTP.Types
 import Network.Wai
 
-import qualified Data.Text as T
 
 routes ::
      Services.Logger.Handle
@@ -36,7 +35,7 @@ routes ::
   -> (Response -> IO b)
   -> IO b
 routes hLogger hToken hDb req respond = do
-  logInfo hLogger ("  Path = " ++ T.unpack (toPath req))
+  logInfo hLogger ("  Path = " ++ toPath req)
   case toPath req of
     "author" -> Controllers.Authors.routes hLogger hToken hDb req respond
     "category" -> Controllers.Categories.routes hLogger hToken hDb req respond

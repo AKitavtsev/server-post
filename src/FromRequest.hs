@@ -22,11 +22,11 @@ toParam req name = fmap BC.unpack parBS
         Nothing $
       queryString req
 
-toPath :: Request -> T.Text
+toPath :: Request -> String
 toPath req =
   case pathInfo req of
     [] -> ""
-    (x:_) -> x
+    (x:_) -> T.unpack x
 
 toMethod :: Request -> BC.ByteString
 toMethod = requestMethod
