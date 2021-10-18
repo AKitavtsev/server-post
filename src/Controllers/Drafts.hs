@@ -5,7 +5,7 @@ module Controllers.Drafts
   ) where
 
 import Control.Monad (when)
-import Data.Aeson (eitherDecode, encode)
+import Data.Aeson (eitherDecode)
 import Data.Maybe (fromMaybe, isNothing)
 
 import Network.HTTP.Types
@@ -86,12 +86,8 @@ routes hLogger hToken hDb req respond = do
         strictRequestBody req >>= getDraft >>= putDraft >>= putTags >>=
         putOtherPhotos
       case res of
-        Nothing ->
-          respond (responseLBS status400 [("Content-Type", "text/plain")] "")
-        Just draft ->
-          respond
-            (responseLBS status200 [("Content-Type", "text/plain")] $
-             encode draft)
+        Nothing -> respondWithError hLogger respond status400 ""
+        Just draft -> respondWithSuccess respond status200 draft
       where
         getDraft body = do
           case eitherDecode body :: Either String ForUpdateDraft of
