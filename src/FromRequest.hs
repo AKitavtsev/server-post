@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-
 module FromRequest where
 
 import qualified Data.ByteString.Char8 as BC
@@ -12,10 +11,7 @@ import Network.Wai
 import Text.Read (readMaybe)
 
 toParam :: Request -> BC.ByteString -> Maybe String
-toParam req name =
-  case parBS of
-    Nothing -> Nothing
-    Just par -> Just (BC.unpack par)
+toParam req name = fmap BC.unpack parBS
   where
     parBS =
       foldl
