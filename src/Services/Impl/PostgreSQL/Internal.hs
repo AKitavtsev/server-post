@@ -175,8 +175,8 @@ queryOrder req =
           acc ++ " (SELECT count (*) FROM getphotos WHERE d_id = draft_id),"
         _ -> acc
 
-fromPhotoId :: Integer -> String
-fromPhotoId i = "http://localhost:3000/photo/" ++ show i
+fromPhotoId :: String -> Integer -> String
+fromPhotoId hostPort i = hostPort ++ "/photo/" ++ show i
 
 toListString :: String -> [String]
 toListString arraySql =

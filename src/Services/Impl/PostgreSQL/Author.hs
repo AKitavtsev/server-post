@@ -22,8 +22,8 @@ insertAuthor pool (RawAuthor id_ descr) = do
         pass [Only i] = i
         pass _ = 0
         
-findAuthorByID :: Pool Connection -> Integer -> IO (Maybe AuthorsDetails)
-findAuthorByID pool id_ = do
+findAuthorByID :: String -> Pool Connection -> Integer -> IO (Maybe AuthorsDetails)
+findAuthorByID hostPort pool id_ = do
       let q =
             "SELECT user_name, surname, description FROM user_ INNER JOIN author USING(user_id) WHERE user_.user_id = ?;"
       res <- fetch pool (Only id_) q
@@ -35,5 +35,6 @@ findAuthorByID pool id_ = do
                name'
                surname'
                descr
-               ("http://localhost:3000/image/" ++ show id_))
+               (hostPort ++ "/image/" ++ show id_)
+            )
         pass _ = Nothing

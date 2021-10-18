@@ -29,8 +29,8 @@ findUserByLogin pool login' password' = do
         pass [(id_, adm)] = Just (id_, adm)
         pass _ = Nothing
         
-findUserByID :: Pool Connection -> Integer -> IO (Maybe ForShowUser)
-findUserByID pool id_ = do
+findUserByID :: String -> Pool Connection -> Integer -> IO (Maybe ForShowUser)
+findUserByID hostPort pool id_ = do
       let q =
             "SELECT user_name, surname, login, user_date::varchar, admin  FROM user_ WHERE user_id=?"
       res <-
@@ -39,7 +39,7 @@ findUserByID pool id_ = do
       where
         pass [(n, sn, l, dat, adm)] =
           Just
-            (ForShowUser n sn ("http://localhost:3000/image/" ++ show id_) l dat adm)
+            (ForShowUser n sn (hostPort ++ "/image/" ++ show id_) l dat adm)
         pass _ = Nothing
         
 insertImage :: Pool Connection -> RawUser -> Integer -> IO Integer

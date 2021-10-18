@@ -37,7 +37,7 @@ dbTest = hspec $ do
     describe "Services.Impl.PostgreSQL.Internal" $ do
       describe "fromPhotoId" $ do
         it "link to photo" $ 
-          fromPhotoId 1 `shouldBe` "http://localhost:3000/photo/1"
+          fromPhotoId "http://localhost:3000" 1 `shouldBe` "http://localhost:3000/photo/1"
       describe "toListString" $ do
         it "list of String" $ 
           toListString "{aaa, bb, c}" `shouldBe` ["aaa", "bb", "c"]

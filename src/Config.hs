@@ -17,9 +17,11 @@ data Config =
       , subpools :: !Int
       , time :: !Integer
       , max_db_resours :: !Int
+      , host :: !String
+      , port :: !Int
       }
   deriving (Show)
-  
+
 getConfig :: IO Config
 getConfig = do
   conf <- C.load [C.Optional "server.conf", C.Optional "local_server.conf"]
@@ -38,4 +40,6 @@ getConfig = do
   subpools' <- C.lookupDefault 1 conf (T.pack "poll.subpools") :: IO Int
   time' <- C.lookupDefault 40 conf (T.pack "poll.time") :: IO Integer
   resources' <- C.lookupDefault 10 conf (T.pack "poll.max_db_resours") :: IO Int
-  return (Config name' user' password' limit' level' lifetime' subpools' time' resources')
+  host' <- C.lookupDefault "http://localhost" conf (T.pack "host_port.host") :: IO String
+  port' <- C.lookupDefault 3000 conf (T.pack "host_port.port") :: IO Int
+  return (Config name' user' password' limit' level' lifetime' subpools' time' resources' host' port')
