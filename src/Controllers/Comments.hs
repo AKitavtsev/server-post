@@ -59,7 +59,7 @@ routes hLogger hToken hDb req respond = do
     delete id_author adm = do
       let id_ = toId req
       case id_ of
-        0 -> respondWithError hLogger respond status400 "  Invalid id_"
+        0 -> respondWithError hLogger respond status400 "  Invalid id"
         _ -> do
           (if adm
              then deleteByID hDb "comment" id_
