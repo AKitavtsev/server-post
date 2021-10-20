@@ -18,7 +18,7 @@ import Network.Wai
 -- http://localhost:3000/image/1
 routes ::
      Services.Logger.Handle
-  -> Services.Db.Handle
+  -> Services.Db.Handle IO
   -> Request
   -> (Response -> IO b)
   -> IO b

@@ -16,7 +16,7 @@ import Network.Wai
 routes ::
      Services.Logger.Handle
   -> Services.Token.Handle
-  -> Services.Db.Handle
+  -> Services.Db.Handle IO
   -> Request
   -> (Response -> IO b)
   -> IO b

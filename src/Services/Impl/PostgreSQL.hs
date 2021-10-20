@@ -21,7 +21,7 @@ import Data.Pool
 import Database.PostgreSQL.Simple
 import GHC.Int (Int64(..))
 
-newHandle :: Config -> Pool Connection -> IO SD.Handle
+newHandle :: Config -> Pool Connection -> IO (SD.Handle IO)
 newHandle config pool = do
   return $
     SD.Handle
