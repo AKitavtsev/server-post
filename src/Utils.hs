@@ -13,33 +13,33 @@ import qualified Data.ByteString.Lazy.Char8 as BL (pack)
 
 import Services.Logger
 
-respondWithSuccess :: ToJSON a =>
-     (Response -> IO b)
+respondWithSuccess :: (ToJSON a, Monad m) =>
+     (Response -> m b)
   -> Status
   -> a
-  -> IO b  
+  -> m b  
 respondWithSuccess respond status context =
   respond (responseLBS status [("Content-Type", "text/plain")] $ encode context)
   
-respondWithError :: 
-     Services.Logger.Handle   
-  -> (Response -> IO b)
+respondWithError :: Monad m =>
+     Services.Logger.Handle m 
+  -> (Response -> m b)
   -> Status
   -> String
-  -> IO b  
+  -> m b  
 respondWithError hLogger respond status message= do
   logError hLogger message
   respond (responseLBS status [("Content-Type", "text/plain")] "")
 
-respondWithImage ::
-     (Response -> IO b)
+respondWithImage :: Monad m =>
+     (Response -> m b)
   -> (String, String)
-  -> IO b
+  -> m b
 respondWithImage respond (image, typeImage) =
   respond (responseLBS status200 [("Content-Type", BC.pack ("image/" ++ typeImage))] $
              BL.pack $ BC.unpack $ B64.decodeLenient $ BC.pack image)
 
-respondWithPhotoId :: (Response -> IO b) -> Integer -> IO b
+respondWithPhotoId :: (Response -> m b) -> Integer -> m b
 respondWithPhotoId respond photoId =
   case photoId of
     0 -> respond (responseLBS status201 [("Content-Type", "text/plain")] "")

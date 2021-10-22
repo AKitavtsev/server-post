@@ -16,12 +16,12 @@ import Network.Wai
 
 -- show avatar, like
 -- http://localhost:3000/image/1
-routes ::
-     Services.Logger.Handle
-  -> Services.Db.Handle IO
+routes :: Monad m =>
+     Services.Logger.Handle m
+  -> Services.Db.Handle m
   -> Request
-  -> (Response -> IO b)
-  -> IO b
+  -> (Response -> m b)
+  -> m b
 routes hLogger hDb req respond = do
   let id_ = toIdImage req
   when (id_ == 0) $ logError hLogger "  Invalid id"

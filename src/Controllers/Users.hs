@@ -20,14 +20,15 @@ import Services.Logger
 import Services.Token
 import Utils
 
-routes ::
-     Services.Logger.Handle
-  -> Services.Token.Handle
-  -> Services.Db.Handle IO
+routes :: Monad m =>
+     Services.Logger.Handle m 
+  -> Services.Token.Handle m 
+  -> Services.Db.Handle m
+  -> FromRequest.HandleRequst m
   -> Request
-  -> (Response -> IO b)
-  -> IO b
-routes hLogger hToken hDb req respond = do
+  -> (Response -> m b)
+  -> m b
+routes hLogger hToken hDb hRequest req respond = do
   logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
   case toMethod req of
     "POST" -> post
@@ -37,7 +38,7 @@ routes hLogger hToken hDb req respond = do
     -- user creation (see example)
   where
     post = do
-      body <- strictRequestBody req
+      body <- toBody hRequest req
       logDebug hLogger ("  Body = " ++ BL.unpack body)
       case eitherDecode body :: Either String RawUser of
         Left e ->
@@ -47,7 +48,7 @@ routes hLogger hToken hDb req respond = do
             status400
             ("  invalid request body  - " ++ e)
         Right correctlyParsedBody -> do
-          c_date <- curTimeStr
+          c_date <- curTimeStr hToken
           id_ <- insertUser hDb correctlyParsedBody c_date
           case id_ of
             0 ->

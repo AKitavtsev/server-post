@@ -20,14 +20,15 @@ import Services.Logger
 import Services.Token
 import Utils
 
-routes ::
-     Services.Logger.Handle
-  -> Services.Token.Handle
-  -> Services.Db.Handle IO
+routes :: Monad m =>
+     Services.Logger.Handle m
+  -> Services.Token.Handle m
+  -> Services.Db.Handle m
+  -> FromRequest.HandleRequst m
   -> Request
-  -> (Response -> IO b)
-  -> IO b
-routes hLogger hToken hDb req respond = do
+  -> (Response -> m b)
+  -> m b
+routes hLogger hToken hDb hRequest req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
     Nothing ->
@@ -44,7 +45,7 @@ routes hLogger hToken hDb req respond = do
   where
     post id_author = do
       res <-
-        strictRequestBody req >>= getDraft >>= postDraft >>= postTags >>=
+        toBody hRequest req >>= getDraft >>= postDraft >>= postTags >>=
         postOtherPhotos
       case res of
         Nothing -> respondWithError hLogger respond status400 ""
@@ -58,7 +59,7 @@ routes hLogger hToken hDb req respond = do
               return Nothing
         postDraft Nothing = return (0, Nothing)
         postDraft (Just draft) = do
-          c_d <- curTimeStr
+          c_d <- curTimeStr hToken
           id_ <- insertDraft hDb draft id_author c_d
           case id_ of
             0 -> do
@@ -83,7 +84,7 @@ routes hLogger hToken hDb req respond = do
     -- draft editing (see example)
     put id_author = do
       res <-
-        strictRequestBody req >>= getDraft >>= putDraft >>= putTags >>=
+        toBody hRequest req >>= getDraft >>= putDraft >>= putTags >>=
         putOtherPhotos
       case res of
         Nothing -> respondWithError hLogger respond status400 ""

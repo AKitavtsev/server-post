@@ -3,12 +3,19 @@
 module FromRequest where
 
 import qualified Data.ByteString.Char8 as BC
+import qualified Data.ByteString.Lazy.Internal as BL
 import qualified Data.Text as T
-import qualified Data.Time as Time
 
 import Data.Maybe (fromMaybe)
 import Network.Wai
 import Text.Read (readMaybe)
+
+newtype (Monad m) => HandleRequst m =
+  HandleRequst
+    {toBody :: Request -> m BL.ByteString}
+    
+hRequstIO :: HandleRequst IO
+hRequstIO = HandleRequst {toBody = strictRequestBody}
 
 toParam :: Request -> BC.ByteString -> Maybe String
 toParam req name = fmap BC.unpack parBS
@@ -49,7 +56,4 @@ toIdImage req =
     (_:y:_) -> fromMaybe 0 (readMaybe $ T.unpack y)
     _ -> 0
 
-curTimeStr :: IO String
-curTimeStr =
-  Time.formatTime Time.defaultTimeLocale "%Y-%m-%d %H:%M:%S" <$> Time.getCurrentTime
 

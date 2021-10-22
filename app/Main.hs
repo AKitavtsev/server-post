@@ -15,6 +15,7 @@ import qualified Services.Impl.StdOut as SL
 import Control.Monad (when)
 import Network.Wai.Handler.Warp (run)
 import System.Environment (getArgs)
+import FromRequest
 
 main :: IO ()
 main = do
@@ -28,4 +29,4 @@ main = do
   when (args == ["migration"]) $ 
     runMigrations hLogger conn pool "sql"
   logInfo hLogger ("  Listen port " ++ show (port conf))
-  run (port conf) (routes hLogger hToken hDb)
+  run (port conf) (routes hLogger hToken hDb hRequstIO)

@@ -7,7 +7,7 @@ import qualified Services.Logger as SL
 
 import Control.Monad (when)
 
-newHandle :: SC.Config -> IO SL.Handle
+newHandle :: SC.Config -> IO (SL.Handle IO)
 newHandle config = do
   return $ SL.Handle {SL.config = config, SL.logPriority = logPriority}
   where

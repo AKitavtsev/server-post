@@ -13,13 +13,13 @@ import Utils
 import Network.HTTP.Types.Status
 import Network.Wai
 
-routes ::
-     Services.Logger.Handle
-  -> Services.Token.Handle
-  -> Services.Db.Handle IO
+routes :: Monad m =>
+     Services.Logger.Handle m
+  -> Services.Token.Handle m
+  -> Services.Db.Handle m
   -> Request
-  -> (Response -> IO b)
-  -> IO b
+  -> (Response -> m b)
+  -> m b
 routes hLogger hToken hDb req respond = do
   let token = toToken req
   vt <- validToken hToken token

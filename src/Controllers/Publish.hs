@@ -15,13 +15,13 @@ import Utils
 
 -- publication of a draft, like
 -- http://localhost:3000/publish/1.120210901202553ff034f3847c1d22f091dde7cde045264/1
-routes ::
-     Services.Logger.Handle
-  -> Services.Token.Handle
-  -> Services.Db.Handle IO
+routes :: Monad m =>
+     Services.Logger.Handle m
+  -> Services.Token.Handle m
+  -> Services.Db.Handle m
   -> Request
-  -> (Response -> IO b)
-  -> IO b
+  -> (Response -> m b)
+  -> m b
 routes hLogger hToken hDb req respond = do
   vt <- validToken hToken (toToken req)
   case vt of

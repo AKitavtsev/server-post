@@ -9,13 +9,13 @@ module Services.Logger
 import Config (Config(..))
 import Services.Types (Priority(..))
 
-data Handle =
+data Monad m => Handle m =
   Handle
     { config :: Config
-    , logPriority :: Priority -> String -> IO ()
+    , logPriority :: Priority -> String -> m ()
     }
 
-logDebug, logInfo, logWarning, logError :: Handle -> String -> IO ()
+logDebug, logInfo, logWarning, logError :: Monad m => Handle m -> String -> m ()
 logDebug = (`logPriority` DEBUG)
 
 logInfo = (`logPriority` INFO)

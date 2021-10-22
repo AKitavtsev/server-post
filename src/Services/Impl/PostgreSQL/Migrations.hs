@@ -14,7 +14,7 @@ import qualified Data.ByteString as BS
 import qualified Data.List as L
 
 runMigrations ::
-     Services.Logger.Handle
+     Services.Logger.Handle IO
   -> Connection
   -> Pool Connection
   -> FilePath
@@ -25,7 +25,7 @@ runMigrations hLogger conn pool dir = do
   withResource pool $ \con -> do forM_ fn (executeMigration hLogger con)
   commit conn
 
-executeMigration :: Services.Logger.Handle -> Connection -> FilePath -> IO ()
+executeMigration :: Services.Logger.Handle IO -> Connection -> FilePath -> IO ()
 executeMigration hLogger con fileName = do
   content <- BS.readFile fileName
   void $ execute_ con (Query content)

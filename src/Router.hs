@@ -4,8 +4,6 @@ module Router
   ( routes
   ) where
 
-import FromRequest (toPath)
-
 import qualified Controllers.Authors
 import qualified Controllers.Categories
 import qualified Controllers.Comments
@@ -18,6 +16,7 @@ import qualified Controllers.Tags
 import qualified Controllers.Token
 import qualified Controllers.Users
 
+import FromRequest
 import Services.Db
 import Services.Logger
 import Services.Token
@@ -27,25 +26,26 @@ import Network.HTTP.Types
 import Network.Wai
 
 
-routes ::
-     Services.Logger.Handle
-  -> Services.Token.Handle
-  -> Services.Db.Handle IO
+routes :: Monad m =>
+     Services.Logger.Handle m
+  -> Services.Token.Handle m
+  -> Services.Db.Handle m
+  -> FromRequest.HandleRequst m  
   -> Request
-  -> (Response -> IO b)
-  -> IO b
-routes hLogger hToken hDb req respond = do
+  -> (Response -> m b)
+  -> m b
+routes hLogger hToken hDb hRequest req respond = do
   logInfo hLogger ("  Path = " ++ toPath req)
   case toPath req of
-    "author" -> Controllers.Authors.routes hLogger hToken hDb req respond
-    "category" -> Controllers.Categories.routes hLogger hToken hDb req respond
-    "comment" -> Controllers.Comments.routes hLogger hToken hDb req respond
-    "draft" -> Controllers.Drafts.routes hLogger hToken hDb req respond
+    "author" -> Controllers.Authors.routes hLogger hToken hDb hRequest req respond
+    "category" -> Controllers.Categories.routes hLogger hToken hDb hRequest req respond
+    "comment" -> Controllers.Comments.routes hLogger hToken hDb hRequest req respond
+    "draft" -> Controllers.Drafts.routes hLogger hToken hDb hRequest req respond
     "image" -> Controllers.Images.routes hLogger hDb req respond
-    "photo" -> Controllers.Photos.routes hLogger hToken hDb req respond
+    "photo" -> Controllers.Photos.routes hLogger hToken hDb hRequest req respond
     "posts" -> Controllers.Posts.routes hLogger hToken hDb req respond
     "publish" -> Controllers.Publish.routes hLogger hToken hDb req respond
-    "tag" -> Controllers.Tags.routes hLogger hToken hDb req respond
+    "tag" -> Controllers.Tags.routes hLogger hToken hDb hRequest req respond
     "token" -> Controllers.Token.routes hLogger hToken hDb req respond
-    "user" -> Controllers.Users.routes hLogger hToken hDb req respond
+    "user" -> Controllers.Users.routes hLogger hToken hDb hRequest req respond
     _ -> respondWithError hLogger respond status404 "  Path not found"

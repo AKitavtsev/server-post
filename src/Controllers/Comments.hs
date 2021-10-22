@@ -19,14 +19,15 @@ import Services.Logger
 import Services.Token
 import Utils
 
-routes ::
-     Services.Logger.Handle
-  -> Services.Token.Handle
-  -> Services.Db.Handle IO
+routes :: Monad m =>
+     Services.Logger.Handle m
+  -> Services.Token.Handle m
+  -> Services.Db.Handle m
+  -> FromRequest.HandleRequst m
   -> Request
-  -> (Response -> IO b)
-  -> IO b
-routes hLogger hToken hDb req respond = do
+  -> (Response -> m b)
+  -> m b
+routes hLogger hToken hDb hRequest req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
     Nothing ->
@@ -40,11 +41,11 @@ routes hLogger hToken hDb req respond = do
     -- comment creation (see example)
   where
     post id_author = do
-      body <- strictRequestBody req
+      body <- toBody hRequest req
       logDebug hLogger ("  Body = " ++ BL.unpack body)
       case eitherDecode body :: Either String RawComment of
         Right correctlyParsedBody -> do
-          creation_date <- curTimeStr
+          creation_date <- curTimeStr hToken
           id_ <- insertComment hDb correctlyParsedBody id_author creation_date
           case id_ of
             0 -> respondWithError hLogger respond status404 "  post not found"
