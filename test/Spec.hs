@@ -1,15 +1,14 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE ViewPatterns #-}
 
 module  Main where
 
 import TokenTest
 import DbTest
 import FromRequestTest
+import ControllersTest.AuthorsTest
 
 main :: IO ()
 main = do
-    tokenTest
-    dbTest
-    fromRequestTest
+    -- tokenTest
+    -- dbTest
+    -- fromRequestTest
+  authorsTest

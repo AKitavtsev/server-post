@@ -1,6 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE ViewPatterns #-}
 
 module  TokenTest where
 
@@ -15,10 +13,10 @@ tokenTest = hspec $ do
       describe "idAdmFromToken" $ do
         it "is admin" $ 
           idAdmFromToken "1.1202104301627401b4056772f899bfcb6a0c827a3ccc222"
-          `shouldBe` (Just ("1", "1"))
+          `shouldBe` Just ("1", "1")
         it "no admin" $ 
           idAdmFromToken "1.0202104301627401b4056772f899bfcb6a0c827a3ccc222"
-          `shouldBe` (Just ("1", "0"))
+          `shouldBe` Just ("1", "0")
         it "all digit - no poin" $ 
           idAdmFromToken "102021043" `shouldBe` Just ("102021043", "0")
         it "[]" $ 

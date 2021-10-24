@@ -48,7 +48,6 @@ stack test
 - `sql/` - sql database migration queries. Database is built and minimal initial seeding is ensured
 - `bat/`- batch files for easy testing of the application. Contains requests to the server passed by the `curl` utility for all endpoints of entities (for Windows). In addition, a `test.bat` is a series of requests to fill the database for testing filtering and sorting of posts, `where-order.bat` - examples of tests for filtering and sorting of posts, `token.bat` - to refresh the token.
 - `sh/`- shell script files for easy testing of the application. Contains requests to the server passed by the `curl` utility for all endpoints of entities (for Linux).
-- `image/` - folder from which you can upload photos to the database.
 
 
 ## Endpoints
@@ -65,7 +64,7 @@ Endpoint of token renewal (at token expiration)
 
 ### Photo endpoints
 
-Two endpoints for loading photos into the database from the request body (using the POST method) or from a file (PUT method).
+Two endpoints for loading photos into the database from the request body (using the POST method).
 
 ### Viewing pictures
 

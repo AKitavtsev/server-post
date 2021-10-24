@@ -86,7 +86,7 @@ findAllPosts hostPort pool req limit = do
             pass _ = ""
         getNameSC = findNameSC pool
 
-findComments :: String -> Pool Connection -> Request -> Integer -> Integer -> IO [Comment]        
+findComments :: String -> Pool Connection -> Request -> Integer -> Integer -> IO [Comment] 
 findComments hostPort pool req limit id_post = do
       let offset =
             case toParam req "page" of

@@ -12,12 +12,12 @@ import Database.PostgreSQL.Simple
 
 
 insertCategory :: Pool Connection -> Category -> IO Integer
-insertCategory pool (Category name' owner_id) = do
-      case owner_id of
-        Just owner -> do
+insertCategory pool (Category name' parent_id) = do
+      case parent_id of
+        Just parent -> do
           let q =
                 "INSERT INTO category (category_name, owner_id) VALUES(?,?) returning category_id"
-          res <- fetch pool [name', show owner] q
+          res <- fetch pool [name', show parent] q
           return $ pass res
         Nothing -> do
           let q =
@@ -38,8 +38,8 @@ findCategoryByID pool id_ = do
         pass _ = Nothing
 
 updateOwnerCategory :: Pool Connection -> Integer -> String -> IO Integer
-updateOwnerCategory pool id_ owner = do
-      case map toLower owner of
+updateOwnerCategory pool id_ parent = do
+      case map toLower parent of
         "null" -> do
           let q =
                 "UPDATE category SET owner_id=null WHERE category_id=? returning category_id"
@@ -48,7 +48,7 @@ updateOwnerCategory pool id_ owner = do
         _ -> do
           let q =
                 "UPDATE category SET owner_id=? WHERE category_id=? returning category_id"
-          res <- fetch pool [owner, show id_] q
+          res <- fetch pool [parent, show id_] q
           return $ pass res
       where
         pass [Only i] = i

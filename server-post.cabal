@@ -119,6 +119,8 @@ test-suite server-post-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      ControllersTest.AuthorsTest
+      ControllersTest.Data
       DbTest
       FromRequestTest
       TokenTest

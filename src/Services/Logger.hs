@@ -6,14 +6,11 @@ module Services.Logger
   , logError
   ) where
 
-import Config (Config(..))
 import Services.Types (Priority(..))
 
 data Monad m => Handle m =
   Handle
-    { config :: Config
-    , logPriority :: Priority -> String -> m ()
-    }
+    {logPriority :: Priority -> String -> m ()}
 
 logDebug, logInfo, logWarning, logError :: Monad m => Handle m -> String -> m ()
 logDebug = (`logPriority` DEBUG)

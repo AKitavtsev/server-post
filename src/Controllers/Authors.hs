@@ -32,12 +32,12 @@ routes hLogger hToken hDb hRequest req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
     Nothing ->
-      respondWithError hLogger respond status400 "  Invalid or outdated token"
+      respondWithError hLogger respond status401 "  Invalid or outdated token"
     Just (_, False) ->
       respondWithError
         hLogger
         respond
-        status400
+        status401
         "  Administrator authority required"
     Just (_, True) -> do
       logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
@@ -73,7 +73,7 @@ routes hLogger hToken hDb hRequest req respond = do
     -- http://localhost:3000/author/<token>/<id''>
     get = do
       let id_ = toId req
-      when (id_ == 0) $ do logError hLogger "  Invalid id''"
+      when (id_ == 0) $ do logError hLogger "  Invalid id"
       authorMb <- findAuthorByID hDb id_
       case authorMb of
         Nothing ->
@@ -94,7 +94,7 @@ routes hLogger hToken hDb hRequest req respond = do
           respondWithError
             hLogger
             respond
-            status400
+            status404
             "  The \"description\" parameter is required"
         Just descr -> do
           updateByID hDb "author" id_ descr
