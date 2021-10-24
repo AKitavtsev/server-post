@@ -52,7 +52,7 @@ routes hLogger hToken hDb hRequest req respond = do
           id_ <- insertUser hDb correctlyParsedBody c_date
           case id_ of
             0 ->
-              respondWithError hLogger respond status400 "  Login already exist"
+              respondWithError hLogger respond status409 "  Login already exist"
             _ -> do
               idim <- insertImage hDb correctlyParsedBody id_
               when (idim == 0) $ do
@@ -67,17 +67,17 @@ routes hLogger hToken hDb hRequest req respond = do
       vt <- validToken hToken (toToken req)
       case vt of
         Just (id_, _) -> do
-          when (id_ == 0) $ do logError hLogger "  Invalid id_"
+          when (id_ == 0) $ do logError hLogger "  Invalid id"
           userMb <- findUserByID hDb id_
           case userMb of
             Nothing ->
-              respondWithError hLogger respond status400 "  User not exist"
+              respondWithError hLogger respond status404 "  User not exist"
             Just user -> respondWithSuccess respond status200 user
         Nothing ->
           respondWithError
             hLogger
             respond
-            status400
+            status401
             "  Invalid or outdated token"
 -- delete user (see example)
     delete = do
@@ -88,7 +88,7 @@ routes hLogger hToken hDb hRequest req respond = do
           respondWithError
             hLogger
             respond
-            status400
+            status401
             "  Invalid or outdated token"
         Just (_, True) -> do
           deleteByID hDb "user" id_
@@ -97,5 +97,5 @@ routes hLogger hToken hDb hRequest req respond = do
           respondWithError
             hLogger
             respond
-            status400
+            status401
             "  Administrator authority required"

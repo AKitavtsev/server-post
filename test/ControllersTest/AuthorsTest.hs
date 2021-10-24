@@ -47,7 +47,7 @@ authorsTest = hspec $ do
       it "Should fail if the user is not found, or the user is already the author" $
         routes hTestLogger hTestTokenTrue hTestDb hTestRequstRawAuthor reqPOST testRespond
           `shouldBe` return status500
-      it "Should be success" $ do
+      it "Should successfully addition author" $ do
         let hTestDb' = hTestDb  {SD.insertAuthor = \ra -> return 1}    
         routes hTestLogger hTestTokenTrue hTestDb' hTestRequstRawAuthor reqPOST testRespond
           `shouldBe` return status201
@@ -56,7 +56,7 @@ authorsTest = hspec $ do
         let hTestDb' = hTestDb  {SD.findAuthorByID = \ id_ -> return Nothing} 
         routes hTestLogger hTestTokenTrue hTestDb' hTestRequst defaultRequest testRespond
           `shouldBe` return status404
-      it "Should be success" $
+      it "Should successfully found author" $
         routes hTestLogger hTestTokenTrue hTestDb hTestRequst defaultRequest testRespond
           `shouldBe` return status200
     describe "Trying to delete an author" $ do
