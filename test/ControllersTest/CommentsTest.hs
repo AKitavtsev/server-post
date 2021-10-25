@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module  ControllersTest.CommentTest where
+module  ControllersTest.CommentsTest where
 
 
 import Controllers.Comments
@@ -18,8 +18,8 @@ import Test.Hspec
 hTestRequestRawComment = 
   hTestRequest {toBody = \req -> return "{\"post_id\": 1, \"comment\":\"\"}"}
 
-commentTest :: IO ()
-commentTest = hspec $ do
+commentsTest :: IO ()
+commentsTest = hspec $ do
   describe "Testing Controllers.Comment" $ do
     describe "Testing token" $ do
       it "Should fail if invalid or outdated token" $

@@ -32,7 +32,7 @@ routes hLogger hToken hDb hRequest req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
     Nothing ->
-      respondWithError hLogger respond status400 "  Invalid or outdated token"
+      respondWithError hLogger respond status401 "  Invalid or outdated token"
     Just (id_author, _) -> do
       logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
       case toMethod req of
@@ -45,11 +45,10 @@ routes hLogger hToken hDb hRequest req respond = do
   where
     post id_author = do
       res <-
-        toBody hRequest req >>= getDraft >>= postDraft >>= postTags >>=
-        postOtherPhotos
+        toBody hRequest req >>= getDraft >>= postDraft >>= postTags >>= postOtherPhotos
       case res of
         Nothing -> respondWithError hLogger respond status400 ""
-        Just draft -> respondWithSuccess respond status204 draft
+        Just draft -> respondWithSuccess respond status201 draft
       where
         getDraft body = do
           case eitherDecode body :: Either String RawDraft of

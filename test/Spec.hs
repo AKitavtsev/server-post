@@ -6,7 +6,9 @@ import DbTest
 import FromRequestTest
 import ControllersTest.AuthorsTest
 import ControllersTest.CategoriesTest
-import ControllersTest.CommentTest
+import ControllersTest.CommentsTest
+import ControllersTest.DraftsTest
+import ControllersTest.ImagesTest
 import ControllersTest.UsersTest
 
 main :: IO ()
@@ -16,5 +18,7 @@ main = do
   fromRequestTest
   authorsTest
   categoriesTest
-  commentTest
+  commentsTest
+  draftsTest
+  imagesTest
   usersTest

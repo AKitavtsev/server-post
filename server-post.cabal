@@ -121,8 +121,10 @@ test-suite server-post-test
   other-modules:
       ControllersTest.AuthorsTest
       ControllersTest.CategoriesTest
-      ControllersTest.CommentTest
+      ControllersTest.CommentsTest
       ControllersTest.Data
+      ControllersTest.DraftsTest
+      ControllersTest.ImagesTest
       ControllersTest.UsersTest
       DbTest
       FromRequestTest
