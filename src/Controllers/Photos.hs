@@ -21,7 +21,7 @@ routes :: Monad m =>
      Services.Logger.Handle m
   -> Services.Token.Handle m
   -> Services.Db.Handle m
-  -> FromRequest.HandleRequst m
+  -> FromRequest.HandleRequest m
   -> Request
   -> (Response -> m b)
   -> m b

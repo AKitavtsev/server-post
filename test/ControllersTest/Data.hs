@@ -63,6 +63,15 @@ post = Post 1 "title" "creation_date"
 comment_ :: Comment
 comment_ = Comment "creation_date" (User "name" "surname" "avatar") "comment"
 
+reqPOST, reqHEAD, reqDELETE, reqPUT :: Request
+reqPOST = defaultRequest {requestMethod = "POST"}
+reqHEAD = defaultRequest {requestMethod = "HEAD"}
+reqDELETE = defaultRequest {requestMethod = "DELETE"}
+reqPUT = defaultRequest {requestMethod = "PUT"}
+
+hTestTokenFalse = hTestToken {ST.validToken = \token -> return (Just (1, False))}
+hTestTokenTrue = hTestToken {ST.validToken = \token -> return (Just (1, True))}
+
 testRespond :: Response -> Identity Status
 testRespond res = return (responseStatus res)
 
@@ -76,8 +85,8 @@ hTestToken = ST.Handle
       , ST.curTimeStr = return ""
       }
 
-hTestRequst :: HandleRequst Identity
-hTestRequst = HandleRequst {toBody = \req -> return ""}
+hTestRequest :: HandleRequest Identity
+hTestRequest = HandleRequest {toBody = \req -> return ""}
 
 
 hTestDb :: SD.Handle Identity
@@ -94,7 +103,7 @@ hTestDb = SD.Handle
       , SD.findAuthorByID = \id_ -> return (Just authorsDetails)
       , SD.insertCategory = \cat -> return 0
       , SD.findCategoryByID = \id_ -> return (Just caregory)
-      , SD.updateOwnerCategory = \id_ parent -> return 1
+      , SD.updateParentCategory = \id_ parent -> return 0
       , SD.insertTag = \t -> return ()
       , SD.insertTagDraft = \id_ t -> return 1
       , SD.insertPhotoDraft = \ id_ ph -> return 1
@@ -107,7 +116,7 @@ hTestDb = SD.Handle
       , SD.findPhotoByID = \id_ -> return (Just ("image", "typ"))
       , SD.findDraftByID = \id_ -> return (Just forShowDraft)
       , SD.publishPost = \draft auth -> return 1
-      , SD.insertComment = \rc auth_id creation_date -> return 1
+      , SD.insertComment = \rc auth_id creation_date -> return 0
       , SD.deleteComment = \id_ auth -> return ()
       , SD.findAllPosts = \req limit -> return [post]
       , SD.findComments = \req limit id_post -> return [comment_]

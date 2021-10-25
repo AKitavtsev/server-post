@@ -5,6 +5,8 @@ import TokenTest
 import DbTest
 import FromRequestTest
 import ControllersTest.AuthorsTest
+import ControllersTest.CategoriesTest
+import ControllersTest.CommentTest
 import ControllersTest.UsersTest
 
 main :: IO ()
@@ -13,4 +15,6 @@ main = do
   dbTest
   fromRequestTest
   authorsTest
+  categoriesTest
+  commentTest
   usersTest

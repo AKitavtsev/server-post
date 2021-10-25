@@ -37,8 +37,8 @@ findCategoryByID pool id_ = do
         pass [(_, name', idOw)] = Just (Category name' idOw)
         pass _ = Nothing
 
-updateOwnerCategory :: Pool Connection -> Integer -> String -> IO Integer
-updateOwnerCategory pool id_ parent = do
+updateParentCategory :: Pool Connection -> Integer -> String -> IO Integer
+updateParentCategory pool id_ parent = do
       case map toLower parent of
         "null" -> do
           let q =

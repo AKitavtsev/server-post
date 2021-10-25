@@ -24,7 +24,7 @@ routes :: Monad m =>
      Services.Logger.Handle m
   -> Services.Token.Handle m
   -> Services.Db.Handle m
-  -> FromRequest.HandleRequst m
+  -> FromRequest.HandleRequest m
   -> Request
   -> (Response -> m b)
   -> m b
@@ -32,7 +32,7 @@ routes hLogger hToken hDb hRequest req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
     Nothing ->
-      respondWithError hLogger respond status400 "  Invalid or outdated token"
+      respondWithError hLogger respond status401 "  Invalid or outdated token"
     _ -> do
       logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
       case toMethod req of
@@ -52,7 +52,7 @@ routes hLogger hToken hDb hRequest req respond = do
             hLogger
             respond
             status400
-            ("  Invalid method request body  - " ++ e)
+            ("  Invalid request body  - " ++ e)
         Right correctlyParsedBody -> do
           id_ <- insertCategory hDb correctlyParsedBody
           case id_ of
@@ -64,9 +64,9 @@ routes hLogger hToken hDb hRequest req respond = do
                 "  category - parent not found"
             _ -> respondWithSuccess respond status201 ("" :: String)
     post (Just (_, False)) =
-      respondWithError hLogger respond status404 "  Administrator authority required"
+      respondWithError hLogger respond status401 "  Administrator authority required"
     post Nothing =
-      respondWithError hLogger respond status400 "  Invalid or outdated token"
+      respondWithError hLogger respond status401 "  Invalid or outdated token"
     -- show category, like
     -- http://localhost:3000/category/1.120210901202553ff034f3847c1d22f091dde7cde045264/1
     get = do
@@ -75,17 +75,17 @@ routes hLogger hToken hDb hRequest req respond = do
       categoryMb <- findCategoryByID hDb id_
       case categoryMb of
         Nothing ->
-          respondWithError hLogger respond status400 "  Category not exist"
-        Just category -> respondWithSuccess respond status201 category
+          respondWithError hLogger respond status404 "  Category not exist"
+        Just category -> respondWithSuccess respond status200 category
     -- deleting a caterory  (see example)
     delete (Just (_, True)) = do
       let id_ = toId req
       when (id_ == 0) $ do logError hLogger "  Invalid id"
       deleteByID hDb "category" id_
-      respondWithSuccess respond status201 ("" :: String)
+      respondWithSuccess respond status204 ("" :: String)
     delete (Just (_, False)) =
-      respondWithError hLogger respond status400 "  Administrator authority required"
-    delete Nothing = respondWithError hLogger respond status404 "  no admin"
+      respondWithError hLogger respond status401 "  Administrator authority required"
+    delete Nothing = respondWithError hLogger respond status401 "  no admin"
     -- category editing
     put (Just (_, True)) = do
       let id_ = toId req
@@ -99,11 +99,11 @@ routes hLogger hToken hDb hRequest req respond = do
       case parentMb of
         Nothing -> respondWithSuccess respond status200 ("" :: String)
         Just parent -> do
-          id' <- updateOwnerCategory hDb id_ parent
+          id' <- updateParentCategory hDb id_ parent
           logDebug hLogger ("  Update id_parent to " ++ parent)
           case id' of
             0 -> respondWithError hLogger respond status500 "  category - parent not found"
             _ -> respondWithSuccess respond status200 ("" :: String)
     put (Just (_, False)) =
-      respondWithError hLogger respond status404 "  Administrator authority required"
+      respondWithError hLogger respond status401 "  Administrator authority required"
     put Nothing = respondWithError hLogger respond status404 "  no admin"

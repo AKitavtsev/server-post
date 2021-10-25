@@ -10,12 +10,12 @@ import Data.Maybe (fromMaybe)
 import Network.Wai
 import Text.Read (readMaybe)
 
-newtype (Monad m) => HandleRequst m =
-  HandleRequst
+newtype (Monad m) => HandleRequest m =
+  HandleRequest
     {toBody :: Request -> m BL.ByteString}
     
-hRequstIO :: HandleRequst IO
-hRequstIO = HandleRequst {toBody = strictRequestBody}
+hRequstIO :: HandleRequest IO
+hRequstIO = HandleRequest {toBody = strictRequestBody}
 
 toParam :: Request -> BC.ByteString -> Maybe String
 toParam req name = fmap BC.unpack parBS

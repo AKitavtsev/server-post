@@ -120,6 +120,8 @@ test-suite server-post-test
   main-is: Spec.hs
   other-modules:
       ControllersTest.AuthorsTest
+      ControllersTest.CategoriesTest
+      ControllersTest.CommentTest
       ControllersTest.Data
       ControllersTest.UsersTest
       DbTest

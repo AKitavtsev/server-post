@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes #-}
+
 module Services.Logger
   ( Handle(..)
   , logDebug
@@ -8,9 +10,9 @@ module Services.Logger
 
 import Services.Types (Priority(..))
 
-data Monad m => Handle m =
+data Handle m =
   Handle
-    {logPriority :: Priority -> String -> m ()}
+    {logPriority :: Monad m => Priority -> String -> m ()}
 
 logDebug, logInfo, logWarning, logError :: Monad m => Handle m -> String -> m ()
 logDebug = (`logPriority` DEBUG)

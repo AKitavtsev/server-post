@@ -1,10 +1,12 @@
+{-# LANGUAGE RankNTypes #-}
+
 module Services.Token
   ( Handle(..)
   ) where
 
-data Monad m => Handle m =
+data Handle m =
   Handle
-    { createToken :: Integer -> Bool -> m String
-    , validToken :: String -> m (Maybe (Integer, Bool))
-    , curTimeStr :: m String
+    { createToken :: Monad m => Integer -> Bool -> m String
+    , validToken :: Monad m => String -> m (Maybe (Integer, Bool))
+    , curTimeStr :: Monad m => m String
     }

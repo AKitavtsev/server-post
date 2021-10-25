@@ -23,7 +23,7 @@ routes :: Monad m =>
      Services.Logger.Handle m
   -> Services.Token.Handle m
   -> Services.Db.Handle m
-  -> FromRequest.HandleRequst m
+  -> FromRequest.HandleRequest m
   -> Request
   -> (Response -> m b)
   -> m b
@@ -31,7 +31,7 @@ routes hLogger hToken hDb hRequest req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
     Nothing ->
-      respondWithError hLogger respond status400 "  Invalid or outdated token"
+      respondWithError hLogger respond status401 "  Invalid or outdated token"
     Just (id_author, adm) -> do
       logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
       case toMethod req of
