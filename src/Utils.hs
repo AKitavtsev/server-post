@@ -39,7 +39,7 @@ respondWithImage respond (image, typeImage) =
   respond (responseLBS status200 [("Content-Type", BC.pack ("image/" ++ typeImage))] $
              BL.pack $ BC.unpack $ B64.decodeLenient $ BC.pack image)
 
-respondWithPhotoId :: (Response -> m b) -> Integer -> m b
+respondWithPhotoId :: Monad m => (Response -> m b) -> Integer -> m b
 respondWithPhotoId respond photoId =
   case photoId of
     0 -> respond (responseLBS status400 [("Content-Type", "text/plain")] "")

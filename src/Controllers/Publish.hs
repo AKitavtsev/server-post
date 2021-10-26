@@ -26,9 +26,9 @@ routes hLogger hToken hDb req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
     Nothing ->
-      respondWithError hLogger respond status400 "  Invalid or outdated token"
+      respondWithError hLogger respond status401 "  Invalid or outdated token"
     Just (id_author, _) -> do
       id_ <- publishPost hDb (toId req) id_author
       case id_ of
-        0 -> respondWithError hLogger respond status400 "  Draft not found"
-        _ -> respondWithSuccess respond status201 ("" :: String)
+        0 -> respondWithError hLogger respond status404 "  Draft not found"
+        _ -> respondWithSuccess respond status200 ("" :: String)
