@@ -9,6 +9,8 @@ import ControllersTest.CategoriesTest
 import ControllersTest.CommentsTest
 import ControllersTest.DraftsTest
 import ControllersTest.ImagesTest
+import ControllersTest.PhotosTest
+import ControllersTest.PostsTest
 import ControllersTest.UsersTest
 
 main :: IO ()
@@ -21,4 +23,6 @@ main = do
   commentsTest
   draftsTest
   imagesTest
+  photosTest
+  postsTest
   usersTest

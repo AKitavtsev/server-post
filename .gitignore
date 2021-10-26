@@ -2,7 +2,6 @@
 .vscode
 .history
 .gitignore
-images/
 local_server.conf
 server.conf
 gitpush.bat

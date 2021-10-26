@@ -16,6 +16,7 @@ import Test.Hspec
 imagesTest :: IO ()
 imagesTest = hspec $ do
   describe "Testing Controllers.Images" $ do
+    describe "Trying to get an image" $ do 
       it "Should fail if image not found" $ do
         let hTestDb' = hTestDb  {SD.findImageByID = \ id_ -> return Nothing} 
         routes hTestLogger hTestDb' defaultRequest testRespond
@@ -23,7 +24,3 @@ imagesTest = hspec $ do
       it "Should successfully found image" $
         routes hTestLogger hTestDb defaultRequest testRespond
           `shouldBe` return status200
-
-
-
-

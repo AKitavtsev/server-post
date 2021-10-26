@@ -125,6 +125,8 @@ test-suite server-post-test
       ControllersTest.Data
       ControllersTest.DraftsTest
       ControllersTest.ImagesTest
+      ControllersTest.PhotosTest
+      ControllersTest.PostsTest
       ControllersTest.UsersTest
       DbTest
       FromRequestTest

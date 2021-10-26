@@ -42,7 +42,7 @@ respondWithImage respond (image, typeImage) =
 respondWithPhotoId :: (Response -> m b) -> Integer -> m b
 respondWithPhotoId respond photoId =
   case photoId of
-    0 -> respond (responseLBS status201 [("Content-Type", "text/plain")] "")
+    0 -> respond (responseLBS status400 [("Content-Type", "text/plain")] "")
     _ -> respond
           (responseLBS status201 [("Content-Type", "text/plain")] $
            BL.pack ("{photo_id:" ++ show photoId ++ "}"))

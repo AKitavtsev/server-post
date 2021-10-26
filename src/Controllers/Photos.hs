@@ -49,7 +49,7 @@ routes hLogger hToken hDb hRequest req respond = do
           respondWithError
             hLogger
             respond
-            status400
+            status401
             "  Invalid or outdated token"
         _ -> getPhoto >>= insertPhotoToDB >>= respondWithPhotoId respond
       where

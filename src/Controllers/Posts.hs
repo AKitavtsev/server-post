@@ -25,7 +25,7 @@ routes hLogger hToken hDb req respond = do
   vt <- validToken hToken token
   case vt of
     Nothing ->
-      respondWithError hLogger respond status400 "  Invalid or outdated token"
+      respondWithError hLogger respond status401 "  Invalid or outdated token"
     Just _ ->
       case toId req of
         0 -> getPosts
@@ -58,5 +58,5 @@ routes hLogger hToken hDb req respond = do
             hLogger
             respond
             status404
-            "  Commets for this post not found"
+            "  Comments for this post not found"
         xs -> respondWithSuccess respond status200 xs
