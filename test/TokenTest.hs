@@ -7,8 +7,8 @@ import Test.Hspec
 import Services.Impl.MD5.Internal
 
 
-tokenTest :: IO ()
-tokenTest = hspec $ do
+tokenMD5Test :: IO ()
+tokenMD5Test = hspec $ do
     describe "Services.Impl.MD5.Internal" $ do
       describe "idAdmFromToken" $ do
         it "is admin" $ 

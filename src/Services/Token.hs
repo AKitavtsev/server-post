@@ -1,4 +1,3 @@
-{-# LANGUAGE RankNTypes #-}
 
 module Services.Token
   ( Handle(..)

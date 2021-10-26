@@ -12,11 +12,13 @@ import ControllersTest.ImagesTest
 import ControllersTest.PhotosTest
 import ControllersTest.PostsTest
 import ControllersTest.PublishTest
+import ControllersTest.TagsTest
+import ControllersTest.TokenTest
 import ControllersTest.UsersTest
 
 main :: IO ()
 main = do
-  tokenTest
+  tokenMD5Test
   dbTest
   fromRequestTest
   authorsTest
@@ -27,4 +29,6 @@ main = do
   photosTest
   postsTest
   publishTest
+  tagsTest
+  tokenTest
   usersTest

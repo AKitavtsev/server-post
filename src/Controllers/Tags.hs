@@ -33,7 +33,7 @@ routes hLogger hToken hDb hRequest req respond = do
   vt <- validToken hToken (toToken req)
   case vt of
     Nothing ->
-      respondWithError hLogger respond status400 "  Invalid or outdated token"
+      respondWithError hLogger respond status401 "  Invalid or outdated token"
     _ -> do
       logInfo hLogger ("  Method = " ++ BC.unpack (toMethod req))
       case toMethod req of
@@ -63,7 +63,7 @@ routes hLogger hToken hDb hRequest req respond = do
           respondWithError
             hLogger
             respond
-            status404
+            status401
             "  Administrator authority required"
         Nothing -> respondWithError hLogger respond status404 ""
     -- show tag_, like
@@ -74,7 +74,7 @@ routes hLogger hToken hDb hRequest req respond = do
       tagMb <- findTagByID hDb id_
       case tagMb of
         Nothing -> respondWithError hLogger respond status404 "  Tag not exist"
-        Just tag_ -> respondWithSuccess respond status201 tag_
+        Just tag_ -> respondWithSuccess respond status200 tag_
     -- deleting a tag_
     delete vt = do
       case vt of
@@ -87,7 +87,7 @@ routes hLogger hToken hDb hRequest req respond = do
           respondWithError
             hLogger
             respond
-            status404
+            status401
             "  Administrator authority required"
         Nothing -> respondWithError hLogger respond status404 ""
     -- tag_ editing
@@ -106,6 +106,6 @@ routes hLogger hToken hDb hRequest req respond = do
           respondWithError
             hLogger
             respond
-            status404
+            status401
             "  Administrator authority required"
         Nothing -> respondWithError hLogger respond status404 ""
