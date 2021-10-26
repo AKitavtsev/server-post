@@ -6,7 +6,7 @@ module Services.Token
 
 data Handle m =
   Handle
-    { createToken :: Monad m => Integer -> Bool -> m String
-    , validToken :: Monad m => String -> m (Maybe (Integer, Bool))
-    , curTimeStr :: Monad m => m String
+    { createToken :: Integer -> Bool -> m String
+    , validToken :: String -> m (Maybe (Integer, Bool))
+    , curTimeStr :: m String
     }

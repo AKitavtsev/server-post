@@ -10,7 +10,7 @@ import Data.Maybe (fromMaybe)
 import Network.Wai
 import Text.Read (readMaybe)
 
-newtype (Monad m) => HandleRequest m =
+newtype HandleRequest m =
   HandleRequest
     {toBody :: Request -> m BL.ByteString}
     

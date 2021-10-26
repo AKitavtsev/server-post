@@ -12,9 +12,9 @@ import Services.Types (Priority(..))
 
 data Handle m =
   Handle
-    {logPriority :: Monad m => Priority -> String -> m ()}
+    {logPriority :: Priority -> String -> m ()}
 
-logDebug, logInfo, logWarning, logError :: Monad m => Handle m -> String -> m ()
+logDebug, logInfo, logWarning, logError ::Handle m -> String -> m ()
 logDebug = (`logPriority` DEBUG)
 
 logInfo = (`logPriority` INFO)
