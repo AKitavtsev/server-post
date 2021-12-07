@@ -15,7 +15,7 @@ stack setup
 # build the project
 stack build 
 ```
-Rename (or copy) file `bot.conf.template` to `bot.conf`. You can also create a file `local_bot.conf`, if it is present, the configuration parameters will be determined in accordance with it, otherwise, by `bot.conf`.
+Rename (or copy) file `server.conf.template` to `server.conf`. You can also create a file `local_server.conf`, if it is present, the configuration parameters will be determined in accordance with it, otherwise, by `bot.conf`.
 That's it! And then when you want to run the service:
 ```
 stack exec server-post-exe
